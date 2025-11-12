@@ -1,0 +1,2221 @@
+<!DOCTYPE html> 
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>NicaExpressWay</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Poppins:wght@600&display=swap" rel="stylesheet">
+  <!-- FAVICONS: pegar dentro de <head> -->
+<link rel="icon" type="image/png" sizes="16x16" href="https://github.com/nicaexpressway/web/blob/main/media/icon.jpg?raw=true">
+<link rel="icon" type="image/png" sizes="32x32" href="https://github.com/nicaexpressway/web/blob/main/media/icon.jpg?raw=true">
+<link rel="apple-touch-icon" sizes="180x180" href="https://github.com/nicaexpressway/web/blob/main/media/icon.jpg?raw=true">
+<meta name="theme-color" content="#E8F0F5">
+<meta property="og:type" content="website" />
+<meta property="og:title" content="Nica ExpressWay" />
+<meta property="og:description" content="Gestiona tus envíos desde USA a Nicaragua: Cotiza, solicita y rastrea tu paquete de forma sencilla." />
+<meta property="og:image" content="https://github.com/nicaexpressway/web/blob/main/media/icon.jpg?raw=true" />
+<style>
+:root{
+  --color-bg:#E8F0F5;
+  --color-accent:#2F528F;
+  --lapis:#06B6D4;  
+  --text:#1A1A1A;
+
+  /* CTA / naranja */
+  --cta-color: #FF6B4A;        
+  --cta-color-active: #FF7A35; 
+  --cta-active-light: #FFD8B0; 
+
+  /* nav / secciones */
+  --nav-inactive: #a0b6e0;        
+  --section-active-color: #6B7A90; 
+
+  --sub-bg: #f3f7fb; 
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:"Inter",sans-serif;
+  background:var(--color-bg);
+  color:var(--text);
+  padding:1rem;
+  max-width:500px;
+  margin:auto;
+  padding-bottom:120px;
+}
+header{text-align:center;margin-bottom:1.5rem}
+h1{font-family:'Poppins',sans-serif;font-size:1.8rem;color:var(--color-accent)}
+nav{display:flex;justify-content:center;gap:.5rem;margin-top:1rem}
+nav button{flex:1;background:var(--color-accent);color:#fff;border:none;padding:.75rem;font-weight:700;border-radius:8px;cursor:pointer}
+
+nav button.inactive{
+  background:var(--nav-inactive);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.16);
+  color:#fff;
+}
+
+section{
+  background:#FFFFFF;
+  padding:1.5rem;
+  border-radius:12px;
+  margin-top:1rem;
+  display:none;
+  opacity:0;
+  transform:translateY(12px);
+  animation: fadeIn 0.72s forwards; 
+  box-shadow:0 6px 14px rgba(0,0,0,0.08);
+}
+section.active{display:block}
+@keyframes fadeIn{to{opacity:1;transform:translateY(0)}}
+
+#inicio{
+  text-align:center;
+    position: relative;
+  padding:0.9rem 1.2rem;         
+  max-height:560px;              
+  overflow-y:auto;                
+  overflow-x:hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+#inicio img:not(.logo-slide){width:100px;height:100px;border-radius:50%;display:block;margin:0 auto 1rem;object-fit:cover;box-shadow:0 6px 18px rgba(47,82,143,0.18)}
+.linktree-buttons{display:flex;flex-direction:column;gap:1rem}
+/* 89-105: link-btn — asegurar stacking y transición */
+.link-btn{
+  position: relative;
+  z-index: 30;                  
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background:var(--color-accent);
+  color:#fff;
+  text-decoration:none;
+  padding:.96rem 6rem;
+  border-radius:999px;
+  font-weight:700;
+  font-size:1rem;
+  max-width:220px;
+  margin:0.3rem auto;
+  box-shadow:0 2px 6px rgba(0,0,0,0.12);
+   transition: transform .72s ease, opacity .72s ease;
+  will-change: opacity, transform;
+}
+.link-btn.visible { opacity: 1 !important; transform: translateY(0) !important; }
+
+.link-btn:hover{transform:translateY(-3px);background:#1f3a66}
+
+label{display:block;margin:1rem 0 .5rem;font-weight:600}
+select,input,textarea{width:100%;padding:.75rem;border-radius:8px;border:1px solid #ccc;font-size:1rem}
+input::placeholder { color:#9aa3ad; }
+textarea { resize: vertical; }
+button.calc-btn{margin-top:1rem;background:var(--color-accent);color:white;border:none;padding:.75rem;font-size:1rem;border-radius:8px;width:100%;font-weight:bold;cursor:pointer}
+.resultado{margin-top:1rem;font-size:1.05rem;font-weight:600}
+footer { color: #888; text-align: center; padding: 0.8rem 0.5rem; font-size: 0.8rem; margin-top: 1.5rem; }
+
+.row{display:flex;gap:.5rem}
+.col{flex:1}
+.phone-row{display:flex;gap:.5rem}
+.phone-row select{width:35%;padding:.6rem;border-radius:8px}
+.phone-row input{flex:1}
+
+.package-box{
+  margin-top:1rem;
+  padding:1rem;
+  border-radius:10px;
+  background: var(--sub-bg); 
+  border:1px solid rgba(16,24,40,0.04);
+}
+.package-title{font-weight:700;margin-bottom:.5rem;color:var(--color-accent)}
+.details-row{display:flex;justify-content:space-between;gap:.5rem;margin-top:.4rem;font-size:.95rem}
+.details-row div{flex:1;text-align:left}
+.mini-spinner {
+  display:flex;align-items:center;justify-content:center;gap:10px;padding:12px;border-radius:8px;background:var(--sub-bg);border:1px solid rgba(16,24,40,0.04);
+}
+.mini-spinner .spinner-small {
+  width:28px;height:28px;border-radius:50%;border:3px solid rgba(47,82,143,0.12);border-top-color:var(--color-accent);animation:spin 1s linear infinite;
+}
+
+.timeline{position:relative;padding-left:24px;border-left:2px solid rgba(47,82,143,0.08);margin-bottom:.5rem}
+.timeline-item{position:relative;padding:8px 12px;margin-bottom:.5rem}
+.timeline-item::before{content:"";position:absolute;left:-11px;top:8px;width:12px;height:12px;border-radius:50%;background:#fff;border:3px solid var(--color-accent)}
+.timeline-item .state{font-weight:700}
+.timeline-item .subtext{font-size:.9rem;color:#555;margin-top:.25rem}
+.timeline-item .fecha{font-size:.85rem;color:#666;margin-top:.25rem}
+
+.blink {
+  animation: blinkAnim 0.9s step-start 0s infinite;
+  box-shadow:0 0 0 4px rgba(47,82,143,0.06) inset;
+  border-radius:8px;
+}
+@keyframes blinkAnim {
+  50% { opacity: 0.25; transform: translateY(-1px); }
+}
+
+#confettiWrap{pointer-events:none;position:fixed;left:0;top:0;width:100%;height:100%;overflow:hidden;z-index:6000}
+
+.small-muted{font-size:.9rem;color:#666;margin-top:.25rem}
+.center{text-align:center}
+
+@media (max-width:420px){ .link-btn{max-width:100%} .phone-row select{width:40%} }
+
+#waitingPop { position: fixed; left:50%; top:50%; transform: translate(-50%,-50%) scale(.98); background: #fff; border-radius:12px; padding:18px; box-shadow:0 12px 40px rgba(0,0,0,0.12); z-index:3000; width:88%; max-width:360px; display:none; opacity:0; transition: opacity .28s ease, transform .28s ease; text-align:center; }
+#waitingPop.show { display:block; opacity:1; transform: translate(-50%,-50%) scale(1); }
+.waiting-circle { width:76px; height:76px; border-radius:999px; margin:0 auto 10px; display:flex; align-items:center; justify-content:center; background: rgba(47,82,143,0.06); }
+/* spinner uses color of title (var(--color-accent)) */
+.spinner { width:36px; height:36px; border-radius:50%; border:4px solid rgba(47,82,143,0.18); border-top-color: var(--color-accent); animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+#confirmPop { position: fixed; left:50%; top:50%; transform: translate(-50%,-50%) scale(.98); background: #fff; border-radius:12px; padding:18px; box-shadow:0 12px 40px rgba(0,0,0,0.12); z-index:3000; width:88%; max-width:360px; display:none; opacity:0; transition: opacity .28s ease, transform .28s ease; text-align:center; }
+#confirmPop.show { display:block; opacity:1; transform: translate(-50%,-50%) scale(1); }
+.check-icon { width:72px;height:72px;border-radius:999px;margin:0 auto 0.6rem;display:flex;align-items:center;justify-content:center;background:rgba(47,82,143,0.08); }
+.check-icon svg { display:block; }
+
+.lightbox-loading { padding:10px 14px; border-radius:10px; background:var(--sub-bg); box-shadow:0 8px 24px rgba(0,0,0,0.12); display:flex;align-items:center;gap:12px; justify-content:center; }
+
+.multi-list { margin-top:1rem; display:flex; flex-direction:column; gap:0.75rem; }
+.multi-card {
+  background: #fbfcfe;
+  border: 1px solid #eef3f8;
+  padding: 0.8rem;
+  border-radius:10px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  cursor:pointer;
+  transition: transform .12s, box-shadow .12s;
+}
+.multi-card:hover { transform: translateY(-3px); box-shadow:0 8px 18px rgba(31,58,102,0.06); }
+.multi-card .left { display:flex; flex-direction:column; gap:6px; }
+.multi-card .title { font-weight:700; color:var(--color-accent); }
+.multi-card .subtitle { font-size:0.9rem; color:#666; }
+.multi-card .right { font-weight:700; color:var(--color-accent); font-size:0.95rem; }
+
+#packageLightboxOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  display: none;
+  opacity: 0;
+  transition: opacity .28s ease;
+  align-items: center;
+  justify-content: center;
+  z-index: 4000;
+  padding: 1rem;
+}
+#packageLightboxOverlay.open {
+  display: flex;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+#packageLightbox {
+  width: 100%;
+  max-width: 520px;
+  background: #fff;
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 12px 36px rgba(0,0,0,0.16);
+  max-height: 86vh;
+  overflow-y: auto;
+  position: relative;
+}
+#packageLightbox .close-btn {
+  position: absolute;
+  top: 10px; right: 10px;
+  background: #fff; border: 1px solid #e6e9ef;
+  width: 38px; height:38px; border-radius:50%; font-size:18px; cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+}
+#packageLightbox h3 { margin-bottom: 6px; color: var(--color-accent); font-family: 'Poppins', sans-serif; }
+.package-info-row { display:flex; gap:12px; flex-wrap:wrap; margin-top:8px; }
+.package-info-row .info { flex: 1 1 120px; min-width:110px; background: var(--sub-bg); padding:10px;border-radius:8px;border:1px solid rgba(16,24,40,0.04); box-sizing:border-box; }
+.package-info-row .info .small-muted { margin-bottom:6px; display:block; }
+
+#cotizarCtaWrap { display:flex; justify-content:center; margin-top:12px; }
+.wa-cta {
+  display:inline-flex; align-items:center; justify-content:center;
+  background: var(--color-accent); color:#fff; padding:12px 18px; border-radius:999px;
+  text-decoration:none; font-weight:700; font-size:1rem; box-shadow:0 6px 18px rgba(31,58,102,0.14); opacity:0; transform: translateY(6px);
+  transition:opacity .4s ease, transform .4s ease;
+}
+.wa-cta.visible { opacity:1; transform: translateY(0); }
+@keyframes floatLoop { 0%{ transform: translateY(0);} 50%{ transform: translateY(-8px);} 100%{ transform: translateY(0);} }
+.wa-cta.float { animation: floatLoop 3s ease-in-out infinite; }
+
+.subtitle-footer {
+  text-align:center;
+  color:#888;
+  font-size:0.85rem;
+  margin:8px 0 12px;
+  font-family: 'Poppins',sans-serif;
+  font-weight:600;
+  position:relative;
+  padding-bottom:10px;
+}
+.subtitle-footer::after{
+  content:"";
+  display:block;
+  height:1px;
+  width:70%;
+  margin:8px auto 0;
+  background:#e6e9ef;
+  border-radius:2px;
+}
+
+.modal-close-btn { margin-top:12px; background:#888;color:#fff;border:none;padding:.6rem .8rem;border-radius:8px; cursor:pointer; }
+
+.hidden{ display:none !important; }
+
+#btnCotizar {
+  background: var(--nav-inactive); 
+  color: #fff;
+  opacity: 1;
+  transform: translateY(0);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.16); 
+  border-radius: 10px;
+  position: relative;
+  z-index: 5;
+  transition: opacity .28s ease, transform .28s ease, box-shadow .24s ease, background .24s ease;
+}
+
+#btnCotizar.show-cotizar {
+  background: var(--cta-color);
+  transform: translateY(-6px); 
+  box-shadow: 0 16px 40px rgba(255,107,74,0.20), 0 8px 20px rgba(255,107,74,0.10);
+}
+#btnCotizar.show-cotizar::after{
+  content:'';
+  position:absolute;
+  inset:-2px;
+  z-index:-1;
+  border-radius:12px;
+  background: linear-gradient(90deg, rgba(255,107,74,0.14), rgba(255,107,74,0.06));
+  box-shadow: 0 0 26px 6px rgba(255,107,74,0.12);
+  animation: glowBorder 2.6s linear infinite;
+  opacity:0.95;
+  pointer-events:none;
+}
+
+#btnCotizar.show-cotizar:hover,
+#btnCotizar.show-cotizar:focus {
+  background: var(--cta-color-active);
+  box-shadow: 0 20px 48px rgba(255,122,53,0.22), 0 10px 26px rgba(255,122,53,0.10);
+}
+#btnCotizar.show-cotizar:active {
+  transform: translateY(-4px) scale(.998);
+  background: color-mix(in srgb, var(--cta-color-active) 85%, black 10%); 
+  box-shadow: 0 14px 34px rgba(255,122,53,0.20);
+}
+
+#btnCotizar:hover {
+  transform: translateY(-8px) scale(1.01);
+}
+
+nav button#btnInicio:not(.inactive),
+nav button#btnSeguimiento:not(.inactive) {
+  background: var(--section-active-color) !important;
+  color: #fff !important;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.22) !important;
+  transition: transform .12s ease, box-shadow .18s ease, background .18s ease;
+}
+nav button#btnInicio:not(.inactive):active,
+nav button#btnSeguimiento:not(.inactive):active {
+  filter: brightness(0.92);
+  transform: translateY(-1px) scale(.998);
+}
+nav button.inactive { background: var(--nav-inactive) !important; }
+
+nav button#btnCotizar:not(.inactive) {
+  background: var(--cta-active-light) !important;
+  color: #fff !important;
+  box-shadow: 0 10px 28px rgba(0,0,0,0.12);
+  border-left: 2px solid rgba(255,255,255,0.75);
+  border-right: 2px solid rgba(255,255,255,0.75);
+  border-top: 2px solid rgba(255,255,255,0.75);    
+  border-bottom: 2px solid rgba(255,255,255,0.75); 
+  transition: background .18s ease, box-shadow .18s ease, transform .12s ease;
+}
+nav button#btnCotizar:not(.inactive):active {
+  transform: translateY(-2px) scale(.998);
+  background: var(--cta-color-active) !important;
+}
+
+#btnCotizar.show-cotizar {
+  background: var(--cta-color) !important;
+  transform: translateY(-6px) !important;
+  box-shadow: 0 16px 40px rgba(255,107,74,0.20) !important;
+  border-left: 2px solid rgba(255,255,255,0.92) !important;
+  border-right: 2px solid rgba(255,255,255,0.92) !important;
+  border-top: 2px solid rgba(255,255,255,0.92) !important;    
+  border-bottom: 2px solid rgba(255,255,255,0.92) !important;
+}
+
+nav button#btnCotizar:hover { transform: translateY(-4px); }
+
+#seguimientoTitle { text-align:center; margin-bottom:0.6rem; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+  #introOverlay { transition: none; }
+}
+
+#introOverlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg);
+  z-index: 7000;
+  pointer-events: auto;
+  opacity: 1;
+  transition: opacity .6s ease;
+  padding: 1rem;                
+}
+
+#introOverlay.show #introLogo,
+#introOverlay.show #introTitle {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+#introInner {
+  text-align: center;
+  transform-origin: center;
+  transition: transform .8s cubic-bezier(.2,.9,.2,1), opacity .6s;
+  width: 100%;
+  max-width: 420px;              
+  box-sizing: border-box;
+  padding: 8px 12px;
+}
+
+#introLogo {
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+  margin: 0 auto 12px;
+  opacity: 0;
+  transform: translateY(6px) scale(.98);
+  transition: transform .6s cubic-bezier(.2,.9,.2,1), opacity .5s;
+  max-width: 100%;              
+}
+
+#introTitle {
+  font-family: 'Poppins', sans-serif;
+  font-size: 1.6rem;
+  color: var(--color-accent);
+  opacity: 0;
+  transform: translateY(6px);
+  transition: transform .6s .06s cubic-bezier(.2,.9,.2,1), opacity .5s .06s;
+}
+
+#introOverlay {
+  transition: opacity .6s ease;
+  opacity: 1;
+}
+
+#introOverlay.hide {
+  opacity: 0 !important;
+  pointer-events: none;
+}
+
+@media (max-width:420px) {
+  .package-info-row { gap:8px; }
+  .package-info-row .info { flex: 1 1 45%; min-width: 45%; padding:8px; }
+  .package-info-row .info div { font-size:0.95rem; }
+}
+#inicioLanding { display:flex; flex-direction:column; gap:1rem; align-items:stretch; }
+
+.landing-top { text-align:center; padding: 0.9rem 0 0.4rem; }
+
+.landing-subtitle {
+  font-family: 'Poppins', sans-serif;
+  color: var(--color-accent);
+  font-weight: 400;
+  font-size: 1.05rem;    
+  line-height: 1.12;
+  margin-bottom: .6rem;
+  max-width: 92%;
+  margin-left: auto;
+  margin-right: auto;
+  text-align:center;
+}
+
+#landingSubtitle {
+  font-size: 0.9rem;
+  line-height: 1.18;
+  max-width: 86%;
+  margin: 0 auto 0.4rem;
+  display: block;
+  font-weight:700;
+}
+
+#servicesTitle {
+  opacity: 0;
+  transform: translateY(9px);
+  transition: opacity .72s ease, transform .72s ease;
+  display: block;
+}
+#servicesTitle.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+#servicesTitle.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.social-desc{
+  font-family: 'Poppins', sans-serif;
+  color: var(--color-accent);
+  font-weight:700;
+}
+.logos-carousel{
+  width:100%;
+  height:96px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+  position:relative;
+  margin:0 auto 0.6rem;
+  border-radius:12px;
+  padding:8px;
+  background:#ffffff;
+  box-shadow: 0 6px 18px rgba(47,82,143,0.04);
+  box-sizing:border-box;
+}
+
+#logosCarousel img {
+  display:block;
+  width:auto;
+  height:100%;
+  max-width:90%;
+  object-fit:contain;
+  object-position:center;
+  border-radius:8px;
+  box-shadow:none;
+  opacity:0;
+  transform:scale(.99);
+  transition: opacity .38s ease, transform .38s ease;
+}
+#logosCarousel img.active {
+  opacity:1;
+  transform:scale(1);
+}
+
+.services-wrapper { display:block; width:100%; margin-top:.6rem; padding:0; }
+.services-track { display:block; transform:none; gap:0; padding:0; }
+
+.service-card {
+  width:100%;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  background:#fbfcfe;
+  border-radius:12px;
+  padding:1px;
+  border:1px solid #eef3f8;
+  box-shadow: 0 10px 22px rgba(31,58,102,0.05);
+  min-height:unset;
+  box-sizing:border-box;
+}
+
+.service-left{ flex:1; display:flex; flex-direction:column; justify-content:center; }
+.service-right{ width:36%; max-width:160px; display:flex; align-items:center; justify-content:center; }
+
+.services-dots{ display:none !important; }
+.reveal, [data-reveal] {
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity .84s ease, transform .84s ease;
+  will-change: opacity, transform;
+}
+.reveal.visible, [data-reveal].visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.reveal.visible, [data-reveal].visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.service-card .card-title {
+  color: var(--color-accent, #0f4c81);
+  font-weight: 700;
+  font-size: 1.05rem;
+  margin-bottom: 4px;
+}
+.service-card .card-price {
+  color: var(--accent-2, #db3a20);
+  font-weight: 800;
+}
+
+.service-card .card-desc .muted { color: #6b7280; }
+
+.service-card {
+  position: relative; 
+}
+
+@keyframes pulseOut {
+  0% {
+    transform: translateY(0) scale(1);
+    box-shadow: 0 8px 20px rgba(31,58,102,0.05);
+  }
+  40% {
+    transform: translateY(-10px) scale(1.04);
+    box-shadow: 0 20px 40px rgba(31,58,102,0.12), 0 0 0 6px rgba(47,82,143,0.06);
+  }
+  70% {
+    transform: translateY(-6px) scale(1.02);
+    box-shadow: 0 14px 30px rgba(31,58,102,0.09), 0 0 0 4px rgba(47,82,143,0.04);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    box-shadow: 0 8px 20px rgba(31,58,102,0.05);
+  }
+}
+.service-card[data-card="2"].pulse-loop {
+  animation: pulseOut 1600ms cubic-bezier(.25,.9,.15,1) infinite;
+  transform-origin: center;
+  z-index: 2;
+}
+.service-card[data-card="2"].pulse-loop::after {
+  content: "";
+  position: absolute;
+  inset: -8px;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow: 0 30px 60px rgba(31,58,102,0.08);
+  opacity: 0.65;
+  transform: translateZ(0);
+  transition: box-shadow 400ms ease, opacity 400ms ease;
+}
+
+.service-card--link{ text-decoration:none; color:inherit; cursor:pointer; display:flex; align-items:center; }
+
+/* responsive tweaks */
+@media (min-width:520px) {
+  .service-card{ padding:14px; }
+  .service-right{ width:34%; }
+}
+.inicio-bottom-fade {
+  position: sticky;
+  bottom: calc(-0.9rem);
+  left: calc(-1.2rem - 2px);
+  right: calc(-1.2rem - 2px);
+  width: calc(100% + 2.4rem + 4px);
+  height: 48px;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(232,240,245,0.95) 60%, rgba(232,240,245,1) 100%);
+  border-radius: 0 0 12px 12px;
+  z-index: 40;
+  box-sizing: border-box;
+  transform: translateZ(0);
+}
+@supports (inset: 0px) {
+  .inicio-bottom-fade {
+    inset: auto calc(-1.2rem - 2px) calc(-0.9rem) calc(-1.2rem - 2px);
+    width:auto;
+  }
+}
+.inicio-graffiti {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 4px;
+  width: 100%;
+  border-radius: 0 0 12px 12px;
+  background: linear-gradient(90deg, rgba(47,82,143,0.12), rgba(255,107,74,0.08));
+  opacity: 1;
+  pointer-events: none;
+  z-index: 41;
+}
+.inicio-bottom-fade { padding: 0; }
+
+.inicio-appearing { opacity:0; transform:translateY(8px); transition:opacity .4s ease, transform .4s ease; }
+.inicio-appearing.visible { opacity:1; transform:none; }
+
+@media (min-width:520px) {
+  .service-card{ min-width:68%; flex:0 0 68%; padding:12px; }
+  .service-right{ width:36%; }
+}
+
+/* header logo */
+header img {
+  width:100px;
+  height:100px;
+  border-radius:50%;
+  display:block;
+  margin:0 auto 1rem;
+  object-fit:cover;
+  box-shadow:0 6px 18px rgba(47,82,143,0.18);
+}
+#logoMain {
+  opacity: 0;
+  transform: translateY(8px) scale(.995);
+  transition: opacity .8s ease, transform .8s ease;
+  display: block;
+  margin: 0 auto 1rem;
+  max-width: 160px;
+  will-change: opacity, transform;
+}
+#logoMain.visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.service-card {
+  padding: 12px 14px;        
+  border-radius: 7px;
+  gap: 6px;               
+  
+  min-height: 150px;         
+}
+
+@media (min-width:520px) {
+  .service-card { min-width: 90%; flex: 0 0 136%; padding: 28px; }
+  .service-right { width: 30%; max-width: 80px; } 
+}
+
+.service-card .card-title {
+  font-size: 1.9rem;
+  line-height: 1;
+}
+.service-card .card-desc {
+  
+  font-size: 1.2rem;  
+}
+.service-card .card-price {
+  font-size: 1.4rem;
+}
+
+.service-right img {
+  width: 200px;        
+  height: auto;
+  max-width: 300%;
+  object-fit: contain;
+  display:block;
+}
+
+.service-block {
+  margin-bottom: 50 rem;  
+}
+
+.landing-subtitle {
+  margin-bottom: 1.2rem !important;
+}
+
+.services-wrapper,
+.service-block {
+  margin-top: 1rem;
+  margin-bottom: 1rem; 
+}
+
+.landing-top,
+.landing-subtitle {
+  margin-bottom: 1.2rem; 
+}
+
+
+.multi-list .service-card,
+.services-wrapper .service-card {
+  margin: 0.9rem 0;       
+  padding: 1rem 1.2rem;   
+}
+
+
+.service-block { margin-bottom: 1rem !important; } 
+.landing-subtitle { margin-bottom: 1.2rem !important; } 
+
+
+.service-right {
+  width: 36% !important;     
+  max-width: none !important; 
+  padding: 0.4rem;            
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.service-right img,
+.service-right svg {
+  width: 100% !important;     
+  height: auto !important;
+  max-width: none !important;
+  object-fit: contain !important; 
+  object-position: center center !important;
+  display:block;
+}
+
+@media (min-width:520px) {
+  .service-right { width: 34% !important; max-width: none !important; }
+  .service-card { min-width: 90% !important; flex: 0 0 90% !important; }
+}
+
+.logos-carousel { height: 120px !important; padding: 12px !important; }
+#logosCarousel img { height:100% !important; width:auto !important; object-fit:contain !important; }
+
+
+</style>
+</head>
+<body>
+
+<div id="introOverlay" aria-hidden="true">
+  <div id="introInner">
+    <img id="introLogo" src="https://github.com/Irvyandl/VirtualAssistance/blob/main/assets/visuals/logo.jpg?raw=true" alt="Logo Nica Expressway" />
+    <div id="introTitle">Nica ExpressWay</div>
+  </div>
+</div>
+
+<header>
+  <h1>Nica ExpressWay</h1>
+  <nav>
+    <button id="btnInicio">Inicio</button>
+    <button id="btnCotizar" class="inactive">Cotizar</button>
+    <button id="btnSolicitar" class="inactive" style="display:none;" title="Oculto por solicitud del cliente (no borrado)">Solicitar</button>
+    <button id="btnSeguimiento" class="inactive">Seguimiento</button>
+  </nav>
+</header>
+
+<section id="inicio" class="active">
+  <div id="inicioLanding">
+    <div class="landing-top inicio-appearing" id="landingTop">
+      <h2 class="landing-subtitle" id="landingSubtitle">Nos encargamos de tus encomiendas de Estados Unidos hechas en:</h2>
+      <div class="logos-carousel" id="logosCarousel" aria-hidden="false">
+ 
+        <img src="https://cdn.simpleicons.org/shein/2F528F" alt="Shein logo" class="logo-slide active" />
+      </div>
+    </div>
+
+    <div class="landing-services inicio-appearing" id="landingServices">
+      <!-- subtítulo principal (aparece al inicio) -->
+      <h3 class="landing-subtitle" id="servicesTitle">Te las hacemos llegar a Nicaragua vía:</h3>
+
+      <div class="service-block" data-reveal>
+        <div class="service-card" data-card="0" role="group" aria-label="Aérea">
+          <div class="service-left">
+            <div class="card-title">Aérea</div>
+            <div class="card-desc">Te hacemos llegar tus paquetes ligeros y urgentes a Nicaragua entre 3 a 5 días hábiles, por tan sólo <span class="card-price">7.5 USD por libra!</span></div>
+          </div>
+          <div class="service-right">
+            <img src="https://github.com/nicaexpressway/web/blob/main/media/plane.jpg?raw=true" alt="Aéreo icon">
+          </div>
+        </div>
+      </div>
+
+      <h4 class="landing-subtitle" data-reveal id="servicesTitle2">También por vía:</h4>
+      <div class="service-block" data-reveal>
+        <div class="service-card" data-card="1" role="group" aria-label="Marítima">
+          <div class="service-left">
+            <div class="card-title">Marítima</div>
+            <div class="card-desc">Te llevamos paquetes grandes a Nicaragua de forma económica entre 15 a 20 días hábiles por <span class="card-price">3 USD por libra!</span></div>
+          </div>
+          <div class="service-right">
+            <img src="https://github.com/nicaexpressway/web/blob/main/media/ship.jpg?raw=true" alt="Marítima icon">
+          </div>
+        </div>
+      </div>
+
+      <!-- Tercer subtítulo y tarjeta: Tarifas Especiales (revela con scroll; mantiene link y bounce) -->
+      <h4 class="landing-subtitle" data-reveal id="servicesTitle3">Además, te ofrecemos:</h4>
+      <div class="service-block" data-reveal>
+        <a class="service-card service-card--link bounce-on" data-card="2" role="group" aria-label="Tarifas Especiales"
+           href="https://wa.me/50577079035?text=Hola,%20Nicaexpressway,%20me%20gustaría%20información%20acerca%20de%20las%20tarifas%20especiales."
+           target="_blank" rel="noopener noreferrer">
+          <div class="service-left">
+            <div class="card-title">Tarifas Especiales</div>
+            <div class="card-desc">Emprendedor, maximizamos las ganancias en tu negocio ofreciéndote tarifas especiales al ordenar al por mayor.   <span class="card-price">Click aquí para más información!</span></div>
+          </div>
+          <div class="service-right">
+            <img src="https://github.com/nicaexpressway/web/blob/main/media/savings.jpg?raw=true" alt="Ahorros icon">
+          </div>
+        </a>
+      </div>
+</div>
+
+      <!-- dots -->
+      <div class="services-dots" id="servicesDots" role="tablist" aria-hidden="false"></div>
+    </div>
+
+    <div id="inicioOriginal" class="inicio-appearing" style="padding-top:0.6rem;">
+    
+       <img id="logoMain" src="https://github.com/nicaexpressway/web/blob/main/media/icon.jpg?raw=true" alt="Logo Nica Expressway">
+<p class="social-desc" style="margin-bottom:1.25rem;">Conecta con nosotros y mantente al día con nuestras ofertas y anuncios!</p>
+      <div class="linktree-buttons" id="linktreeOriginal">
+        <a class="link-btn" href="https://www.instagram.com/nicaexpressway/" target="_blank">Instagram</a>
+        <a class="link-btn" href="https://www.facebook.com/profile.php?id=61577870368716" target="_blank">Facebook</a>
+        <a class="link-btn" href="https://wa.me/50577079035" target="_blank">WhatsApp</a>
+      </div>
+    </div>
+
+    <!-- fade / graffiti hint al final -->
+        <!-- cierre de #inicioLanding -->
+    </div>
+
+    <div class="inicio-bottom-fade" aria-hidden="true">
+      <div class="inicio-graffiti" aria-hidden="true"></div>
+    </div>
+  </section>
+<section id="cotizar">
+  <h2>Cotiza precios de tus pedidos.</h2>
+
+  <div style="max-width:420px;margin:0 auto;">
+    <label for="tipoEnvio">Selecciona el tipo de envío aquí:</label>
+    <select id="tipoEnvio">
+      <option value="aereo">Aéreo</option>
+      <option value="maritimo">Marítimo</option>
+    </select>
+
+    <label for="peso">Peso aproximado (libras):</label>
+    <input type="number" id="peso" placeholder="Ej: 5" inputmode="numeric" />
+
+    <button class="calc-btn" id="btnCalcularMain">Calcular</button>
+
+    <div id="resultado" class="package-box" style="text-align:center;margin-top:12px;display:none"></div>
+  </div>
+  <div id="cotizarCtaWrap" style="display:flex;justify-content:center;">
+    <!-- inserted by JS -->
+  </div>
+</section>
+
+<section id="solicitar">
+  <h2>Solicita tu pedido</h2>
+
+  <label for="nombreSolicitar">Nombre</label>
+  <input type="text" id="nombreSolicitar" placeholder="Ej: Lester Gamez">
+
+  <label for="telCodeSolicitar">Teléfono</label>
+  <div class="phone-row">
+    <select id="telCodeSolicitar">
+      <option value="+505">Nicaragua (+505)</option>
+      <option value="+1">USA (+1)</option>
+    </select>
+    <input type="tel" id="telefonoSolicitar" placeholder="Ej: 12345678" inputmode="numeric" pattern="[0-9]{8,10}">
+  </div>
+
+  <label for="plataformaSolicitar">Plataforma / Agencia</label>
+  <input type="text" id="plataformaSolicitar" placeholder="Ej: Shein">
+
+  <label for="descripcionSolicitar">Descripción (opcional)</label>
+  <textarea id="descripcionSolicitar" rows="2" placeholder="Ej: Ropa, perfumes, etc"></textarea>
+
+  <label for="tipoEnvioSolicitar">Tipo de envío</label>
+  <select id="tipoEnvioSolicitar">
+    <option value="aereo">Aéreo</option>
+    <option value="maritimo">Marítimo</option>
+  </select>
+
+  <label for="pesoSolicitar">Peso aproximado (libras)</label>
+  <input type="number" id="pesoSolicitar" placeholder="Ej: 2.0" step="0.1" min="0">
+
+  <button id="btnCalcularSolicitar" class="calc-btn">Solicitar</button>
+  <button id="btnConfirmarSolicitar" class="calc-btn" style="display:none;background:#1f3a66;">Confirmar solicitud</button>
+
+  <div id="reciboSolicitar" aria-live="polite">
+    <div class="line"><div>Precio por libra de envío</div><div id="rcPrecioLibra">-</div></div>
+    <div class="line"><div>Libras totales</div><div id="rcLibras">-</div></div>
+    <div class="line"><div><strong>Total</strong></div><div id="rcTotal"><strong>-</strong></div></div>
+    <div class="estimado" id="rcEstimado"></div>
+  </div>
+
+</section>
+
+<section id="seguimiento">
+  <h2 id="seguimientoTitle">Maneja tus pedidos</h2>
+
+  <div class="subtitle-footer">Busca por tu nombre y teléfono.</div>
+
+  <label for="nombreBuscar">Nombre y Apellido</label>
+<input 
+  type="text" 
+  id="nombreBuscar" 
+  placeholder="Ej: Lester Gamez"
+  required
+  title="Por favor ingrese el nombre y apellido."
+>
+
+<label for="telefonoBuscar">Teléfono (8-10 dígitos)</label>
+<div class="phone-row" style="margin-bottom:0.5rem;">
+  <select id="telCodeBuscar">
+    <option value="(505)">Nicaragua (505)</option>
+    <option value="(1)">USA (1)</option>
+  </select>
+  <input 
+    type="tel" 
+    id="telefonoBuscar" 
+    placeholder="Ej: 12345678" 
+    inputmode="numeric"  
+    required
+    title="El teléfono debe tener entre 8 y 10 dígitos numéricos."
+  >
+</div>
+
+  <div class="subtitle-footer" style="margin-top:8px;">O busca un paquete en específico con su código </div>
+
+  <label for="codigo">Tu código de seguimiento</label>
+  <input type="text" id="codigo" placeholder="Ej: ABC123">
+
+  <div class="row" style="gap:.6rem;margin-top:.6rem;">
+    <div class="col"><button id="btnBuscar" class="calc-btn">Buscar</button></div>
+    <div class="col"><button id="btnLimpiar" class="calc-btn" style="background:#888;">Limpiar</button></div>
+  </div>
+
+  <div id="searchOverlay" style="display:none;margin-top:1rem;padding:.9rem;border-radius:8px;background:#f3f7fb;text-align:center;">
+    <strong>Buscando tu paquete, espera...</strong>
+  </div>
+
+  <div id="multiResults" class="multi-list" style="display:none;"></div>
+
+  <div id="resultContainer" class="package-box" style="display:none;">
+    <div id="timeline" class="timeline"></div>
+
+    <div id="packageDetails" class="details-row" style="margin-top:1rem">
+      <div>
+        <div class="small-muted">Tipo de envío</div>
+        <div id="detalleTipo">-</div>
+      </div>
+      <div>
+        <div class="small-muted">Peso (lbs)</div>
+        <div id="detallePeso">-</div>
+      </div>
+      <div>
+        <div class="small-muted">Tarifa por libra (USD)</div>
+        <div id="detalleTarifa">USD-</div>
+      </div>
+    </div>
+
+    <div style="margin-top:.8rem" id="detalleTotal"><strong>Total:</strong> -</div>
+  </div>
+
+  <div id="noResult" class="small-muted center" style="margin-top:1rem; display:none;">Aquí se mostrará el estado de tu envío.</div>
+</section>
+
+<div id="packageLightboxOverlay" aria-hidden="true">
+  <div id="packageLightbox" role="dialog" aria-modal="true" aria-labelledby="lbTitle">
+    <button class="close-btn" id="lbClose" aria-label="Cerrar ventana">×</button>
+    <h3 id="lbTitle">Pedido</h3>
+
+    <div id="lbHeader" style="margin-top:6px;">
+      <div id="lbWhen" style="font-weight:700;color:var(--color-accent);">Pedido hecho el -</div>
+      <div class="package-info-row" style="margin-top:8px;">
+        <div class="info"><div class="small-muted">Tipo de envío</div><div id="lbTipo">-</div></div>
+        <div class="info"><div class="small-muted">Peso aproximado</div><div id="lbPeso">-</div></div>
+        <div class="info"><div class="small-muted">Tarifa por libra</div><div id="lbTarifa">-</div></div>
+        <div class="info" id="lbTotalCard" style="display:none;"><div class="small-muted">Total</div><div id="lbTotal">-</div></div>
+      </div>
+    </div>
+
+    <div id="lbLoading" style="display:none;margin-top:12px;justify-content:center;">
+      <div class="lightbox-loading"><div class="spinner" style="width:28px;height:28px;border-width:3px;border-top-color:var(--color-accent);"></div><div style="font-weight:700;color:var(--color-accent);margin-left:8px;">Cargando historial...</div></div>
+    </div>
+
+    <div id="lbTimeline" class="timeline" style="margin-top:12px;"></div>
+
+    <div style="text-align:center;margin-top:10px;">
+      <button id="lbCloseBtn" class="modal-close-btn">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<div id="waitingPop" role="status" aria-live="polite">
+  <div class="waiting-circle" aria-hidden="true">
+    <div class="spinner" aria-hidden="true"></div>
+  </div>
+  <div style="font-weight:700;color:var(--color-accent);margin-bottom:6px;">Solicitando tu pedido</div>
+  <div style="color:#444;margin-bottom:8px;">Estamos procesando tu solicitud, por favor espera...</div>
+  <div class="error" id="waitingError" style="display:none;"></div>
+</div>
+
+<div id="confirmPop" role="dialog" aria-modal="true" aria-hidden="true">
+  <div class="check-icon" aria-hidden="true">
+    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" fill="none"/>
+      <path d="M9 12.5l2 2 4-4" stroke="#2F528F" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    </svg>
+  </div>
+  <h3 style="color:var(--color-accent);margin-bottom:6px;">Tu solicitud ha sido enviada</h3>
+  <p style="color:#444;margin-bottom:10px;">Te contactaremos por WhatsApp para confirmar el estado de tu solicitud en los próximos minutos.</p>
+  <button id="btnCerrarConfirm" class="calc-btn" style="background:var(--color-accent);">Cerrar</button>
+</div>
+
+<div id="confettiWrap" aria-hidden="true"></div>
+
+<footer>
+  <p>&copy; 2025. NicaExpressWay.</p>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+
+<script>
+/* CONFIG */
+const API_BASE = 'https://nicaexpressway.onrender.com'; 
+
+(async function runIntroFLIP(){
+  try {
+    const intro = document.getElementById('introOverlay');
+    if(!intro) return;
+    intro.style.display = 'flex';
+    intro.classList.add('show');
+    await new Promise(r=>setTimeout(r, 2000));
+
+    const logo = document.getElementById('introLogo');
+    const title = document.getElementById('introTitle');
+    const targetLogo = document.getElementById('logoMain');
+    const targetTitle = document.querySelector('header h1');
+    const inner = document.getElementById('introInner');
+
+    if(!logo || !targetLogo || !title || !targetTitle || !inner) {
+      intro.classList.add('hide');
+      setTimeout(()=>{ intro.style.display='none'; intro.classList.remove('show','hide'); }, 700);
+      return;
+    }
+
+    targetLogo.style.visibility = 'hidden';
+    targetTitle.style.visibility = 'hidden';
+
+    const firstLogoRect = logo.getBoundingClientRect();
+    const lastLogoRect = targetLogo.getBoundingClientRect();
+
+    const safeFirstW = (firstLogoRect.width > 0) ? firstLogoRect.width : 110;
+    const safeLastW  = (lastLogoRect.width  > 0) ? lastLogoRect.width  : safeFirstW;
+
+    let dx = (lastLogoRect.left + lastLogoRect.width / 2) - (firstLogoRect.left + firstLogoRect.width / 2);
+    let dy = (lastLogoRect.top + lastLogoRect.height / 2) - (firstLogoRect.top + firstLogoRect.height / 2);
+    let scale = safeLastW / safeFirstW;
+
+    scale = Math.max(0.6, Math.min(scale, 1.15));
+    const maxDX = window.innerWidth * 0.5;
+    const maxDY = window.innerHeight * 0.5;
+    dx = Math.max(-maxDX, Math.min(dx, maxDX));
+    dy = Math.max(-maxDY, Math.min(dy, maxDY));
+    inner.style.transition = 'transform 1s cubic-bezier(.2,.9,.2,1), opacity .6s';
+    inner.style.transform = `translate(${dx}px, ${dy}px) scale(${scale})`;
+    inner.style.opacity = '0';
+
+    setTimeout(()=>{
+      try { window.scrollBy({ top: 60, behavior: 'smooth' }); } catch(e){}
+      intro.classList.add('hide');
+      targetLogo.style.visibility = '';
+      targetTitle.style.visibility = '';
+      setTimeout(()=>{ 
+        intro.style.display='none'; 
+        intro.classList.remove('show','hide'); 
+        inner.style.transform=''; 
+        inner.style.opacity=''; 
+        try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch(e) {}
+      }, 700);
+    }, 1000);
+
+  } catch (e) {
+    console.warn('Intro FLIP failed', e);
+    const intro = document.getElementById('introOverlay');
+    if(intro) { intro.classList.remove('show'); intro.style.display='none'; }
+  }
+})();
+
+/* UI refs */
+const btnInicio = document.getElementById('btnInicio');
+const btnCotizar = document.getElementById('btnCotizar');
+const btnSolicitar = document.getElementById('btnSolicitar'); 
+const btnSeguimiento = document.getElementById('btnSeguimiento');
+
+const secciones = {
+  inicio: document.getElementById('inicio'),
+  cotizar: document.getElementById('cotizar'),
+  solicitar: document.getElementById('solicitar'),
+  seguimiento: document.getElementById('seguimiento')
+};
+
+function resetNavStyles(){
+  [btnInicio,btnCotizar,btnSolicitar,btnSeguimiento].forEach(b=>{
+    if(!b) return;
+    b.classList.remove('active-highlight');
+    b.style.background = '';
+  });
+}
+function mostrarSeccion(nombre){
+  for(let s in secciones) {
+    if(secciones[s]) secciones[s].classList.remove('active');
+  }
+  if(secciones[nombre]) secciones[nombre].classList.add('active');
+
+  [btnInicio,btnCotizar,btnSolicitar,btnSeguimiento].forEach(b=>{ if(b) b.classList.add('inactive'); });
+  if(nombre==='inicio' && btnInicio) { btnInicio.classList.remove('inactive'); }
+  if(nombre==='cotizar' && btnCotizar) { btnCotizar.classList.remove('inactive'); }
+  if(nombre==='solicitar' && btnSolicitar) { btnSolicitar.classList.remove('inactive'); }
+  if(nombre==='seguimiento' && btnSeguimiento) {
+    btnSeguimiento.classList.remove('inactive');
+    btnSeguimiento.classList.add('active-highlight');
+  } else {
+    if(btnSeguimiento) btnSeguimiento.classList.remove('active-highlight');
+  }
+}
+if(btnInicio) btnInicio.addEventListener('click',()=>mostrarSeccion('inicio'));
+if(btnCotizar) btnCotizar.addEventListener('click',()=>mostrarSeccion('cotizar'));
+if(btnSolicitar) btnSolicitar.addEventListener('click',()=>mostrarSeccion('solicitar'));
+if(btnSeguimiento) btnSeguimiento.addEventListener('click',()=>mostrarSeccion('seguimiento'));
+
+(function revealCotizarCTA(){
+  try {
+    setTimeout(()=> {
+      if (btnCotizar) btnCotizar.classList.add('show-cotizar');
+    }, 10000);
+  } catch(e){}
+})();
+
+const btnCalcularMain = document.getElementById('btnCalcularMain');
+const resultadoDiv = document.getElementById('resultado');
+const cotizarCtaWrap = document.getElementById('cotizarCtaWrap');
+
+function crearWaButton(){
+  const waHref = 'https://wa.me/50577079035?text=' + encodeURIComponent('Hola, NicaExpressWay, me gustaria hacer un pedido.');
+  const a = document.createElement('a');
+  a.className = 'wa-cta';
+  a.href = waHref;
+  a.target = '_blank';
+  a.rel = 'noopener noreferrer';
+  a.innerText = 'Click aquí para realizar tu pedido!';
+  return a;
+}
+let waBtnTimeout = null;
+
+function resetCotizarForm(){
+  const tipoEl = document.getElementById('tipoEnvio');
+  const pesoEl = document.getElementById('peso');
+  if(tipoEl) tipoEl.value = 'aereo';
+  if(pesoEl) pesoEl.value = '';
+}
+
+if (btnCalcularMain) {
+  btnCalcularMain.addEventListener('click', (e)=>{
+    e.preventDefault();
+    const tipoEl = document.getElementById('tipoEnvio');
+    const pesoEl = document.getElementById('peso');
+    const tipo = tipoEl ? (tipoEl.value || 'aereo') : 'aereo';
+    const peso = pesoEl ? parseFloat(pesoEl.value) : NaN;
+    if(isNaN(peso)||peso<=0){ alert('Por favor, ingresa un peso válido.'); if(pesoEl) pesoEl.blur(); return; }
+
+    let precioPerLb = 0;
+    if(tipo==='aereo'){ precioPerLb = 7.50; } else { precioPerLb = 3.00; }
+
+    let precio=0,dias=0;
+    if(tipo==='aereo'){ precio = peso*precioPerLb; dias=5; } else { precio = peso*precioPerLb; dias=15; }
+
+    if (pesoEl) pesoEl.blur();
+
+    if (resultadoDiv) {
+      resultadoDiv.style.display = 'block';
+      resultadoDiv.innerHTML = `
+        <div class="mini-spinner" aria-hidden="true">
+          <div class="spinner-small" role="img" aria-hidden="true"></div>
+          <div style="font-weight:700;color:var(--color-accent)">Calculando precio...</div>
+        </div>
+      `;
+    }
+    if (cotizarCtaWrap) cotizarCtaWrap.innerHTML = '';
+
+    setTimeout(()=> {
+      if (resultadoDiv) {
+        resultadoDiv.innerHTML = `<div class="result-fade" id="resultadoInner"><div style="font-weight:700">Precio estimado: $${precio.toFixed(2)} USD</div><div style="margin-top:6px">(Precio por libra: $${precioPerLb.toFixed(2)} USD)</div><div style="margin-top:6px">Llegada estimada: ${dias} días</div></div>`;
+        const inner = document.getElementById('resultadoInner');
+        if (inner) requestAnimationFrame(()=> inner.classList.add('visible'));
+      }
+    }, 2000);
+
+    // reset form
+    resetCotizarForm();
+    if(waBtnTimeout) clearTimeout(waBtnTimeout);
+    waBtnTimeout = setTimeout(()=>{
+      const btn = crearWaButton();
+      if (cotizarCtaWrap) {
+        cotizarCtaWrap.appendChild(btn);
+        setTimeout(()=> { btn.classList.add('visible'); btn.classList.add('float'); }, 50);
+      }
+    }, 8000);
+  });
+}
+
+const btnBuscar = document.getElementById('btnBuscar');
+const btnLimpiar = document.getElementById('btnLimpiar');
+const overlay = document.getElementById('searchOverlay');
+const resultContainer = document.getElementById('resultContainer');
+const noResult = document.getElementById('noResult');
+const timelineEl = document.getElementById('timeline');
+const detalleTipo = document.getElementById('detalleTipo');
+const detallePeso = document.getElementById('detallePeso');
+const detalleTarifa = document.getElementById('detalleTarifa');
+const detalleTotal = document.getElementById('detalleTotal');
+const multiResults = document.getElementById('multiResults');
+
+if(btnBuscar) btnBuscar.addEventListener('click', onBuscar);
+if(btnLimpiar) btnLimpiar.addEventListener('click', onLimpiar);
+
+function onLimpiar(){
+  const c = document.getElementById('codigo');
+  const n = document.getElementById('nombreBuscar');
+  const t = document.getElementById('telefonoBuscar');
+  const cc = document.getElementById('telCodeBuscar');
+  if(c) c.value='';
+  if(n) n.value='';
+  if(t) t.value='';
+  if(cc) cc.value='(505)';
+  hideResult();
+  if (multiResults) {
+    multiResults.style.display = 'none';
+    multiResults.innerHTML = '';
+  }
+}
+
+function gatherSearchParams(){
+  const codigoEl = document.getElementById('codigo');
+  const nombreEl = document.getElementById('nombreBuscar');
+  const countryEl = document.getElementById('telCodeBuscar');
+  const telefonoEl = document.getElementById('telefonoBuscar');
+  const codigo = codigoEl ? (codigoEl.value||'').trim() || null : null;
+  const nombre = nombreEl ? (nombreEl.value||'').trim() || null : null;
+  const country = countryEl ? countryEl.value : null;
+  const telefonoDigits = telefonoEl ? (telefonoEl.value||'').trim() || null : null;
+  const telefono = telefonoDigits ? `${country}${telefonoDigits}` : null;
+  return { codigo, nombre, telefono };
+}
+
+function validateSearch(params){
+  if(!(params.codigo || params.nombre || params.telefono)){
+    alert('Ingresa al menos el código, o el nombre, o el teléfono para buscar.');
+    return false;
+  }
+  if(params.codigo && (params.nombre || params.telefono)){
+    alert('Por favor busca por **código** O por **nombre/telefono**. No mezcles ambos.');
+    return false;
+  }
+  return true;
+}
+async function onBuscar(){
+  const params = gatherSearchParams();
+  if(!validateSearch(params)) return;
+
+  (document.activeElement instanceof HTMLElement) && document.activeElement.blur();
+
+  if(overlay) overlay.style.display = 'block';
+  hideResult();
+  if (multiResults) { multiResults.style.display = 'none'; multiResults.innerHTML = ''; }
+
+  try {
+    const res = await fetchPackageFromAPI(params);
+
+    if(!res){
+      if(overlay) overlay.style.display = 'none';
+      if(noResult){ noResult.style.display = 'block'; noResult.textContent = 'No se encontró paquete con los detalles otorgados, verifica la información.'; }
+      return;
+    }
+
+    if(res.paquetes && Array.isArray(res.paquetes)){
+      renderMultiplePackages(res.paquetes);
+      if(overlay) overlay.style.display = 'none';
+      return;
+    }
+
+    renderPackageResult(res);
+    if(overlay) overlay.style.display = 'none';
+  } catch (err) {
+    console.error('Error búsqueda:', err);
+    if(overlay) overlay.style.display = 'none';
+    if(noResult){ noResult.style.display = 'block'; noResult.textContent = 'Ocurrió un error buscando el paquete. Refresca la página y re-intenta.'; }
+  }
+}
+
+async function fetchPackageFromAPI({ codigo, nombre, telefono }){
+  codigo = codigo ? String(codigo).trim() : null;
+  nombre = nombre ? String(nombre).trim() : null;
+  telefono = telefono ? String(telefono).trim() : null;
+
+  if (codigo) {
+    const resP = await fetch(`${API_BASE}/paquetes?codigo=${encodeURIComponent(codigo)}`);
+    if (!resP.ok) { console.warn('paquetes fetch fallo', resP.status); return null; }
+    const arr = await resP.json();
+    if (!Array.isArray(arr) || arr.length === 0) return null;
+    const paquete = arr[0];
+
+    let historial = null;
+    try {
+      const resH = await fetch(`${API_BASE}/historial?codigo=${encodeURIComponent(paquete.codigo_seguimiento)}`);
+      if (resH.ok) historial = await resH.json();
+    } catch(err){ console.warn('historial fetch failed', err); historial = null; }
+
+    return { paquete, historial };
+  }
+
+  if (nombre || telefono) {
+    const res = await fetch(`${API_BASE}/paquetes/search`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nombre, telefono })
+    });
+    if (!res.ok) { console.warn('search endpoint fallo', res.status); return null; }
+    const arr = await res.json();
+    if (!Array.isArray(arr) || arr.length === 0) return null;
+    return { paquetes: arr };
+  }
+
+  return null;
+}
+function parseNumberFromString(val){
+  if(val === null || val === undefined) return null;
+  if(typeof val === 'number') return isFinite(val) ? Number(val) : null;
+  const s = String(val).replace(/[^0-9\.,-]/g,'').replace(',','.');
+  const n = parseFloat(s);
+  return isFinite(n) ? n : null;
+}
+
+function renderPackageResult({ paquete, historial }){
+  if (multiResults) { multiResults.style.display = 'none'; multiResults.innerHTML = ''; }
+
+  if (timelineEl) timelineEl.innerHTML = '';
+  if (detalleTipo) detalleTipo.textContent = 'Datos aún no disponibles';
+  if (detallePeso) detallePeso.textContent = 'Datos aún no disponibles';
+  if (detalleTarifa) detalleTarifa.textContent = 'Datos aún no disponibles';
+  if (detalleTotal) detalleTotal.innerHTML = '<strong>Total:</strong> Datos aún no disponibles';
+  if(noResult) noResult.style.display='none';
+  if(resultContainer) resultContainer.style.display='block';
+
+  const tipoMap = { 1: 'Aéreo', 2: 'Marítimo' };
+  if (detalleTipo) detalleTipo.textContent = tipoMap[paquete?.tipo_envio_id] ?? (paquete?.tipo || 'Datos aún no disponibles');
+
+  if (detallePeso) detallePeso.textContent = paquete?.peso_libras  ?? 'Datos aún no disponibles';
+  if (detalleTarifa) detalleTarifa.textContent = paquete?.tarifa_usd ?? 'Datos aún no disponibles';
+
+  if (paquete?.peso_libras != null && paquete?.tarifa_usd != null){
+    const total = Number(paquete.peso_libras) * Number(paquete.tarifa_usd);
+    if (detalleTotal) detalleTotal.innerHTML = `<strong>Total:</strong> $${isFinite(total) ? total.toFixed(2) : '0.00'} USD`;
+  }
+
+  if (timelineEl) timelineEl.innerHTML = '';
+  if (!historial) {
+    if (timelineEl) timelineEl.innerHTML = '<div class="small-muted">Historial no disponible (abre el detalle para cargar historial completo).</div>';
+  } else {
+    buildTimelineFromHistorialElement(historial, timelineEl);
+  }
+}
+
+function renderMultiplePackages(paquetes){
+  if(resultContainer) resultContainer.style.display = 'none';
+  if(noResult) noResult.style.display='none';
+
+  if (!multiResults) return;
+  multiResults.innerHTML = '';
+  paquetes.forEach(p => {
+    const card = document.createElement('div');
+    card.className = 'multi-card';
+    const previewDate = p.fecha_ingreso ? formatDate(p.fecha_ingreso) : '--';
+    const left = document.createElement('div');
+    left.className = 'left';
+    left.innerHTML = `<div class="title">Pedido del ${previewDate}</div><div class="subtitle">${escapeHtml(p.nombre_cliente ?? p.nombre ?? '-')}</div>`;
+    const right = document.createElement('div');
+    right.className = 'right';
+    const tipoMap = { 1: 'Aéreo', 2: 'Marítimo' };
+    right.innerText = tipoMap[p.tipo_envio_id] ?? (p.tipo || '-');
+    card.appendChild(left);
+    card.appendChild(right);
+
+    card.dataset.paquete = JSON.stringify(p);
+    card.addEventListener('click', async ()=>{
+      const paqueteObj = JSON.parse(card.dataset.paquete);
+      openPackageLightbox(paqueteObj);
+    });
+
+    multiResults.appendChild(card);
+  });
+
+  multiResults.style.display = 'flex';
+}
+
+function buildTimelineFromHistorialElement(historial, containerEl){
+  if(!containerEl) return;
+  containerEl.innerHTML = '';
+  const items = [];
+  for (let i=1;i<=4;i++){
+    const s = historial[`estado${i}`];
+    const f = historial[`fecha${i}`];
+    if ((s && String(s).trim()!=='') || (f && String(f).trim()!=='')){
+      items.push({ estado: s || null, fecha: f || null, index: i });
+    }
+  }
+  if (items.length===0){
+    containerEl.innerHTML = '<div class="small-muted">No hay eventos en el historial.</div>';
+  } else {
+    items.forEach(it => {
+      const div = document.createElement('div');
+      div.className = 'timeline-item';
+      const label = mapStateLabel(it.estado);
+      div.innerHTML = `<div class="state">${label}</div>
+                       <div class="subtext">${mapStateSubtext(it.estado) || ''}</div>
+                       <div class="fecha">${it.fecha ? 'El ' + formatDate(it.fecha) : ''}</div>`;
+      if (it.estado && String(it.estado).toLowerCase()==='listo_recoger'){
+        div.classList.add('blink');
+        triggerConfetti(div);
+      }
+      containerEl.appendChild(div);
+    });
+  }
+}
+
+const packageLightboxOverlay = document.getElementById('packageLightboxOverlay');
+const lbClose = document.getElementById('lbClose');
+const lbCloseBtn = document.getElementById('lbCloseBtn');
+const lbTitle = document.getElementById('lbTitle');
+const lbWhen = document.getElementById('lbWhen');
+const lbTipo = document.getElementById('lbTipo');
+const lbPeso = document.getElementById('lbPeso');
+const lbTarifa = document.getElementById('lbTarifa');
+const lbTotalCard = document.getElementById('lbTotalCard');
+const lbTotal = document.getElementById('lbTotal');
+const lbTimeline = document.getElementById('lbTimeline');
+const lbLoading = document.getElementById('lbLoading');
+
+async function openPackageLightbox(paquete){
+  if(!paquete) return;
+  if (packageLightboxOverlay) {
+    packageLightboxOverlay.style.display = 'flex';
+    setTimeout(()=> packageLightboxOverlay.classList.add('open'), 20);
+    packageLightboxOverlay.setAttribute('aria-hidden','false');
+  }
+
+  if (lbTitle) lbTitle.textContent = `Pedido ${paquete.id ? '#' + paquete.id : (paquete.codigo_seguimiento ? paquete.codigo_seguimiento : '')}`;
+  if (lbWhen) lbWhen.textContent = 'Pedido hecho - (cargando...)';
+  if (lbTipo) lbTipo.textContent = (paquete.tipo_envio_id ? (paquete.tipo_envio_id === 1 ? 'Aéreo' : paquete.tipo_envio_id === 2 ? 'Marítimo' : paquete.tipo) : (paquete.tipo || 'No disponible'));
+
+  // Mostrar peso con "libras" si es numérico
+  const pesoNum = parseNumberFromString(paquete.peso_libras ?? paquete.peso ?? paquete.peso_lb);
+  if (pesoNum !== null) {
+    if (lbPeso) lbPeso.textContent = `${Number(pesoNum).toFixed(2)} libras`;
+  } else {
+    if (lbPeso) lbPeso.textContent = 'No disponible';
+  }
+  const tarifaNum = parseNumberFromString(paquete.tarifa_usu ?? paquete.tarifa_usd ?? paquete.tarifa);
+  if (tarifaNum !== null) {
+    if (lbTarifa) lbTarifa.textContent = `$${Number(tarifaNum).toFixed(2)} USD`;
+  } else {
+    if (lbTarifa) lbTarifa.textContent = 'No disponible';
+  }
+
+  if (lbTotalCard) lbTotalCard.style.display = 'none';
+  if (lbTotal) lbTotal.textContent = '-';
+
+  if (lbTimeline) lbTimeline.innerHTML = '';
+  if (lbLoading) lbLoading.style.display = 'flex';
+
+  let historial = null;
+  try {
+    if(paquete.codigo_seguimiento){
+      const resH = await fetch(`${API_BASE}/historial?codigo=${encodeURIComponent(paquete.codigo_seguimiento)}`);
+      if(resH.ok){
+        historial = await resH.json();
+      } else {
+        historial = null;
+      }
+    }
+  } catch(e){
+    console.warn('historial fetch failed in lightbox', e);
+    historial = null;
+  }
+
+  if (lbLoading) lbLoading.style.display = 'none';
+  if(historial && historial.fecha1){
+    if (lbWhen) lbWhen.textContent = `Pedido hecho el ${formatDate(paquete.fecha_ingreso)}`;
+  } else if (paquete && paquete.fecha_ingreso) {
+    if (lbWhen) lbWhen.textContent = `Pedido hecho el ${formatDate(paquete.fecha_ingreso)}`;
+  } else {
+    if (lbWhen) lbWhen.textContent = 'Pedido hecho el ----';
+  }
+
+  if(historial){
+    buildTimelineFromHistorialElement(historial, lbTimeline);
+  } else {
+    if (lbTimeline) lbTimeline.innerHTML = '<div class="small-muted">Historial no disponible por el momento.</div>';
+  }
+
+  if (pesoNum !== null && tarifaNum !== null) {
+    const totalCalc = Number(pesoNum) * Number(tarifaNum);
+    if (isFinite(totalCalc)) {
+      if (lbTotal) lbTotal.textContent = `$${totalCalc.toFixed(2)} USD`;
+      if (lbTotalCard) lbTotalCard.style.display = '';
+    } else {
+      if (lbTotalCard) lbTotalCard.style.display = 'none';
+    }
+  } else {
+    if (lbTotalCard) lbTotalCard.style.display = 'none';
+  }
+
+  setTimeout(()=> { if (lbCloseBtn) lbCloseBtn.focus(); }, 80);
+}
+
+function closePackageLightbox(){
+  if (packageLightboxOverlay) {
+    packageLightboxOverlay.classList.remove('open');
+    packageLightboxOverlay.setAttribute('aria-hidden','true');
+    if (lbTimeline) lbTimeline.innerHTML = '';
+    setTimeout(()=> { packageLightboxOverlay.style.display = 'none'; }, 320);
+  }
+}
+
+if(lbClose) lbClose.addEventListener('click', closePackageLightbox);
+if(lbCloseBtn) lbCloseBtn.addEventListener('click', closePackageLightbox);
+
+/* Utils used across file */
+function mapStateLabel(raw){
+  if(!raw) return 'Estamos esperando tu paquete';
+  const r = raw.toString().toLowerCase();
+  switch(r){
+    case 'recibido': return 'Recibido';
+    case 'en_transito': return 'En tránsito';
+    case 'en_aduana': return 'En aduana';
+    case 'listo_recoger': return 'Listo Para Recoger';
+    default: return capitalize(r.replace(/_/g,' '));
+  }
+}
+function mapStateSubtext(raw){
+  if(!raw) return '';
+  const r = raw.toString().toLowerCase();
+  switch(r){
+    case 'recibido': return 'Tu paquete fue recibido por NicaExpressWay en Estados Unidos';
+    case 'en_transito': return 'Tu paquete está en camino a Nicaragua';
+    case 'en_aduana': return 'Tu paquete está en aduanas, será recibido por nuestra agencia pronto';
+    case 'listo_recoger': return 'Tu paquete ya listo para retirar!';
+    default: return '';
+  }
+}
+function formatDate(d){
+  try {
+    if (typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d)) {
+      const [y, m, day] = d.split('-').map(x => Number(x));
+      const local = new Date(y, m - 1, day);
+      return local.toLocaleDateString('es-ES');
+    }
+    const dt = new Date(d);
+    if (isNaN(dt)) return d;
+    return dt.toLocaleDateString('es-ES');
+  } catch (e) {
+    return d;
+  }
+}
+function capitalize(s){ return s && s.length ? s.charAt(0).toUpperCase()+s.slice(1) : s; }
+function escapeHtml(str){
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+let confettiClearTimeout = null;
+function triggerConfettiOnce(opts = {}) {
+  const defaults = {
+    particleCount: 260,
+    spread: 110,
+    ticks: 520,
+    gravity: 0.32,
+    startVelocity: 30,
+    decay: 0.9,
+    drift: 0.4,
+    scalar: 1,
+    origin: { y: 0.08 },
+    colors: ['#1f3a66','#2F528F','#79A7E4'],
+    shapes: ['square','circle'],
+    zIndex: 6001
+  };
+  const cfg = Object.assign({}, defaults, opts);
+  const maxAllowed = (window.innerWidth <= 420) ? 320 : 700;
+  cfg.particleCount = Math.min(cfg.particleCount, maxAllowed);
+
+  if (typeof confetti === 'function') {
+    const shootBurst = (override) => { confetti(Object.assign({}, cfg, override)); };
+
+    shootBurst({
+      particleCount: Math.floor(cfg.particleCount * 0.45),
+      spread: cfg.spread + 30,
+      origin: cfg.origin,
+      ticks: cfg.ticks,
+      gravity: cfg.gravity,
+      startVelocity: cfg.startVelocity,
+      decay: cfg.decay,
+      drift: cfg.drift,
+      scalar: cfg.scalar,
+      shapes: cfg.shapes,
+      colors: cfg.colors
+    });
+
+    setTimeout(() => {
+      shootBurst({
+        particleCount: Math.floor(cfg.particleCount * 0.28),
+        angle: 60,
+        spread: Math.max(40, cfg.spread - 20),
+        origin: { x: 0.12, y: cfg.origin.y },
+        ticks: Math.floor(cfg.ticks * 0.95),
+        gravity: cfg.gravity * 0.98,
+        drift: cfg.drift * 1.2
+      });
+      shootBurst({
+        particleCount: Math.floor(cfg.particleCount * 0.28),
+        angle: 120,
+        spread: Math.max(40, cfg.spread - 20),
+        origin: { x: 0.88, y: cfg.origin.y },
+        ticks: Math.floor(cfg.ticks * 0.95),
+        gravity: cfg.gravity * 0.98,
+        drift: -cfg.drift * 1.2
+      });
+    }, 180);
+
+    setTimeout(() => {
+      shootBurst({
+        particleCount: Math.floor(cfg.particleCount * 0.12),
+        spread: 40,
+        origin: { x: 0.5, y: cfg.origin.y + 0.02 },
+        startVelocity: Math.max(10, cfg.startVelocity * 0.6),
+        ticks: Math.floor(cfg.ticks * 0.8),
+        gravity: cfg.gravity * 0.9
+      });
+    }, 360);
+  } else {
+    console.warn('canvas-confetti not loaded');
+  }
+
+  if (confettiClearTimeout) clearTimeout(confettiClearTimeout);
+  confettiClearTimeout = setTimeout(() => {
+    const wrap = document.getElementById('confettiWrap');
+    if (wrap) wrap.innerHTML = '';
+  }, 9000);
+}
+
+function triggerConfetti(el) {
+  let side = 'center';
+  try {
+    if (el && el.getBoundingClientRect) {
+      const rect = el.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      side = (cx < window.innerWidth / 2) ? 'left' : 'right';
+    }
+  } catch(e){
+    side = 'center';
+  }
+
+  if (window.innerWidth <= 420) {
+    if (side === 'left' || side === 'right') {
+      triggerConfettiOnce({ particleCount: 220, origin: { y: 0.06 }, gravity: 0.34 });
+    } else {
+      triggerConfettiOnce({ particleCount: 200, origin: { y: 0.06 }, gravity: 0.34 });
+    }
+  } else {
+    if (side === 'left' || side === 'right') {
+      triggerConfettiOnce({ particleCount: 420, origin: { y: 0.04 } });
+    } else {
+      triggerConfettiOnce({ particleCount: 360, origin: { y: 0.04 } });
+    }
+  }
+}
+
+['codigo','telefonoBuscar','nombreBuscar','telefonoSolicitar','peso'].forEach(id=>{
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.addEventListener('keydown',(e)=>{
+    if(e.key==='Enter'){
+      e.preventDefault();
+      if(id==='peso'){
+        if (btnCalcularMain) btnCalcularMain.click();
+        try { el.blur(); } catch(_) {}
+      } else {
+        onBuscar();
+        try { el.blur(); } catch(_) {}
+      }
+    }
+  });
+});
+['peso','codigo','nombreBuscar','telefonoBuscar','telefonoSolicitar'].forEach(id=>{
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.addEventListener('input', ()=> {});
+  el.addEventListener('blur', ()=> {});
+});
+
+(function init(){
+  mostrarSeccion('inicio');
+  hideResult();
+})();
+function hideResult(){
+  if(resultContainer) resultContainer.style.display='none';
+  if(noResult) { noResult.style.display='block'; noResult.textContent = 'Aquí se mostrará el estado del envío.'; }
+  if(timelineEl) timelineEl.innerHTML='';
+}
+
+const btnCalcularSolicitar = document.getElementById('btnCalcularSolicitar');
+const btnConfirmarSolicitar = document.getElementById('btnConfirmarSolicitar');
+const reciboSolicitar = document.getElementById('reciboSolicitar');
+const rcPrecioLibra = document.getElementById('rcPrecioLibra');
+const rcLibras = document.getElementById('rcLibras');
+const rcTotal = document.getElementById('rcTotal');
+const rcEstimado = document.getElementById('rcEstimado');
+
+const waitingPop = document.getElementById('waitingPop');
+const waitingError = document.getElementById('waitingError');
+const confirmPop = document.getElementById('confirmPop');
+const btnCerrarConfirm = document.getElementById('btnCerrarConfirm');
+
+function calcularSolicitar(){
+  const tipoEl = document.getElementById('tipoEnvioSolicitar');
+  const pesoEl = document.getElementById('pesoSolicitar');
+  const tipo = tipoEl ? tipoEl.value : 'aereo';
+  const peso = pesoEl ? parseFloat(pesoEl.value) : NaN;
+  if (isNaN(peso) || peso <= 0) {
+    alert('Por favor ingresa un peso válido.');
+    return false;
+  }
+  let precioPorLb = 0;
+  if (tipo === 'aereo') precioPorLb = 7.50;
+  else precioPorLb = 3.00;
+
+  const total = precioPorLb * peso;
+
+  if (rcPrecioLibra) rcPrecioLibra.textContent = `$${precioPorLb.toFixed(2)} USD`;
+  if (rcLibras) rcLibras.textContent = `${Number(peso).toFixed(2)} lb`;
+  if (rcTotal) rcTotal.innerHTML = `<strong>$${isFinite(total) ? total.toFixed(2) : '0.00'} USD</strong>`;
+
+  if (tipo === 'maritimo') {
+    if (rcEstimado) rcEstimado.textContent = 'Llegada estimada: 15 días';
+  } else {
+    if (rcEstimado) rcEstimado.textContent = 'Llegada estimada: 7 días';
+  }
+
+  if (reciboSolicitar) reciboSolicitar.style.display = 'block';
+  if (btnCalcularSolicitar) btnCalcularSolicitar.style.display = 'none';
+  if (btnConfirmarSolicitar) btnConfirmarSolicitar.style.display = 'block';
+  return true;
+}
+
+if (btnCalcularSolicitar) btnCalcularSolicitar.addEventListener('click', (e)=>{
+  e.preventDefault();
+  calcularSolicitar();
+});
+
+function validarFormularioSolicitar(){
+  const nombre = (document.getElementById('nombreSolicitar')?.value||'').trim();
+  const telCode = document.getElementById('telCodeSolicitar')?.value;
+  const telefono = (document.getElementById('telefonoSolicitar')?.value||'').trim();
+  const plataforma = (document.getElementById('plataformaSolicitar')?.value||'').trim();
+  const tipo = document.getElementById('tipoEnvioSolicitar')?.value;
+  const peso = document.getElementById('pesoSolicitar')?.value;
+
+  if (!nombre) { alert('Ingresa el nombre del cliente.'); return false; }
+  if (!telefono || !/^\d{8,10}$/.test(telefono)) { alert('Ingresa un teléfono válido (8-10 dígitos).'); return false; }
+  if (!plataforma) { alert('Ingresa la plataforma o agencia.'); return false; }
+  if (!tipo) { alert('Selecciona el tipo de envío.'); return false; }
+  if (!peso || isNaN(Number(peso)) || Number(peso) <= 0) { alert('Ingresa un peso válido.'); return false; }
+
+  return true;
+}
+
+function showWaiting(){ if (waitingError) { waitingError.style.display = 'none'; waitingError.textContent = ''; } if (waitingPop) waitingPop.classList.add('show'); }
+function hideWaiting(){ if (waitingPop) waitingPop.classList.remove('show'); setTimeout(()=>{ if (waitingError) { waitingError.style.display='none'; waitingError.textContent=''; } }, 350); }
+function showConfirm(){ if (confirmPop) confirmPop.classList.add('show'); }
+function hideConfirm(){ if (confirmPop) confirmPop.classList.remove('show'); }
+
+if (btnConfirmarSolicitar) btnConfirmarSolicitar.addEventListener('click', async (e)=>{
+  e.preventDefault();
+  if (!validarFormularioSolicitar()) return;
+  const nombre = (document.getElementById('nombreSolicitar')?.value||'').trim();
+  const telCode = document.getElementById('telCodeSolicitar')?.value;
+  const telefono = (document.getElementById('telefonoSolicitar')?.value||'').trim();
+  const agencia = (document.getElementById('plataformaSolicitar')?.value||'').trim();
+  const descripcion = (document.getElementById('descripcionSolicitar')?.value||'').trim() || null;
+  const tipo = document.getElementById('tipoEnvioSolicitar')?.value;
+  const peso_aprox = Number(document.getElementById('pesoSolicitar')?.value);
+  const telefonoFull = `${telCode}${telefono}`;
+  const payload = { nombre, telefono: telefonoFull, agencia, descripcion, tipo, peso_aprox };
+
+  showWaiting();
+  if (btnConfirmarSolicitar) btnConfirmarSolicitar.disabled = true;
+
+  try {
+    const resp = await fetch(`${API_BASE}/pedidos`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (!resp.ok) {
+      const txt = await resp.text().catch(()=>null);
+      if (waitingError) { waitingError.style.display = 'block'; waitingError.textContent = `Error guardando la solicitud (${resp.status})`; }
+      console.error('POST /pedidos failed', resp.status, txt);
+      if (btnConfirmarSolicitar) btnConfirmarSolicitar.disabled = false;
+      return;
+    }
+
+    const data = await resp.json().catch(()=>null);
+    hideWaiting();
+    showConfirm();
+
+    document.getElementById('nombreSolicitar').value = '';
+    document.getElementById('telCodeSolicitar').value = '+505';
+    document.getElementById('telefonoSolicitar').value = '';
+    document.getElementById('plataformaSolicitar').value = '';
+    document.getElementById('descripcionSolicitar').value = '';
+    document.getElementById('tipoEnvioSolicitar').value = 'aereo';
+    document.getElementById('pesoSolicitar').value = '';
+    if (reciboSolicitar) reciboSolicitar.style.display = 'none';
+    if (btnConfirmarSolicitar) btnConfirmarSolicitar.style.display = 'none';
+    if (btnConfirmarSolicitar) btnConfirmarSolicitar.disabled = false;
+    if (btnCalcularSolicitar) btnCalcularSolicitar.style.display = 'block';
+  } catch (err) {
+    console.error('Error POST /pedidos', err);
+    if (waitingError) { waitingError.style.display = 'block'; waitingError.textContent = 'Ocurrió un error de red. Intenta nuevamente.'; }
+    if (btnConfirmarSolicitar) btnConfirmarSolicitar.disabled = false;
+  }
+});
+
+if (btnCerrarConfirm) btnCerrarConfirm.addEventListener('click', (e)=>{
+  e.preventDefault();
+  hideConfirm();
+});
+
+(function(){
+  // logos
+  const logos = [
+    'https://github.com/nicaexpressway/web/blob/main/media/shein.png?raw=true',
+    'https://github.com/nicaexpressway/web/blob/main/media/alibaba.webp?raw=true',
+    'https://github.com/nicaexpressway/web/blob/main/media/aliexpress.png?raw=true',
+    'https://github.com/nicaexpressway/web/blob/main/media/ebay.webp?raw=true',
+    'https://raw.githubusercontent.com/nicaexpressway/web/652db483d5e2050f4495a2f65c52fcb2da155b3e/media/amazon.svg'
+  ];
+  const logoInterval = 1800;
+  const logoFade = 380;
+
+  // legacy vars
+  const servicesAutoAdvance = 5400;
+  let logosIdx = 0, logosTimer = null;
+  let servicesIdx = 0, servicesTimer = null;
+
+  let subtitleChangeTimer = null;
+  function safeChangeSubtitle(el, newText, delay = 180){
+    if(!el) return;
+    if (el.textContent === newText) {
+      el.classList.add('visible');
+      return;
+    }
+    el.classList.remove('visible');
+    if (subtitleChangeTimer) clearTimeout(subtitleChangeTimer);
+    subtitleChangeTimer = setTimeout(()=> {
+      el.textContent = newText;
+      requestAnimationFrame(()=> el.classList.add('visible'));
+      subtitleChangeTimer = null;
+    }, delay);
+  }
+
+  function rotateLogos() {
+    const wrap = document.getElementById('logosCarousel');
+    if (!wrap) return;
+    let img = wrap.querySelector('img.logo-slide');
+    if (!img) {
+      img = document.createElement('img');
+      img.className = 'logo-slide';
+      img.style.opacity = '0';
+      img.style.transition = `opacity ${logoFade}ms ease, transform ${logoFade}ms ease`;
+      wrap.appendChild(img);
+    }
+
+    img.classList.remove('active');
+
+    setTimeout(() => {
+      const nextSrc = logos[logosIdx];
+      logosIdx = (logosIdx + 1) % logos.length;
+
+      const tmp = new Image();
+      tmp.onload = () => {
+        img.src = nextSrc;
+        img.alt = (nextSrc.split('/').slice(-1)[0] || 'logo') + ' logo';
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          img.classList.add('active');
+        }));
+      };
+      tmp.onerror = () => {
+        img.src = nextSrc;
+        img.alt = 'logo';
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          img.classList.add('active');
+        }));
+      };
+      tmp.src = nextSrc;
+    }, logoFade);
+  }
+
+  function startLogoLoop(){
+    rotateLogos();
+    if (logosTimer) clearInterval(logosTimer);
+    logosTimer = setInterval(rotateLogos, logoInterval);
+  }
+
+  function setServicesPosition(idx){
+    const track = document.getElementById('servicesTrack');
+    if(!track) return;
+    const firstCard = track.children[0];
+    const cardW = firstCard ? firstCard.getBoundingClientRect().width : track.getBoundingClientRect().width;
+    const gap = parseFloat(getComputedStyle(track).gap) || 0;
+    const x = (cardW + gap) * idx * -1;
+    track.style.transform = `translateX(${x}px)`;
+
+    const dots = document.getElementById('servicesDots');
+    if (dots) {
+      Array.from(dots.children).forEach((b,i) => b.classList.toggle('active', i === idx));
+    }
+
+    Array.from(track.children).forEach((c, i) => {
+      c.classList.toggle('current', i === idx);
+    });
+
+    const servicesTitle = document.getElementById('servicesTitle');
+    if (servicesTitle) {
+      const newText = (idx === 2) ? 'También te ofrecemos:' : 'Te las hacemos llegar vía:';
+      safeChangeSubtitle(servicesTitle, newText, 180);
+    }
+
+    servicesIdx = idx;
+  }
+
+  function advanceServices(){
+    const track = document.getElementById('servicesTrack');
+    if(!track) return;
+    const total = track.children.length || 1;
+    servicesIdx = (servicesIdx + 1) % total;
+    setServicesPosition(servicesIdx);
+  }
+
+  function startServicesAuto(){
+    if(servicesTimer) clearInterval(servicesTimer);
+    servicesTimer = setInterval(advanceServices, servicesAutoAdvance);
+  }
+
+  function buildDots(){
+    const track = document.getElementById('servicesTrack');
+    const dots = document.getElementById('servicesDots');
+    if(!track || !dots) return;
+    dots.innerHTML = '';
+    for(let i=0;i<track.children.length;i++){
+      const b = document.createElement('button');
+      b.type='button';
+      b.title = 'Mostrar tarjeta ' + (i+1);
+      b.addEventListener('click', ()=> {
+        servicesIdx = i;
+        setServicesPosition(i);
+        startServicesAuto();
+      });
+      dots.appendChild(b);
+    }
+    if (dots.children[0]) dots.children[0].classList.add('active');
+  }
+
+  function waitForIntroAndInit(){
+    const intro = document.getElementById('introOverlay');
+    if(!intro || getComputedStyle(intro).display === 'none') { initLandingSequence(); return; }
+    const observer = new MutationObserver(()=> {
+      if(!document.body.contains(intro) || getComputedStyle(intro).display === 'none' || intro.classList.contains('hide')){
+        observer.disconnect();
+        setTimeout(initLandingSequence, 260);
+      }
+    });
+    observer.observe(document.documentElement || document.body, { childList:true, subtree:true, attributes:true });
+    setTimeout(()=> { if(observer) observer.disconnect(); initLandingSequence(); }, 6000);
+  }
+
+  function revealElement(el, delay=0){
+    if(!el) return;
+    setTimeout(()=> el.classList.add('visible'), delay);
+  }
+
+  function initLandingSequence(){
+    startLogoLoop();
+
+    setTimeout(()=> {
+      const first = document.querySelector('#landingServices [data-reveal]');
+      if(first) first.classList.add('visible');
+
+      const servicesTitle = document.getElementById('servicesTitle');
+      if(servicesTitle) servicesTitle.classList.add('visible');
+
+      try { adjustServiceTextSizes(); } catch(e){/* ignore */ }
+    }, 600);
+
+    const top = document.getElementById('landingTop');
+    const services = document.getElementById('landingServices');
+    const original = document.getElementById('inicioOriginal');
+
+    revealElement(top, 400);
+    revealElement(services, 680);
+    revealElement(original, 1900);
+
+    setTimeout(()=>{
+      const logoMain = document.getElementById('logoMain');
+      if (logoMain) logoMain.classList.add('visible');
+    }, 1950);
+  }
+
+  function adjustServiceTextSizes(){
+    const cards = document.querySelectorAll('.service-card');
+    cards.forEach(card => {
+      const desc = card.querySelector('.card-desc');
+      if(!desc) return;
+      const len = (desc.textContent || '').trim().length;
+      let size = 15;
+      if(len < 40) size = 18;
+      else if(len < 80) size = 16;
+      else if(len < 140) size = 15;
+      else size = 14;
+      desc.style.fontSize = size + 'px';
+    });
+  }
+
+  function setupSocialScrollReveal(){
+    const inicio = document.getElementById('inicio');
+    const linkwrap = document.getElementById('linktreeOriginal');
+    if(!inicio || !linkwrap) return;
+    const buttons = Array.from(linkwrap.querySelectorAll('.link-btn'));
+    if(buttons.length === 0) return;
+
+    function computeTriggerPoints(){
+      const maxScroll = Math.max(0, inicio.scrollHeight - inicio.clientHeight);
+      const step = maxScroll / (buttons.length + 1);
+      return { start: maxScroll * 0.15, step };
+    }
+
+    let scrollTimeout = null;
+    function onScroll(){
+      if (scrollTimeout) clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(() => {
+        const { start, step } = computeTriggerPoints();
+        const progress = inicio.scrollTop;
+        const maxScroll = Math.max(0, inicio.scrollHeight - inicio.clientHeight);
+
+        if (maxScroll > 0 && progress >= (maxScroll - 6)) {
+          buttons.forEach((btn) => {
+            btn.classList.add('visible');
+            btn.style.opacity = '1';
+            btn.style.transform = 'translateY(0)';
+            btn.setAttribute('aria-hidden','false');
+          });
+          return;
+        }
+
+        buttons.forEach((btn, i) => {
+          const threshold = Math.round(start + i * step);
+          if (progress >= threshold){
+            setTimeout(() => {
+              btn.classList.add('visible');
+              btn.style.opacity = '1';
+              btn.style.transform = 'translateY(0)';
+              btn.setAttribute('aria-hidden','false');
+            }, i * 150);
+          } else {
+            btn.classList.remove('visible');
+            btn.style.opacity = '0';
+            btn.style.transform = 'translateY(8px)';
+            btn.setAttribute('aria-hidden','true');
+          }
+        });
+      }, 50);
+    }
+
+    buttons.forEach(b => { b.style.transition = 'opacity .72s ease, transform .72s ease'; b.style.opacity = 0; b.style.transform = 'translateY(8px)'; b.setAttribute('aria-hidden','true'); });
+
+    inicio.addEventListener('scroll', onScroll, { passive:true });
+    setTimeout(onScroll, 80);
+  }
+  function setupRevealOnScroll(){
+    const inicio = document.getElementById('inicio');
+    if(!inicio) return;
+
+    const revealEls = Array.from(document.querySelectorAll('#landingServices [data-reveal]'));
+    if(revealEls.length === 0) return;
+
+    revealEls.forEach(el => {
+      el.style.transition = 'opacity .84s ease, transform .84s ease';
+      el.setAttribute('aria-hidden', 'true');
+      if(!el.classList.contains('reveal')) el.classList.add('reveal');
+    });
+
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(en => {
+        const el = en.target;
+        const isVisible = en.intersectionRatio > 0.18;
+
+        if(isVisible) {
+          el.classList.add('visible');
+          el.setAttribute('aria-hidden','false');
+        } else {
+          el.classList.remove('visible');
+          el.setAttribute('aria-hidden','true');
+        }
+        let cardEl = null;
+        if (el.getAttribute && el.getAttribute('data-card') === '2') {
+          cardEl = el;
+        } else {
+          cardEl = el.querySelector ? el.querySelector('[data-card="2"]') : null;
+        }
+        if(!cardEl) {
+          const fallback = document.querySelector('#landingServices [data-card="2"]');
+          if(fallback) cardEl = fallback;
+        }
+        if(cardEl){
+        }
+      });
+    }, {
+      root: document.getElementById('inicio'),
+      threshold: [0.18]
+    });
+
+    revealEls.forEach(el => io.observe(el));
+  }
+
+  document.addEventListener('keydown', (e)=>{
+    if(e.key === 'ArrowRight'){ try { advanceServices(); } catch(e){} }
+    if(e.key === 'ArrowLeft'){ try { servicesIdx = Math.max(0, servicesIdx-1); setServicesPosition(servicesIdx); } catch(e){} }
+  });
+
+  document.addEventListener('DOMContentLoaded', ()=>{
+    try{ setupSocialScrollReveal(); }catch(e){ console.warn('social reveal init failed', e); }
+    try{ setupRevealOnScroll(); }catch(e){ console.warn('reveal-on-scroll init failed', e); }
+    try {
+      fetch(`${API_BASE}/wake?nocache=${Date.now()}`, { method: 'GET', mode: 'no-cors' }).catch(()=>{});
+    } catch(e){ /* ignore */ }
+
+    waitForIntroAndInit();
+    try {
+      const third = document.querySelector('.service-card[data-card="2"]');
+      if (third) third.classList.add('pulse-loop');
+    } catch(e){ /* ignore */ }
+    window.addEventListener('resize', () => {
+      if(window.__svc_resize_timeout) clearTimeout(window.__svc_resize_timeout);
+      window.__svc_resize_timeout = setTimeout(() => { adjustServiceTextSizes(); }, 120);
+    });
+  });
+
+})();
+  const form = document.querySelector("form");
+
+form.addEventListener("submit", (e) => {
+  const nombre = document.getElementById("nombreBuscar").value.trim();
+  const telefono = document.getElementById("telefonoBuscar").value.trim();
+
+  if (!nombre) {
+    alert("Por favor ingrese su nombre y apellido.");
+    e.preventDefault();
+    return;
+  }
+
+  if (!/^[0-9]{8,10}$/.test(telefono)) {
+    alert("El teléfono debe tener entre 8 y 10 dígitos numéricos.");
+    e.preventDefault();
+  }
+});
+
+</script>
+</body>
+</html>
