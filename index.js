@@ -598,7 +598,7 @@ app.get('/stats', async (req, res) => {
 /* -------------------- PEDIDOS -------------------- */
 
 app.post('/pedidos', async (req, res) => {
-  try {]
+  try {
     const nombre = req.body.nombre ?? req.body.nombreSolicitar ?? req.body.nombre_cliente ?? null;
     const telefono = req.body.telefono ?? req.body.telefonoSolicitar ?? req.body.phone ?? null;
     const agencia = req.body.agencia ?? req.body.plataforma ?? req.body.plataformaSolicitar ?? null;
