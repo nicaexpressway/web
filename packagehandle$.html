@@ -1,0 +1,1993 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title> Manejo de Pedidos</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Poppins:wght@600&display=swap" rel="stylesheet">
+<link rel="icon" type="image/png" sizes="16x16" href="https://github.com/nicaexpressway/web/blob/main/media/icon.jpg?raw=true">
+<link rel="icon" type="image/png" sizes="32x32" href="https://github.com/nicaexpressway/web/blob/main/media/icon.jpg?raw=true">
+<link rel="apple-touch-icon" sizes="180x180" href="https://github.com/nicaexpressway/web/blob/main/media/icon.jpg?raw=true">
+<meta name="theme-color" content="#E8F0F5">
+<meta property="og:type" content="website" />
+<meta property="og:title" content="NicaExpressWay" />
+<meta property="og:description" content="Gestión de envíos - Nica ExpressWay" />
+<meta property="og:image" content="https://github.com/nicaexpressway/web/blob/main/media/icon.jpg?raw=true" />
+<style>
+:root {
+  --color-bg: #E8F0F5;
+  --color-accent: #2F528F;
+  --color-light: #FFFFFF;
+  --color-gray: #F6F8FB;
+  --color-text-dark: #1A1A1A;
+  --modal-overlay-bg: rgba(0,0,0,0.45);
+  --lapis: #1f3a66; 
+  --red-delete: #f56565;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text-dark);
+  padding: 1rem;
+  max-width: 500px;
+  margin: auto;
+}
+
+header { text-align: center; margin-bottom: 2rem; }
+h1 { font-family: 'Poppins', sans-serif; font-size: 1.8rem; color: var(--color-accent); }
+
+nav { display: flex; justify-content: center; gap: 0.5rem; margin-top: 1rem; flex-wrap: wrap; }
+nav button {
+  flex: 1 1 28%;
+  min-width: 90px;
+  background: var(--color-accent);
+  color: white;
+  border: none;
+  padding: 0.6rem 0.5rem;
+  font-weight: bold;
+  border-radius: 8px;
+  cursor: pointer;
+  white-space: normal;
+  text-align:center;
+  line-height:1.05;
+  font-size: 0.95rem;
+}
+nav button.inactive { background: #a0b6e0; }
+nav button#btnActualizar:hover { background: var(--lapis); }
+nav button#btnActualizar.active-nav { background: var(--lapis); }
+
+#btnPedidos { display: none; }
+
+section { background: var(--color-light); padding: 1.5rem; border-radius: 12px; margin-top: 1rem; display: none; }
+
+section.active { display: block; }
+
+/* Fade-in para secciones */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.section-fade { animation: fadeIn .18s ease both; }
+
+label { display: block; margin: 1rem 0 0.5rem; font-weight: 600; }
+input, select, textarea { width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid #ccc; font-size: 1rem; }
+input::placeholder { color: #9aa3ad; }
+textarea { resize: vertical; }
+
+button.action-btn { margin-top: 1rem; background: var(--color-accent); color: white; border: none; padding: 0.75rem; font-size: 1rem; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer; }
+
+.recordatorio-item {
+  background: var(--color-gray);
+  padding: 0.75rem;
+  border-radius: 16px;
+  margin-bottom: 0.75rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  overflow: hidden;
+}
+.link-btn {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: var(--color-accent);
+  color: #fff;
+  text-decoration: none;
+  padding: .56rem 6rem;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 1rem;
+  max-width: 220px;
+  margin: 0.3rem auto;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+  transition: transform .12s;
+  white-space: nowrap;
+}
+.link-btn:hover { transform: translateY(-3px); background: #1f3a66; }
+
+.recordatorio-info {
+  flex: 1;
+  border-radius: 12px;
+  padding: 0.4rem;
+}
+.btnEliminar {
+  background: #f56565;
+  color: white;
+  border: none;
+  padding: 0.35rem 0.6rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+.btnEliminar:hover { background: #ff6b6b; }
+
+.modal-overlay, .authOverlay, .lightbox {
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: var(--modal-overlay-bg);
+  backdrop-filter: blur(5px);
+  z-index: 10000;
+  padding: 1rem;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.modal-overlay.modal-visible, .authOverlay.modal-visible, .lightbox.modal-visible {
+  opacity: 1;
+}
+
+.modal-overlay .modal-inner,
+.authOverlay .authBox,
+.lightbox .lightbox-content {
+  background: var(--color-light);
+  padding: 1.25rem;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 460px; /* reduced from 520 */
+  box-shadow: 0 6px 24px rgba(0,0,0,0.28);
+  position: relative;
+  text-align: left;
+  pointer-events: auto !important;
+  z-index: 10001;
+}
+
+.lightbox-manejo .lightbox-inner {
+  background: var(--color-light);
+  padding: 1rem;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 640px; /* reduced from 720 */
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.28);
+  position: relative;
+  text-align: left;
+  pointer-events: auto !important;
+  z-index: 10001;
+}
+
+.modal-visible { display: flex !important; animation: fadeIn .16s ease both; }
+.fade-in { animation: fadeIn .16s ease both; }
+
+.pop-result {
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 12000;
+  background: var(--modal-overlay-bg);
+  backdrop-filter: blur(3px);
+  padding: 1rem;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.pop-result.modal-visible {
+  opacity: 1;
+}
+.pop-result .panel {
+  background: var(--color-light);
+  padding: 14px;
+  border-radius: 10px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.2);
+  width: 90%;
+  max-width: 360px;
+  text-align: center;
+  pointer-events: auto !important;
+  z-index: 12001;
+}
+.pop-result .title { font-weight: 700; color: var(--color-accent); margin-bottom: 8px; }
+.pop-result .msg { margin-bottom: 10px; }
+.pop-result .btn-close { background: var(--color-accent); color: white; border: none; padding: 10px 12px; border-radius: 8px; cursor: pointer; width: 100%; }
+
+.overlay-spinner {
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.28);
+  z-index: 11000;
+  backdrop-filter: blur(3px);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.overlay-spinner.modal-visible {
+  opacity: 1;
+}
+.spinner-box {
+  background: var(--color-light);
+  padding: 16px;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+  min-width: 220px;
+  pointer-events: auto !important;
+  z-index: 11001;
+}
+.spinner {
+  width: 40px; height: 40px;
+  margin: 0 auto 10px auto;
+  border-radius: 50%;
+  border: 4px solid rgba(47,82,143,0.15);
+  border-top-color: var(--color-accent);
+  animation: spin 1s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.lightbox-content {
+  background: #fff;
+  padding: 20px;
+  border-radius: 12px;
+  max-width: 360px; 
+  width: 92%;
+  max-height: 70vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  text-align: center;
+  position: relative;
+  pointer-events: auto !important;
+  z-index: 10001;
+}
+.close-lightbox, .close-lightbox-pedido, .close-lightbox-manejo {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: var(--color-light);
+  border: 1px solid #e6e9ef;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  font-size: 20px;
+  line-height: 36px;
+  text-align: center;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+}
+.close-lightbox:hover, .close-lightbox-pedido:hover, .close-lightbox-manejo:hover { transform: translateY(-2px); }
+
+.lightbox-content p { white-space: pre-line; word-wrap: break-word; }
+
+.btn-eliminar { margin-top: 20px; padding: 10px 15px; border: none; background: #e74c3c; color: #fff; border-radius: 8px; cursor: pointer; transition: background 0.2s ease; }
+.btn-eliminar:hover { background: #c0392b; }
+
+#listaPedidos, #listaManejo { margin-top: 8px; }
+.pedido-type { font-weight:700; color:var(--color-accent); }
+
+.pedido-phone { color: var(--color-accent); text-decoration: underline; cursor: pointer; }
+
+.phone-row { display: flex; gap: 0.5rem; align-items: center; }
+.phone-row select { width: 35%; min-width: 110px; }
+.phone-row input { flex: 1; }
+
+.form-group { position: relative; }
+.tooltip { display: none; position: absolute; left: 0; top: -2rem; background: var(--color-light); color: var(--color-text-dark); padding: 0.35rem 0.55rem; border-radius: 6px; font-size: 0.9rem; font-family: 'Poppins', sans-serif; font-weight:600; white-space: normal; max-width: 95%; box-shadow: 0 4px 12px rgba(0,0,0,0.12); border: 1px solid #ccc; }
+.form-group:focus-within .tooltip { display: block; }
+
+.manejo-list { display:flex; flex-direction:column; gap:10px; margin-top:10px; }
+.manejo-item {
+  background: #fff;
+  border: 1px solid #e9f0fb;
+  padding: 12px;
+  border-radius: 12px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  box-shadow: 0 4px 12px rgba(16,32,64,0.04);
+  cursor:pointer;
+}
+.manejo-meta { display:flex; flex-direction:column; gap:4px; text-align:left; }
+.manejo-meta small { color:#666; font-size:0.92rem; }
+.manejo-right { text-align:right; min-width:80px; }
+
+.timeline{position:relative;padding-left:24px;border-left:2px solid rgba(47,82,143,0.08);margin-bottom:.5rem}
+.timeline-item{position:relative;padding:8px 12px;margin-bottom:.5rem}
+.timeline-item::before{content:"";position:absolute;left:-11px;top:8px;width:12px;height:12px;border-radius:50%;background:#fff;border:3px solid var(--color-accent)}
+.timeline-item .state{font-weight:700}
+.timeline-item .subtext{font-size:.9rem;color:#555;margin-top:.25rem}
+.timeline-item .fecha{font-size:.85rem;color:#666;margin-top:.25rem}
+
+.blink {
+  animation: blinkAnim 0.9s step-start 0s infinite;
+  box-shadow:0 0 0 4px rgba(47,82,143,0.06) inset;
+  border-radius:8px;
+}
+@keyframes blinkAnim {
+  50% { opacity: 0.25; transform: translateY(-1px); }
+}
+
+/* recordatorio highlight for due today */
+.recordatorio-due-today {
+  animation: blinkRed 1.2s ease-in-out infinite;
+}
+@keyframes blinkRed {
+  0%, 100% { background-color: var(--color-gray); }
+  50% { background-color: var(--red-delete); opacity: 0.7; }
+}
+
+#confettiWrap{pointer-events:none;position:fixed;left:0;top:0;width:100%;height:100%;overflow:hidden;z-index:20000}
+
+.pagination { display:flex; gap:8px; align-items:center; justify-content:center; margin-top:12px; }
+.page-btn { background:#fff; border:1px solid #e6eefb; padding:6px 10px; border-radius:8px; cursor:pointer; }
+.page-btn[disabled]{ opacity:0.45; cursor:not-allowed; }
+
+@media (max-width:420px){
+  nav { gap:8px; }
+  nav button { flex: 1 1 45%; min-width: 120px; font-size: 0.95rem; padding: 0.6rem; }
+  .manejo-right { min-width:64px; font-size:0.9rem; }
+  .lightbox-manejo .lightbox-inner { padding:12px; max-width: 92%; }
+  .modal-overlay .modal-inner, .authOverlay .authBox { max-width: 92%; padding: 12px; }
+  .lightbox-content { max-width: 94%; padding: 14px; }
+}
+
+#estadisticas-container { margin-top: 0.75rem; width: 100%; }
+#estadisticasFrame {
+  width: 100%;
+  min-height: 72vh;
+  border: 0;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.modal-inner, .authBox, .lightbox-content { max-height: 86vh; overflow-y: auto; }
+
+.btn { border: none; padding: 10px 12px; border-radius: 8px; cursor: pointer; font-weight:700; }
+.btn.primary { background: var(--color-accent); color: #fff; }
+.btn.primary:hover { background: var(--lapis); }
+.btn.secondary { background: #f3f7fb; color: var(--color-text-dark); border: 1px solid #e6eefb; margin-left: 8px; }
+.btn.secondary:hover { background: #eef3fb; }
+.manejo-filters { display:flex; align-items:center; justify-content:flex-start; gap:12px; margin:12px 0; flex-wrap:wrap; }
+.manejo-filters .filter-left, .manejo-filters .filter-right { min-width:120px; max-width:unset; }
+.manejo-filters .filter-center { flex:0 1 220px; display:flex; flex-direction:column; align-items:center; justify-content:center; min-width:140px; }
+.manejo-filters select { padding:8px 10px; border-radius:8px; border:1px solid rgba(0,0,0,0.08); font-family:inherit; background:var(--color-light); }
+.small-btn { padding:6px 10px; border-radius:8px; border:1px solid rgba(0,0,0,0.08); background:transparent; font-size:0.92rem; cursor:pointer; }
+.manejo-filters label { display:block; font-size:0.9rem; color:#555; margin-bottom:6px; }
+@media (max-width:680px) {
+  .manejo-filters { flex-direction:column; align-items:stretch; }
+  .manejo-filters .filter-left, .manejo-filters .filter-right, .manejo-filters .filter-center { max-width:100%; min-width:0; }
+  .manejo-filters .filter-center { order: 2; margin-top:8px; }
+}
+
+.authBox input[type="password"] { width: 100%; padding: 0.75rem; font-size: 1rem; border-radius: 8px; border: 1px solid #d0d7ea; margin-top: 8px; }
+.authError { display: none; color: #e74c3c; margin-top: 10px; font-weight: 700; }
+
+.hidden { display: none; }
+
+footer { color: #888; text-align: center; padding: 0.8rem 0.5rem; font-size: 0.8rem; margin-top: 1.5rem; }
+
+#lmUpdateForm .action-btn {
+  margin-top: 0.5rem;
+}
+#lmUpdateForm .action-btn.cancel {
+  background: #888;
+}
+#lmUpdateForm .action-btn[type="submit"],
+#lmUpdateForm .action-btn.cancel {
+  width: 100%;
+  padding: 0.75rem;
+  font-size: 1rem;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  border: none;
+  color: white;
+}
+
+#lmToggleUpdate {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: var(--color-accent);
+  color: #fff;
+  text-decoration: none;
+  padding: .56rem 1rem;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 1rem;
+  margin: 1rem auto 0;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+  transition: transform .12s;
+  white-space: nowrap;
+  width: fit-content;
+}
+#lmToggleUpdate:hover { transform: translateY(-3px); background: #1f3a66; }
+
+#lbRecordDesc { white-space: pre-line; word-wrap: break-word; text-align: left; }
+
+/* Loading text style */
+#loadingRecordatorios { text-align: center; color: #666; font-size: 1rem; margin-top: 1rem; }
+
+#lightbox-recordatorio .lightbox-content {
+  text-align: left;
+}
+#lightbox-recordatorio .btn-eliminar {
+  margin: 1rem auto 0;
+  display: block;
+  width: fit-content;
+}
+#lightbox-recordatorio .lightbox-due-today {
+  animation: blinkRed 1.2s ease-in-out infinite;
+}
+
+.modal-overlay, .authOverlay, .lightbox, .pop-result, .overlay-spinner {
+  transition: opacity 0.3s ease;
+}
+.modal-visible {
+  opacity: 1 !important;
+}
+
+button:hover, a:hover, .btnEliminar:hover, .close-lightbox:hover, .close-lightbox-pedido:hover, .close-lightbox-manejo:hover, .manejo-item:hover {
+  transform: scale(1.05);
+  transition: transform 0.2s ease;
+}
+.embedded-scroll {
+  max-height: 48vh;
+  overflow-y: auto;
+  padding-right: 8px;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 10px;
+}
+
+@media (max-width:420px) {
+  .embedded-scroll { max-height: 40vh; }
+  .pop-result .panel { max-width: 92%; width: 92%; padding: 12px; }
+  .pop-result .title { font-size: 1.05rem; }
+}
+
+.pop-result .btn-close { font-weight: 700; }
+
+.disabled-select {
+  opacity: 0.6;
+  background: #f3f7fb;
+  cursor: not-allowed;
+}
+select[disabled] {
+  pointer-events: none;
+  background: #f3f7fb;
+  color: #666;
+}
+.state-note { font-size: 0.9rem; color: #666; margin-top:6px; }
+
+
+</style>
+
+</head>
+<body>
+
+<div id="app" tabindex="-1"><!-- wrapper para inert/blur si hiciera falta -->
+
+<header>
+<h1>Gestión de Envíos</h1>
+<nav>
+  <button id="btnInicio">Recordatorios</button>
+  <!-- legacy btnPedidos hidden via CSS; a new button below -->
+  <button id="btnManejo" class="inactive">Manejo de pedidos</button>
+  <button id="btnAgregar" class="inactive">Agregar Paquete</button>
+  <button id="btnActualizar" class="inactive">Actualizar Seguimiento</button>
+  <button id="btnEstadisticas" class="inactive">Estadísticas</button>
+</nav>
+</header>
+
+<section id="inicio" class="active section-fade">
+<h2>Recordatorios</h2>
+<div id="loadingRecordatorios" style="display: block;">Cargando recordatorios, espera...</div>
+<div id="listaRecordatorios" style="display: none;">
+  <p>No hay recordatorios por el momento.</p>
+</div>
+<button id="btnAgregarRecord" class="action-btn">Agregar Recordatorio</button>
+</section>
+
+<section id="pedidos" class="section-fade" style="display:none;">
+  <h2>Pedidos</h2>
+  
+
+  <div id="listaPedidos">
+    <p>Cargando pedidos...</p>
+  </div>
+</section>
+
+<section id="manejo" class="section-fade">
+  <h2>Manejo de pedidos</h2>
+
+<div class="manejo-filters" id="manejoFilters" aria-hidden="false">
+    <!-- LEFT: ESTADO (POV usuario) -->
+    <div class="filter-left" style="order:1">
+   
+   
+    </div>
+
+    <div class="filter-right" style="order:3; text-align:right;">
+      <label for="filtroTipo">Mostrar por tipo</label>
+      <select id="filtroTipo" aria-label="Filtrar por tipo de envío">
+        <option value="all">Todos</option>
+        <option value="aereo">Aéreos</option>
+        <option value="maritimo">Marítimos</option>
+      </select>
+    </div>
+  </div>
+
+  <div style="margin-top:8px;">
+    <label for="manejoSearch">Buscar por nombre o teléfono (opcional)</label>
+    <input id="manejoSearch" placeholder="Ej: Lester Gamez o (505)12345678">
+  </div>
+
+  <div id="listaManejo" class="manejo-list" aria-live="polite">
+ 
+  </div>
+
+  <div class="pagination" id="manejoPagination" style="display:none;">
+    <button class="page-btn" id="prevPage">Anterior</button>
+    <div id="pageInfo" style="font-size:0.95rem;color:#444;"></div>
+    <button class="page-btn" id="nextPage">Siguiente</button>
+  </div>
+</section>
+
+<section id="agregar" class="section-fade">
+<h2>Registrar Paquete</h2>
+<form id="formAgregar">
+  <div class="form-group">
+    <label for="nombre">Nombre del cliente</label>
+    <div class="tooltip">Ingresa un nombre y un apellido</div>
+    <input type="text" id="nombre" name="nombre" placeholder="Ej: Lester Gamez" required>
+  </div>
+
+  <div class="form-group">
+    <label for="codigo">Código de seguimiento (opcional)</label>
+   <input type="text" id="codigo" name="codigo" pattern="^\S+$" placeholder="Sin espacios">
+  </div>
+
+  <div class="form-group">
+    <label for="telefonoDigits">Teléfono</label>
+    <div class="tooltip">Selecciona (505) o (1) y luego ingresa de 8 a 10 dígitos</div>
+    <div class="phone-row">
+      <select id="telCode" name="telCode" required>
+        <option value="(505)">(505)</option>
+        <option value="(1)">(1)</option>
+      </select>
+      <input type="tel" id="telefonoDigits" name="telefonoDigits" placeholder="Ej: 12345678"
+             inputmode="numeric" pattern="[0-9]{8,10}" title="Ingresa solo números (8 a 10 dígitos)" required>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="tipo">Tipo de envío</label>
+    <select id="tipo" name="tipo" required>
+      <option value="aereo">Aéreo</option>
+      <option value="maritimo">Marítimo</option>
+    </select>
+  </div>
+
+  <button type="submit" class="action-btn">Registrar Paquete</button>
+</form>
+<div id="mensajeAgregar" class="mensaje" style="display:none;">
+Esta plataforma es de prueba, dog. Acción no disponible por el momento.
+</div>
+</section>
+
+<section id="actualizar" class="section-fade">
+<h2>Actualizar Estado</h2>
+<form id="formActualizar">
+  <div class="form-group">
+    <label for="nombreSeg">Nombre del cliente</label>
+    <div class="tooltip">Ingresa un nombre y un apellido</div>
+    <input type="text" id="nombreSeg" name="nombreSeg" placeholder="Ej: Lester Gamez">
+  </div>
+
+ <div class="form-group">
+    <label for="codigoSeg">Código de seguimiento (obligatorio)</label>
+   <input type="text" id="codigoSeg" name="codigoSeg" placeholder="Ingresa el código" required>
+  </div>
+
+  <div class="form-group">
+    <label for="telefonoSegDigits">Teléfono</label>
+    <div class="tooltip">Selecciona (505) o (1) y luego ingresa de 8 a 10 dígitos</div>
+    <div class="phone-row">
+      <select id="telCodeSeg" name="telCodeSeg">
+        <option value="(505)">(505)</option>
+        <option value="(1)">(1)</option>
+      </select>
+      <input type="tel" id="telefonoSegDigits" name="telefonoSegDigits" placeholder="Ej: 12345678"
+             inputmode="numeric" pattern="[0-9]{8,10}" title="Ingresa solo números (8 a 10 dígitos)">
+    </div>
+  </div>
+
+  <div class="form-group">
+    <div class="form-group">
+    <label for="estadoSeg">Estado del paquete</label>
+    <select id="estadoSeg" name="estado" class="dynamic-state" aria-describedby="estadoSegNote">
+      <option value="">-- Seleccione --</option>
+    </select>
+    <div id="estadoSegNote" class="state-note" aria-live="polite"></div>
+  </div>
+  <div class="form-group">
+    <label for="pesoSeg">Peso en libras</label>
+    <input type="number" id="pesoSeg" name="pesoSeg" step="0.1" min="0" placeholder="Ej: 1.0">
+  </div>
+  <div class="form-group">
+  <label for="tarifaSeg">Tarifa en USD</label>
+  <input type="number" id="tarifaSeg" name="tarifaSeg" step="0.1" min="0" placeholder="Ej: 1.1">
+</div>
+
+  <div class="form-group">
+    <label for="fechaEstado">Ingrese fecha</label>
+    <input type="date" id="fechaEstado" name="fechaEstado">
+  </div>
+
+  <button type="submit" class="action-btn">Actualizar Estado</button>
+</form>
+<div id="mensajeActualizar" class="mensaje" style="display:none;">
+Esta plataforma es de prueba, dog. Acción no disponible por el momento.
+</div>
+</section>
+
+<section id="estadisticas" class="section-fade">
+  <div id="estadisticas-container">
+    <iframe id="estadisticasFrame" src="" title="Estadísticas"></iframe>
+  </div>
+  <a class="link-btn" href="https://nicaexpressway/web/hiddenstatshandle$.html" target="_blank">Vista Completa</a>
+</section>
+
+<footer>
+&copy; 2025. Irvin Prado. Ascende Superius - Seek Higher Things
+</footer>
+
+</div><!-- /#app -->
+<div id="lockOverlay" class="authOverlay modal-overlay modal-visible" style="display:flex;" aria-hidden="false">
+  <div class="authBox">
+    <h2>Acceso al Panel</h2>
+    <!-- autofocus + autocomplete for better UX on mobile -->
+    <input type="password" id="lockPass" placeholder="Contraseña" aria-label="Contraseña de acceso" autocomplete="current-password" />
+    <div style="margin-top:0.6rem;">
+      <button class="btn primary" id="lockSubmit">Entrar</button>
+    </div>
+    <div class="authError" id="lockError">Contraseña incorrecta</div>
+  </div>
+</div>
+<div id="statsOverlay" class="authOverlay modal-overlay" style="display:none;" aria-hidden="true">
+  <div class="authBox">
+    <h2>Acceso a Estadísticas</h2>
+    <input type="password" id="statsPass" placeholder="Contraseña" aria-label="Contraseña estadísticas" autocomplete="current-password" />
+    <div style="margin-top:0.6rem;">
+      <button class="btn primary" id="statsSubmit">Acceder</button>
+      <button class="btn secondary" id="statsCancel">Cancelar</button>
+    </div>
+    <div class="authError" id="statsError">Contraseña incorrecta</div>
+  </div>
+</div>
+
+<div id="lightbox-recordatorio" class="lightbox" style="display:none;" aria-hidden="true">
+  <div class="lightbox-content">
+    <button class="close-lightbox" aria-label="Cerrar recordatorio">&times;</button>
+    <h2 id="lbRecordTitulo">Recordatorio</h2>
+    <p id="lbRecordDesc">Descripción</p>
+    <small id="lbRecordFecha" style="display: block; margin-bottom: 1rem; text-align: center;">Fecha</small>
+    <button class="btn-eliminar" style="margin: 0 auto; display: block; width: fit-content;">Eliminar recordatorio</button>
+  </div>
+</div>
+
+<div id="lightbox-pedido" class="lightbox" style="display:none;" aria-hidden="true">
+  <div class="lightbox-content">
+    <button class="close-lightbox-pedido" aria-label="Cerrar pedido">&times;</button>
+    <h2 id="lbPedidoTitulo">Pedido</h2>
+    <div style="text-align:left;margin-top:8px;">
+      <div style="margin:8px 0;"><strong>Nombre:</strong> <span id="lbNombre">-</span></div>
+      <div style="margin:8px 0;"><strong>Teléfono:</strong> <a id="lbTelefono" class="pedido-phone" target="_blank" rel="noopener">-</a></div>
+      <div style="margin:8px 0;"><strong>Plataforma / Agencia:</strong> <span id="lbAgencia">-</span></div>
+      <div style="margin:8px 0;"><strong>Descripción:</strong> <span id="lbDescripcion">-</span></div>
+      <div style="margin:8px 0;"><strong>Tipo:</strong> <span id="lbTipo">-</span></div>
+      <div style="margin:8px 0;"><strong>Fecha de ingreso:</strong> <span id="lbFechaIngreso">-</span></div>
+      <div style="margin:8px 0;"><strong>Peso:</strong> <span id="lbPeso">-</span></div>
+      <div style="margin:8px 0;"><strong>Tarifa:</strong> <span id="lbTarifa">-</span></div>
+      <div style="margin:8px 0;"><strong>Total:</strong> <span id="lbTotal">-</span></div>
+      <div style="margin:8px 0;"><strong>Estado:</strong> <span id="lbEstado">-</span></div>
+    </div>
+  </div>
+</div>
+
+<div id="lightbox-manejo" class="lightbox lightbox-manejo" style="display:none;" aria-hidden="true">
+  <div class="lightbox-inner">
+    <button class="close-lightbox-manejo" aria-label="Cerrar manejo">&times;</button>
+    <h2 id="lmTitle">Pedido</h2>
+    <div id="lmSubtitle" style="font-size:0.95rem;color:#666;margin-bottom:12px;"></div>
+    <div id="lmLoading" style="text-align:center;color:#666;">Cargando...</div>
+    <div id="lmContent" style="display:none;">
+      <div style="margin:8px 0;"><strong>Nombre:</strong> <span id="lmNombre">-</span></div>
+      <div style="margin:8px 0;"><strong>Teléfono:</strong> <span id="lmPhoneWrap">-</span></div>
+      <div style="margin:8px 0;"><strong>Tipo:</strong> <span id="lmTipo">-</span></div>
+      <div style="margin:8px 0;"><strong>Fecha de ingreso:</strong> <span id="lmFechaIngreso">-</span></div>
+      <div style="margin:8px 0;"><strong>Peso:</strong> <span id="lmPeso">-</span></div>
+      <div style="margin:8px 0;"><strong>Tarifa:</strong> <span id="lmTarifa">-</span></div>
+      <div style="margin:8px 0;"><strong>Total:</strong> <span id="lmTotal">-</span></div>
+      <div style="margin:16px 0 8px;"><strong>Historial:</strong></div>
+      <div id="lmTimeline" class="timeline"></div>
+      <button id="lmToggleUpdate">Actualizar estado</button>
+      <div id="lmUpdateFormWrap" style="display:none;margin-top:16px;border-top:1px solid #eee;padding-top:12px;">
+        <form id="lmUpdateForm">
+          <label for="lmPesoInput">Peso en libras</label>
+          <input type="number" id="lmPesoInput" step="0.1" min="0" placeholder="Ej: 1.0">
+          <label for="lmTarifaInput">Tarifa en USD</label>
+          <input type="number" id="lmTarifaInput" step="0.1" min="0" placeholder="Ej: 1.1">
+          <label for="lmEstadoSelect">Estado del paquete</label>
+          <select id="lmEstadoSelect" class="dynamic-state" aria-describedby="lmEstadoNote">
+            <option value="">-- Seleccione --</option>
+          </select>
+          <div id="lmEstadoNote" class="state-note" aria-live="polite"></div>
+          <label for="lmFechaInput">Fecha del estado</label>
+          <input type="date" id="lmFechaInput">
+          <button type="submit" class="action-btn">Actualizar Estado</button>
+          <button type="button" id="lmCancelUpdate" class="action-btn cancel">Cancelar</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="pop-result" id="popResult" style="display:none;">
+  <div class="panel">
+    <div class="title" id="popResultTitle"></div>
+    <div class="msg" id="popResultMsg"></div>
+    <button class="btn-close" id="popResultClose">Cerrar</button>
+  </div>
+</div>
+
+<div class="overlay-spinner" id="spinnerOverlay" style="display:none;">
+  <div class="spinner-box">
+    <div class="spinner"></div>
+    <div id="spinnerMsg">Cargando...</div>
+  </div>
+</div>
+
+<div id="confettiWrap"></div>
+
+<div class="modal-overlay popUp" id="popFormRecord" aria-hidden="true">
+  <div class="modal-inner form-modal">
+    <h3>Agregar Recordatorio</h3>
+    <form id="formRecord">
+      <label for="tituloRecord">Título del recordatorio</label>
+      <input type="text" id="tituloRecord" placeholder="Ej: Llamada importante" required>
+      <label for="descRecord">Descripción</label>
+      <textarea id="descRecord" rows="2" placeholder="Ej: Llamar a cliente, enviar factura..." required></textarea>
+      <label for="fechaRecord">Fecha límite</label>
+      <input type="date" id="fechaRecord" required>
+      <button type="submit" class="action-btn">Agregar</button>
+      <button type="button" id="cerrarPopForm" class="action-btn" style="background:#888;">Cancelar</button>
+    </form>
+  </div>
+</div>
+
+<div class="modal-overlay confirmPop" id="popConfirm" aria-hidden="true">
+  <div class="modal-inner">
+    <p>Recordatorio agregado</p>
+    <button id="cerrarPopConfirm" class="action-btn">Cerrar</button>
+  </div>
+</div>
+
+<div class="modal-overlay confirmPop" id="popEliminarConfirm" aria-hidden="true">
+  <div class="modal-inner">
+    <p>¿Desea eliminar este recordatorio?</p>
+    <button id="btnConfirmEliminar" class="action-btn" style="background:#f56565;">Eliminar</button>
+    <button id="btnCancelarEliminar" class="action-btn" style="background:#888;">Cancelar</button>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id); // $ shortcut
+const appWrapper = $('app');
+
+function setInert(el, inert){
+  if (!el) return;
+  if (inert) {
+    el.setAttribute('inert', '');
+  } else {
+    el.removeAttribute('inert');
+  }
+  el.style.pointerEvents = inert ? 'none' : 'auto';
+  el.style.opacity = inert ? '0.65' : '1';
+  // Removed filter: blur to avoid visual issues
+  el.tabIndex = inert ? -1 : 0;
+}
+
+function showModalByElement(el){
+  if (!el) return;
+  el.style.display = 'flex';
+  el.classList.add('modal-visible');
+  el.setAttribute('aria-hidden', 'false');
+  if (appWrapper) setInert(appWrapper, true);
+  // focus first input if exists
+  const firstInput = el.querySelector('input, textarea, select, button');
+  if (firstInput) setTimeout(()=>firstInput.focus(), 50);
+}
+
+function hideModalByElement(el) {
+  if (!el) return;
+  el.classList.remove('modal-visible');
+  el.setAttribute('aria-hidden', 'true');
+  if (appWrapper) setInert(appWrapper, false);
+  setTimeout(() => {
+    try { el.style.display = 'none'; } catch (e) {}
+    if (document.activeElement && el.contains(document.activeElement)) document.activeElement.blur();
+  }, 320);
+}
+function showResult(title, msg){
+  const pop = $('popResult');
+  if (!pop) return alert(`${title}: ${msg}`);
+  $('popResultTitle').textContent = title || '';
+  $('popResultMsg').textContent = msg || '';
+  showModalByElement(pop);
+  const cb = $('popResultClose');
+  if (cb) setTimeout(()=>cb.focus(), 50);
+}
+if ($('popResultClose')) $('popResultClose').addEventListener('click', ()=>hideModalByElement($('popResult')));
+
+function showSpinner(msg = 'Cargando...') {
+  const spin = $('spinnerOverlay');
+  if (!spin) return;
+  $('spinnerMsg').textContent = msg;
+  spin.style.display = 'flex';
+  spin.classList.add('modal-visible');
+  startDbDelayTimer();
+}
+function hideSpinner() {
+  const spin = $('spinnerOverlay');
+  if (spin) {
+    spin.classList.remove('modal-visible');
+    setTimeout(() => { try { spin.style.display = 'none'; } catch (e) {} }, 320);
+  }
+  clearDbDelayTimer();
+}
+let dbDelayTimer = null;
+function startDbDelayTimer(timeout = 60000) {
+  clearDbDelayTimer();
+  dbDelayTimer = setTimeout(() => {
+    showResult('Aviso', 'Hay un retraso en los servidores ajeno a la página, intenta más tarde');
+  }, timeout);
+}
+function clearDbDelayTimer() {
+  if (dbDelayTimer) {
+    clearTimeout(dbDelayTimer);
+    dbDelayTimer = null;
+  }
+}
+// getNumberOrNull: small util
+function getNumberOrNull(id){
+  const val = $(id)?.value.trim() || '';
+  if (val === '') return null;
+  const num = Number(val);
+  return isNaN(num) ? null : num;
+}
+const btnInicio = $('btnInicio');
+const btnManejo = $('btnManejo');
+const btnAgregar = $('btnAgregar');
+const btnActualizar = $('btnActualizar');
+const btnEstadisticas = $('btnEstadisticas');
+
+const secciones = {
+  inicio: $('inicio'),
+  manejo: $('manejo'),
+  agregar: $('agregar'),
+  actualizar: $('actualizar'),
+  estadisticas: $('estadisticas'),
+  pedidos: $('pedidos') 
+};
+
+function mostrarSeccion(seccionId) {
+  Object.keys(secciones).forEach(id => {
+    const sec = secciones[id];
+    if (sec) {
+      sec.classList.toggle('active', id === seccionId);
+      if (id === seccionId) sec.classList.add('section-fade');
+    }
+  });
+  [btnInicio, btnManejo, btnAgregar, btnActualizar, btnEstadisticas].forEach(btn => {
+    if (btn) btn.classList.toggle('inactive', btn.id !== `btn${seccionId.charAt(0).toUpperCase() + seccionId.slice(1)}`);
+  });
+  if (seccionId === 'inicio') cargarRecord();
+  if (seccionId === 'manejo') cargarManejo();
+}
+
+if (btnInicio) btnInicio.addEventListener('click', () => mostrarSeccion('inicio'));
+if (btnManejo) btnManejo.addEventListener('click', () => mostrarSeccion('manejo'));
+if (btnAgregar) btnAgregar.addEventListener('click', () => mostrarSeccion('agregar'));
+if (btnActualizar) btnActualizar.addEventListener('click', () => mostrarSeccion('actualizar'));
+if (btnEstadisticas) btnEstadisticas.addEventListener('click', () => {
+  showModalByElement($('statsOverlay'));
+});
+
+const listaRecordatorios = $('listaRecordatorios');
+const btnAgregarRecord = $('btnAgregarRecord');
+const popFormRecord = $('popFormRecord');
+const formRecord = $('formRecord');
+const cerrarPopForm = $('cerrarPopForm');
+const popConfirm = $('popConfirm');
+const cerrarPopConfirm = $('cerrarPopConfirm');
+const popEliminarConfirm = $('popEliminarConfirm');
+const btnConfirmEliminar = $('btnConfirmEliminar');
+const btnCancelarEliminar = $('btnCancelarEliminar');
+const lightboxRecordatorio = $('lightbox-recordatorio');
+const closeLightboxBtn = document.querySelector('.close-lightbox');
+const btnEliminarLightbox = lightboxRecordatorio.querySelector('.btn-eliminar');
+const lbRecordTitulo = $('lbRecordTitulo');
+const lbRecordDesc = $('lbRecordDesc');
+const lbRecordFecha = $('lbRecordFecha');
+let recordatorioIdAEliminar = null;
+let currentRecordatorio = null;
+
+const loadingRecordatorios = $('loadingRecordatorios');
+
+async function cargarRecord() {
+  loadingRecordatorios.style.display = 'block';
+  listaRecordatorios.style.display = 'none';
+startDbDelayTimer();
+  try {
+    const res = await fetch(`${API_BASE}/recordatorios`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const recordatorios = await res.json();
+    listaRecordatorios.innerHTML = '';
+    if (recordatorios.length === 0) {
+      listaRecordatorios.innerHTML = '<p>No hay recordatorios por el momento.</p>';
+    } else {
+      recordatorios.forEach((rec) => {
+        const div = document.createElement('div');
+        div.className = 'recordatorio-item';
+        div.dataset.id = rec.id;
+        div.innerHTML = `
+          <div class="recordatorio-info">
+            <strong>${escapeHtml(rec.titulo)}</strong><br>
+            <small>${escapeHtml((rec.descripcion || '').slice(0, 50))}${(rec.descripcion || '').length > 50 ? '...' : ''}</small><br>
+            <small>Fecha: ${escapeHtml(rec.fecha_limite)}</small>
+          </div>
+          <button class="btnEliminar">Eliminar</button>
+        `;
+        // check if due today in Miami time
+        const todayMiami = new Date().toLocaleDateString('en-US', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' });
+        const recDate = new Date(rec.fecha_limite).toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' });
+        if (recDate === todayMiami) {
+          div.classList.add('recordatorio-due-today');
+        }
+        listaRecordatorios.appendChild(div);
+      });
+    }
+if (recordatorios.length > 5) {
+  listaRecordatorios.classList.add('embedded-scroll');
+} else {
+  listaRecordatorios.classList.remove('embedded-scroll');
+}
+if (recordatorios.length > 10) {
+  showResult('Aviso', 'Hay demasiados recordatorios, revisa qué recordatorios no necesitas y elimínalos, para mantener la base de datos lo más optimizada posible');
+}
+clearDbDelayTimer();
+    loadingRecordatorios.style.display = 'none';
+    listaRecordatorios.style.display = 'block';
+  } catch (err) {
+    clearDbDelayTimer();
+    console.error('Error cargando recordatorios:', err);
+    listaRecordatorios.innerHTML = '<p>No se pudieron cargar los recordatorios.</p>';
+    loadingRecordatorios.style.display = 'none';
+    listaRecordatorios.style.display = 'block';
+  }
+}
+
+if (formRecord) formRecord.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const titulo = $('tituloRecord').value.trim();
+  const descripcion = $('descRecord').value.trim();
+  const fecha_limite = $('fechaRecord').value;
+  if (!titulo || !descripcion || !fecha_limite) return;
+  showSpinner('Agregando recordatorio...');
+  try {
+    const res = await fetch(`${API_BASE}/recordatorios`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ titulo, descripcion, fecha_limite })
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    hideSpinner();
+    formRecord.reset();
+    hideModalByElement(popFormRecord);
+    showModalByElement(popConfirm);
+    cargarRecord();
+  } catch (err) {
+    hideSpinner();
+    console.error('Error agregando recordatorio:', err);
+    showResult('Error', 'No se pudo agregar el recordatorio, intenta más tarde.');
+  }
+});
+
+if (listaRecordatorios) listaRecordatorios.addEventListener('click', (e) => {
+  if (e.target.classList.contains('btnEliminar')) {
+    const item = e.target.closest('.recordatorio-item');
+    if (item) {
+      recordatorioIdAEliminar = item.dataset.id;
+      showModalByElement(popEliminarConfirm);
+    }
+  } else {
+    const item = e.target.closest('.recordatorio-item');
+    if (item) openRecordLightbox(item.dataset.id);
+  }
+});
+
+if (btnConfirmEliminar) btnConfirmEliminar.addEventListener('click', async () => {
+  if (recordatorioIdAEliminar !== null) {
+    showSpinner('Eliminando recordatorio...');
+    try {
+      const res = await fetch(`${API_BASE}/recordatorios/${recordatorioIdAEliminar}`, {
+        method: 'DELETE'
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      hideSpinner();
+      hideModalByElement(popEliminarConfirm);
+      cargarRecord();
+      recordatorioIdAEliminar = null;
+    } catch (err) {
+      hideSpinner();
+      console.error('Error eliminando recordatorio:', err);
+      showResult('Error', 'No se pudo eliminar el recordatorio, intenta más tarde.');
+    }
+  }
+});
+
+if (btnCancelarEliminar) btnCancelarEliminar.addEventListener('click', () => {
+  hideModalByElement(popEliminarConfirm);
+  recordatorioIdAEliminar = null;
+});
+
+async function openRecordLightbox(id) {
+  showSpinner('Cargando recordatorio...');
+  try {
+    const res = await fetch(`${API_BASE}/recordatorios/${id}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    currentRecordatorio = await res.json();
+    lbRecordTitulo.textContent = currentRecordatorio.titulo || 'Recordatorio';
+    lbRecordDesc.textContent = currentRecordatorio.descripcion || '';
+    lbRecordFecha.textContent = `Fecha: ${currentRecordatorio.fecha_limite || ''}`;
+
+const todayMiami = new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' });
+
+let recDate;
+if (typeof currentRecordatorio.fecha_limite === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(currentRecordatorio.fecha_limite)) {
+  // ya viene como YYYY-MM-DD -> úsala tal cual
+  recDate = currentRecordatorio.fecha_limite;
+} else {
+
+  recDate = new Date(currentRecordatorio.fecha_limite).toLocaleDateString('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' });
+}
+
+const shouldBlink = (todayMiami >= recDate);
+
+    if (recDate === todayMiami) {
+      lightboxRecordatorio.querySelector('.lightbox-content').classList.add('lightbox-due-today');
+    } else {
+      lightboxRecordatorio.querySelector('.lightbox-content').classList.remove('lightbox-due-today');
+    }
+    hideSpinner();
+    showModalByElement(lightboxRecordatorio);
+  } catch (err) {
+    hideSpinner();
+    console.error('Error cargando recordatorio:', err);
+    showResult('Error', 'No se pudo cargar el recordatorio.');
+  }
+}
+
+if (closeLightboxBtn) closeLightboxBtn.addEventListener('click', () => hideModalByElement(lightboxRecordatorio));
+if (btnEliminarLightbox) btnEliminarLightbox.addEventListener('click', () => {
+  if (currentRecordatorio && currentRecordatorio.id) {
+    recordatorioIdAEliminar = currentRecordatorio.id;
+    hideModalByElement(lightboxRecordatorio);
+    showModalByElement(popEliminarConfirm);
+  }
+});
+
+if (btnAgregarRecord) btnAgregarRecord.addEventListener('click', () => showModalByElement(popFormRecord));
+if (cerrarPopForm) cerrarPopForm.addEventListener('click', () => hideModalByElement(popFormRecord));
+if (cerrarPopConfirm) cerrarPopConfirm.addEventListener('click', () => hideModalByElement(popConfirm));
+
+const formAgregar = $('formAgregar');
+const mensajeAgregar = $('mensajeAgregar');
+
+if (formAgregar) formAgregar.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const nombre = $('nombre').value.trim();
+  const codigo = $('codigo').value.trim() || null;
+  const telCode = $('telCode').value;
+  const telefonoDigits = $('telefonoDigits').value.trim();
+  const telefono = `${telCode}${telefonoDigits}`;
+  const tipo = $('tipo').value;
+  if (!nombre || !telefonoDigits.match(/^[0-9]{8,10}$/)) return;
+
+  showSpinner('Registrando paquete...');
+  try {
+    const res = await fetch(`${API_BASE}/paquetes`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nombre_cliente: nombre, codigo_seguimiento: codigo, telefono, tipo_envio: tipo })
+    });
+    if (!res.ok) {
+      let errText = `Registro falló ${res.status}`;
+      try { const j = await res.json(); if (j?.error) errText = j.error; } catch(_) {}
+      throw new Error(errText);
+    }
+    const result = await res.json();
+    hideSpinner();
+    showResult('Registrado', 'El paquete fue registrado correctamente.');
+    formAgregar.reset();
+    // refresh manejo if open
+    if (secciones.manejo && secciones.manejo.classList.contains('active')) cargarManejo();
+  } catch (err) {
+    hideSpinner();
+    console.error('Error agregando:', err);
+    showResult('Error', 'No se pudo registrar el paquete.');
+  }
+});
+const formActualizar = $('formActualizar');
+const mensajeActualizar = $('mensajeActualizar');
+
+const codigoSegInput = $('codigoSeg');
+if (codigoSegInput) {
+  codigoSegInput.addEventListener('blur', (e)=> {
+    const v = (e.target.value||'').trim();
+    if (v) updateEstadoSegForCodigo(v);
+  });
+  codigoSegInput.addEventListener('keydown', (e)=> {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const v = (e.target.value||'').trim();
+      if (v) updateEstadoSegForCodigo(v);
+    }
+  });
+}
+
+if (formActualizar) formActualizar.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const nombreSeg = $('nombreSeg').value.trim();
+  const codigoSeg = $('codigoSeg').value.trim();
+  const telCodeSeg = $('telCodeSeg').value;
+  const telefonoSegDigits = $('telefonoSegDigits').value.trim();
+  const telefonoSeg = telefonoSegDigits ? `${telCodeSeg}${telefonoSegDigits}` : null;
+  const estado = $('estadoSeg').value;
+  const peso = getNumberOrNull('pesoSeg');
+  const tarifa = getNumberOrNull('tarifaSeg');
+  const fecha = $('fechaEstado').value || null;
+
+  if (!codigoSeg || !codigoSeg.match(/^\d{1,10}$/)) return showResult('Aviso', 'Código de seguimiento requerido (1-10 dígitos numéricos).');
+
+  const updateObj = {};
+  if (nombreSeg) updateObj.nombre_cliente = nombreSeg;
+  if (telefonoSeg) updateObj.telefono = telefonoSeg;
+  if (estado) updateObj.estado = estado;
+  if (peso !== null) updateObj.peso_libras = peso;
+  if (tarifa !== null) updateObj.tarifa_usd = tarifa;
+  if (fecha) updateObj.fecha = fecha;
+
+  if (Object.keys(updateObj).length === 0) return showResult('Aviso', 'Ingresa al menos un campo para actualizar.');
+
+  showSpinner('Actualizando estado...');
+  try {
+    const res = await fetch(`${API_BASE}/paquetes/${encodeURIComponent(codigoSeg)}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updateObj)
+    });
+    if (!res.ok) {
+      let errText = `Actualizar falló ${res.status}`;
+      try { const j = await res.json(); if (j?.error) errText = j.error; } catch(_) {}
+      throw new Error(errText);
+    }
+    const result = await res.json();
+    hideSpinner();
+    showResult('Actualizado', 'El estado fue actualizado correctamente.');
+    formActualizar.reset();
+    // refresh manejo if open
+    if (secciones.manejo && secciones.manejo.classList.contains('active')) cargarManejo();
+  } catch (err) {
+    hideSpinner();
+    console.error('Error actualizando:', err);
+    showResult('Error', 'No se pudo actualizar.');
+  }
+});
+
+const API_BASE = 'https://nicaexpressway.onrender.com'; 
+const PAGE_SIZE = 10;
+let manejoData = [];
+let currentManejoPage = 1;
+
+const listaManejo = $('listaManejo');
+const manejoSearch = $('manejoSearch');
+const manejoPagination = $('manejoPagination');
+const prevPageBtn = $('prevPage');
+const nextPageBtn = $('nextPage');
+const pageInfo = $('pageInfo');
+
+function tipoTextFromId(id) {
+  if (id === null || id === undefined) return '-';
+  const tid = Number(id);
+  return tid === 1 ? 'Aéreo' : tid === 2 ? 'Marítimo' : '-';
+}
+function getLatestStateFromPackage(p){
+  if(!p) return null;
+  const extract = (v) => {
+    if (v == null) return null;
+    if (typeof v === 'string') return v.trim();
+    if (typeof v === 'object') {
+      if (v.estado) return String(v.estado).trim();
+      if (v.state) return String(v.state).trim();
+      if (v.name) return String(v.name).trim();
+      if (v.status) return String(v.status).trim();
+      // caso: objeto que ya contiene otro objeto
+      if (v.ultimo_estado) return String(v.ultimo_estado).trim();
+    }
+    return null;
+  };
+
+  let cand = extract(p.ultimo_estado) || extract(p.estado) || extract(p.estado_actual);
+  if (cand) return cand;
+
+  if (p.historial) {
+    for (let i = 4; i >= 1; i--) {
+      const s = p.historial[`estado${i}`];
+      const ext = extract(s);
+      if (ext && ext !== '') return ext;
+    }
+  }
+
+  if (Array.isArray(p.estados) && p.estados.length) {
+    for (let i = p.estados.length - 1; i >= 0; i--) {
+      const item = p.estados[i];
+      // item puede ser string o objeto
+      const ext = extract(item && (item.estado || item.name || item.status) ? (item.estado || item.name || item.status) : item);
+      if (ext && ext !== '') return ext;
+    }
+  }
+
+  return null;
+}
+
+function mapLatestToCategory(latest){
+  const v = (latest || '').toString().toLowerCase().trim();
+ 
+  if (!v || v === 'paquete registrado' || v === 'registrado' || v.includes('registr')) return 'en_espera';
+  if (v === 'recibido' || v.includes('recib')) return 'en_bodega';
+  if (v === 'en_transito' || v.includes('transito') || v.includes('transit')) return 'en_transito';
+  if (v === 'en_aduana' || v.includes('aduan')) return 'en_aduana';
+  if (v === 'listo_recoger' || v === 'entregado' || v === 'entregados' || v.includes('entreg')) return 'entregados';
+  return 'en_espera';
+}
+async function cargarManejo() {
+  listaManejo.innerHTML = '<p>Cargando paquetes...</p>';
+  try {
+    startDbDelayTimer();
+    const res = await fetch(`${API_BASE}/paquetes`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    manejoData = await res.json();
+    manejoData.sort((a, b) => {
+      const ta = a && a.fecha_ingreso ? new Date(a.fecha_ingreso).getTime() : 0;
+      const tb = b && b.fecha_ingreso ? new Date(b.fecha_ingreso).getTime() : 0;
+      return tb - ta;
+    });
+    clearDbDelayTimer();
+    currentManejoPage = 1;
+    renderManejoPage();
+  } catch(err){
+    clearDbDelayTimer();
+    console.warn('Fallo al cargar paquetes desde API:', err);
+    listaManejo.innerHTML = '<p>No se pudo cargar paquetes. Intenta más tarde.</p>';
+    manejoData = [];
+    manejoPagination.style.display = 'none';
+  }
+}
+
+function filterManejoData(query){
+  const q = String(query || '').trim().toLowerCase();
+
+  const tipo = (document.getElementById('filtroTipo')?.value) || 'all';
+  const estado = (document.getElementById('filtroEstado')?.value) || 'all';
+
+  let resultado = manejoData.slice();
+
+  if (q) {
+    resultado = resultado.filter(p => {
+      const nombre = (p.nombre_cliente || p.nombre || '').toString().toLowerCase();
+      const telefono = (p.telefono || '').toString().toLowerCase();
+      const codigo = (p.codigo_seguimiento || '').toString().toLowerCase();
+      return nombre.includes(q) || telefono.includes(q) || codigo.includes(q);
+    });
+  }
+
+  if (tipo && tipo !== 'all') {
+    resultado = resultado.filter(p => {
+      const tid = p.tipo_envio_id != null ? Number(p.tipo_envio_id) : null;
+      const tname = (p.tipo_envio || p.tipo || '').toString().toLowerCase();
+      if (tipo === 'aereo') return tid === 1 || tname === 'aereo';
+      if (tipo === 'maritimo') return tid === 2 || tname === 'maritimo';
+      return true;
+    });
+  }
+
+  if (estado && estado !== 'all') {
+    resultado = resultado.filter(p => {
+      const latest = getLatestStateFromPackage(p);
+      const cat = mapLatestToCategory(latest);
+      return cat === estado;
+    });
+  }
+
+  return resultado;
+}
+
+
+function renderManejoPage(){
+  const q = manejoSearch.value || '';
+  const filtered = filterManejoData(q);
+  filtered.sort((a, b) => {
+    const ta = a && a.fecha_ingreso ? new Date(a.fecha_ingreso).getTime() : 0;
+    const tb = b && b.fecha_ingreso ? new Date(b.fecha_ingreso).getTime() : 0;
+    return tb - ta;
+  });
+  const total = filtered.length;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  if (currentManejoPage > totalPages) currentManejoPage = totalPages;
+
+  const start = (currentManejoPage - 1) * PAGE_SIZE;
+  const pageItems = filtered.slice(start, start + PAGE_SIZE);
+
+  listaManejo.innerHTML = '';
+  if (pageItems.length === 0){
+    listaManejo.innerHTML = '<div style="padding:10px;color:#666;text-align:center;">No hay resultados.</div>';
+    manejoPagination.style.display = 'none';
+    return;
+  }
+
+  pageItems.forEach(p => {
+    const div = document.createElement('div');
+    div.className = 'manejo-item';
+    const fechaIngreso = p.fecha_ingreso || 'No disponible';
+    const tipo = tipoTextFromId(p.tipo_envio_id ?? p.tipo_envio ?? null);
+    const nombre = p.nombre_cliente || p.nombre || '-';
+    const codigo = p.codigo_seguimiento || '';
+    div.dataset.codigo = codigo;
+    div.dataset.id = p.id ?? '';
+    div.innerHTML = `
+      <div class="manejo-meta">
+        <div style="font-weight:700;">${escapeHtml(nombre)}</div>
+        <small>Pedido del ${escapeHtml(fechaIngreso)}</small>
+      </div>
+      <div class="manejo-right">
+        <div style="font-weight:700;">${escapeHtml(tipo)}</div>
+        <small style="color:#777">Código: ${escapeHtml(codigo || '-')}</small>
+      </div>
+    `;
+    listaManejo.appendChild(div);
+  });
+
+  if (total > 5) {
+    listaManejo.classList.add('embedded-scroll');
+  } else {
+    listaManejo.classList.remove('embedded-scroll');
+  }
+  if (total > PAGE_SIZE) {
+    manejoPagination.style.display = 'flex';
+    pageInfo.textContent = `Página ${currentManejoPage} de ${totalPages} — ${total} resultados`;
+    prevPageBtn.disabled = currentManejoPage <= 1;
+    nextPageBtn.disabled = currentManejoPage >= totalPages;
+  } else {
+    manejoPagination.style.display = 'none';
+  }
+}
+if (prevPageBtn) prevPageBtn.addEventListener('click', ()=>{ if(currentManejoPage>1) { currentManejoPage--; renderManejoPage(); }});
+if (nextPageBtn) nextPageBtn.addEventListener('click', ()=>{ currentManejoPage++; renderManejoPage(); });
+
+if (manejoSearch) {
+  manejoSearch.addEventListener('input', ()=>{ currentManejoPage = 1; renderManejoPage(); });
+  manejoSearch.addEventListener('keydown', (e)=>{ if(e.key === 'Enter'){ e.preventDefault(); currentManejoPage = 1; renderManejoPage(); }});
+}
+  const filtroTipo = document.getElementById('filtroTipo');
+  const filtroEstado = document.getElementById('filtroEstado');
+  const filtroTitulo = document.getElementById('filtroTitulo');
+  const btnMostrarTodo = document.getElementById('btnMostrarTodo');
+
+  function updateFiltroTitulo(){
+    if(!filtroTitulo || !filtroTipo || !filtroEstado || !btnMostrarTodo) return;
+    const t = filtroTipo.value, e = filtroEstado.value;
+    if(t === 'all' && e === 'all'){
+      filtroTitulo.style.display = 'none';
+      btnMostrarTodo.style.display = 'none';
+      return;
+    }
+    const tipoText = t === 'aereo' ? 'Aéreos' : t === 'maritimo' ? 'Marítimos' : '';
+    const estadoText = e === 'en_espera' ? 'En espera' : e === 'en_bodega' ? 'En bodega' : e === 'en_transito' ? 'En tránsito' : e === 'en_aduana' ? 'En aduana' : e === 'entregados' ? 'Entregados' : '';
+    let txt = '';
+    if (tipoText && estadoText) txt = `${tipoText} — ${estadoText}`;
+    else if (tipoText) txt = tipoText;
+    else if (estadoText) txt = estadoText;
+    filtroTitulo.textContent = `Mostrando pedidos: ${txt}`;
+    filtroTitulo.style.display = 'block';
+    btnMostrarTodo.style.display = 'inline-block';
+  }
+
+  if (filtroTipo) filtroTipo.addEventListener('change', ()=>{ currentManejoPage = 1; updateFiltroTitulo(); renderManejoPage(); });
+  if (filtroEstado) filtroEstado.addEventListener('change', ()=>{ currentManejoPage = 1; updateFiltroTitulo(); renderManejoPage(); });
+  if (btnMostrarTodo) btnMostrarTodo.addEventListener('click', ()=>{ if(filtroTipo) filtroTipo.value='all'; if(filtroEstado) filtroEstado.value='all'; updateFiltroTitulo(); renderManejoPage(); });
+  updateFiltroTitulo();
+const lightboxManejo = $('lightbox-manejo');
+const lmTitle = $('lmTitle');
+const lmSubtitle = $('lmSubtitle');
+const lmLoading = $('lmLoading');
+const lmContent = $('lmContent');
+const lmNombre = $('lmNombre');
+const lmPhoneWrap = $('lmPhoneWrap');
+const lmTipo = $('lmTipo');
+const lmFechaIngreso = $('lmFechaIngreso');
+const lmPeso = $('lmPeso');
+const lmTarifa = $('lmTarifa');
+const lmTotal = $('lmTotal');
+const lmTimeline = $('lmTimeline');
+const lmToggleUpdate = $('lmToggleUpdate');
+const lmUpdateFormWrap = $('lmUpdateFormWrap');
+const lmUpdateForm = $('lmUpdateForm');
+const lmPesoInput = $('lmPesoInput');
+const lmTarifaInput = $('lmTarifaInput');
+const lmEstadoSelect = $('lmEstadoSelect');
+const lmFechaInput = $('lmFechaInput');
+const lmSubmitUpdate = $('lmSubmitUpdate');
+const lmCancelUpdate = $('lmCancelUpdate');
+let currentManejoCodigo = null;
+let currentManejoPaquete = null;
+let currentManejoLatestState = null;
+
+function formatDateShort(d){
+  try {
+    if (typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d)) {
+      const [y, m, day] = d.split('-').map(x => Number(x));
+      const local = new Date(y, m - 1, day);
+      return local.toLocaleDateString('es-ES');
+    }
+    const dt = new Date(d);
+    if (isNaN(dt)) return d;
+    return dt.toLocaleDateString('es-ES');
+  } catch (e) {
+    return d;
+  }
+}
+function mapStateLabel(raw){
+  if(!raw) return 'Paquete registrado';
+  const r = raw.toString().toLowerCase();
+  switch(r){
+    case 'recibido': return 'Recibido';
+    case 'en_transito': return 'En tránsito';
+    case 'en_aduana': return 'En aduana';
+    case 'listo_recoger': return 'Listo Para Recoger';
+    default: return (r.charAt(0).toUpperCase() + r.slice(1)).replace(/_/g,' ');
+  }
+}
+function mapStateSubtext(raw){
+  if(!raw) return '';
+  const r = raw.toString().toLowerCase();
+  switch(r){
+    case 'recibido': return 'Paquete recibido por Nica Express Way';
+    case 'en_transito': return 'Paquete en camino';
+    case 'en_aduana': return 'Paquete en aduanas';
+    case 'listo_recoger': return 'Paquete listo para retirar';
+    default: return '';
+  }
+}
+function getNextStateOptions(latest) {
+  const v = (latest || '').toString().toLowerCase();
+  if (!v || v === 'paquete registrado' || v === '') return [{ value: 'recibido', label: 'Recibido' }];
+  if (v === 'recibido') return [{ value: 'en_transito', label: 'En tránsito' }];
+  if (v === 'en_transito') return [{ value: 'en_aduana', label: 'En Aduana' }];
+  if (v === 'en_aduana') return [{ value: 'listo_recoger', label: 'Listo Para Recoger' }];
+  return [];
+}
+
+function applyStateOptionsToSelect(selectEl, optionsArr) {
+  if (!selectEl) return;
+  selectEl.innerHTML = '';
+  if (!optionsArr || optionsArr.length === 0) {
+    selectEl.innerHTML = '<option value="">-- Todos los estados han sido actualizados --</option>';
+    selectEl.disabled = true;
+    selectEl.classList.add('disabled-select');
+    const noteEl = document.getElementById(selectEl.id === 'lmEstadoSelect' ? 'lmEstadoNote' : 'estadoSegNote');
+    if (noteEl) noteEl.textContent = 'Todos los estados han sido actualizados';
+    return;
+  }
+  selectEl.disabled = false;
+  selectEl.classList.remove('disabled-select');
+  const noteEl = document.getElementById(selectEl.id === 'lmEstadoSelect' ? 'lmEstadoNote' : 'estadoSegNote');
+  if (noteEl) noteEl.textContent = '';
+  const base = '<option value="">-- Seleccione --</option>';
+  selectEl.innerHTML = base + optionsArr.map(o => `<option value="${o.value}">${o.label}</option>`).join('');
+}
+
+// fetch historial y actualiza estadoSeg (sección Actualizar Seguimiento)
+let estadoSegDebounce = null;
+async function updateEstadoSegForCodigo(codigo) {
+  const sel = $('estadoSeg');
+  const note = $('estadoSegNote');
+  if (!codigo || !sel) return;
+  if (estadoSegDebounce) clearTimeout(estadoSegDebounce);
+  estadoSegDebounce = setTimeout(async () => {
+    try {
+      const res = await fetch(`${API_BASE}/historial?codigo=${encodeURIComponent(codigo)}`);
+      let historial = null;
+      if (res.ok) historial = await res.json();
+      let latest = null;
+      if (historial) {
+        for (let i = 4; i >= 1; i--) {
+          const s = historial[`estado${i}`];
+          if (s && String(s).trim() !== '') { latest = s; break; }
+        }
+      }
+      applyStateOptionsToSelect(sel, getNextStateOptions(latest));
+      if (sel.disabled && note) note.textContent = 'Todos los estados han sido actualizados';
+    } catch (err) {
+      console.warn('No se pudo obtener historial para estadoSeg', err);
+      applyStateOptionsToSelect(sel, getNextStateOptions(null));
+    }
+  }, 250);
+}
+
+if (listaManejo) {
+  listaManejo.addEventListener('click', async (e) => {
+    const item = e.target.closest('.manejo-item');
+    if (!item) return;
+    const codigo = item.dataset.codigo || null;
+    const id = item.dataset.id || null;
+    await openManejoLightbox({ codigo, id });
+  });
+}
+
+async function openManejoLightbox({ codigo, id }){
+  currentManejoCodigo = codigo || null;
+  currentManejoPaquete = null;
+
+  lmTitle.textContent = 'Pedido';
+  lmSubtitle.textContent = 'Cargando información...';
+  lmLoading.style.display = 'block';
+  lmContent.style.display = 'none';
+  lmTimeline.innerHTML = '';
+  lmNombre.textContent = '-';
+  lmPhoneWrap.textContent = '-';
+  lmTipo.textContent = '-';
+  lmFechaIngreso.textContent = '-';
+  lmPeso.textContent = '-';
+  lmTarifa.textContent = '-';
+  lmTotal.textContent = '-';
+
+  if (lightboxManejo) {
+    lightboxManejo.style.display = 'flex';
+    lightboxManejo.classList.add('modal-visible');
+    lightboxManejo.setAttribute('aria-hidden','false');
+    if (appWrapper) setInert(appWrapper, true);
+    const cb = lightboxManejo.querySelector('.close-lightbox-manejo');
+    if (cb) setTimeout(()=>cb.focus(), 50);
+  }
+  startDbDelayTimer();
+  try {
+    let paquete = null;
+    if (codigo) {
+      const res = await fetch(`${API_BASE}/paquetes?codigo=${encodeURIComponent(codigo)}`);
+      if (res.ok) {
+        const arr = await res.json();
+        if (Array.isArray(arr) && arr.length>0) paquete = arr[0];
+      }
+    }
+    // fallback by id
+    if (!paquete && id) {
+      const res2 = await fetch(`${API_BASE}/paquetes/${encodeURIComponent(id)}`);
+      if (res2.ok) paquete = await res2.json();
+    }
+    // last fallback: try find in manejoData
+    if (!paquete && manejoData && manejoData.length) {
+      paquete = manejoData.find(pp => String(pp.id) === String(id) || (pp.codigo_seguimiento && String(pp.codigo_seguimiento) === String(codigo)));
+    }
+    currentManejoPaquete = paquete || null;
+
+    let historial = null;
+    if (paquete && paquete.codigo_seguimiento) {
+      try {
+        const rh = await fetch(`${API_BASE}/historial?codigo=${encodeURIComponent(paquete.codigo_seguimiento)}`);
+        if (rh.ok) historial = await rh.json();
+      } catch(err){ console.warn('hist fetch failed', err); }
+    }
+
+    const nombre = paquete?.nombre_cliente || paquete?.nombre || '-';
+    const telefono = paquete?.telefono || '-';
+    const tipo = tipoTextFromId(paquete?.tipo_envio_id ?? paquete?.tipo_envio ?? null);
+    let fechaPrimer = paquete?.fecha_ingreso ?? null;
+
+    lmNombre.textContent = nombre;
+
+    const digits = String(telefono || '').replace(/\D/g,'');
+    if (digits.length>0) {
+      lmPhoneWrap.innerHTML = `<a class="pedido-phone" href="https://wa.me/${digits}" target="_blank" rel="noopener">${escapeHtml(telefono)}</a>`;
+    } else {
+      lmPhoneWrap.textContent = telefono || '-';
+    }
+
+    lmTipo.textContent = tipo;
+    lmFechaIngreso.textContent = fechaPrimer ? `Pedido hecho el ${formatDateShort(fechaPrimer)}` : 'Fecha de ingreso: No disponible';
+
+    if (paquete?.peso_libras != null) lmPeso.textContent = Number(paquete.peso_libras).toFixed(2) + ' lb'; else lmPeso.textContent = 'No disponible, actualizar los datos';
+    if (paquete?.tarifa_usd != null) lmTarifa.textContent = `$${Number(paquete.tarifa_usd).toFixed(2)} USD`; else lmTarifa.textContent = 'No disponible, actualizar los datos';
+    if (paquete?.peso_libras != null && paquete?.tarifa_usd != null) {
+      const total = Number(paquete.peso_libras) * Number(paquete.tarifa_usd);
+      lmTotal.textContent = `$${isFinite(total) ? total.toFixed(2) : '0.00'} USD`;
+    } else lmTotal.textContent = 'No disponible';
+
+    lmTimeline.innerHTML = '';
+    let items = [];
+    if (!historial) {
+      lmTimeline.innerHTML = '<div class="small-muted">Historial no disponible</div>';
+    } else {
+      for (let i=1;i<=4;i++){
+        const s = historial[`estado${i}`];
+        const f = historial[`fecha${i}`];
+        if ((s && String(s).trim()!=='') || (f && String(f).trim()!=='')){
+          items.push({ estado: s || null, fecha: f || null, index: i });
+        }
+      }
+      if (items.length===0){
+        lmTimeline.innerHTML = '<div class="small-muted">No hay eventos en el historial.</div>';
+      } else {
+        items.forEach(it => {
+          const div = document.createElement('div');
+          div.className = 'timeline-item';
+          const label = mapStateLabel(it.estado);
+          div.innerHTML = `<div class="state">${label}</div>
+                           <div class="subtext">${mapStateSubtext(it.estado) || ''}</div>
+                           <div class="fecha">${it.fecha ? formatDateShort(it.fecha) : ''}</div>`;
+          if (String(it.estado).toLowerCase()==='listo_recoger'){
+            div.classList.add('blink');
+            triggerConfetti();
+          }
+          lmTimeline.appendChild(div);
+        });
+      }
+    }
+    let latestState = null;
+    if (items && items.length > 0) {
+      const sorted = items.slice().sort((a,b)=>a.index - b.index);
+      for (let k = sorted.length - 1; k >= 0; k--) {
+        const s = sorted[k].estado;
+        if (s && String(s).trim() !== '') { latestState = s; break; }
+      }
+    }
+    currentManejoLatestState = latestState;
+    applyStateOptionsToSelect(lmEstadoSelect, getNextStateOptions(latestState));
+
+    clearDbDelayTimer();
+    lmLoading.style.display = 'none';
+    lmContent.style.display = 'block';
+    lmSubtitle.textContent = paquete?.codigo_seguimiento ? `Código: ${paquete.codigo_seguimiento}` : '';
+
+  } catch(err){
+    clearDbDelayTimer();
+    console.error('openManejoLightbox error', err);
+    lmLoading.style.display = 'none';
+    lmContent.style.display = 'block';
+    lmTimeline.innerHTML = '<div class="small-muted">No se pudo cargar la información del paquete.</div>';
+    lmSubtitle.textContent = 'Error al cargar';
+  }
+}
+
+const closeManejoBtn = document.querySelector('.close-lightbox-manejo');
+if (closeManejoBtn) closeManejoBtn.addEventListener('click', () => {
+  if (lightboxManejo) {
+    if (document.activeElement && lightboxManejo.contains(document.activeElement)) try { document.activeElement.blur(); } catch(e){}
+    lightboxManejo.classList.remove('modal-visible');
+    lightboxManejo.style.display = 'none';
+    lightboxManejo.setAttribute('aria-hidden','true');
+    if (appWrapper) setInert(appWrapper, false);
+
+    lmUpdateFormWrap.style.display = 'none';
+    lmUpdateForm.reset();
+  }
+});
+
+if (lmToggleUpdate) {
+  lmToggleUpdate.addEventListener('click', (e)=>{
+    e.preventDefault();
+    if (lmUpdateFormWrap.style.display === 'none' || lmUpdateFormWrap.style.display === '') {
+      lmUpdateFormWrap.style.display = 'block';
+      try {
+        applyStateOptionsToSelect(lmEstadoSelect, getNextStateOptions(currentManejoLatestState));
+      } catch(e){ console.warn('applyStateOptions error', e); }
+
+      setTimeout(()=>{ try{ lmPesoInput.focus(); }catch(e){} }, 80);
+
+      setTimeout(() => {
+        const inner = document.querySelector('.lightbox-inner');
+        if (inner) {
+          inner.scrollTo({
+            top: lmUpdateFormWrap.offsetTop - 20,
+            behavior: 'smooth'
+          });
+        }
+      }, 100);
+    } else {
+      lmUpdateFormWrap.style.display = 'none';
+    }
+  });
+}
+if (lmCancelUpdate) {
+  lmCancelUpdate.addEventListener('click', (e)=>{
+    e.preventDefault();
+    lmUpdateFormWrap.style.display = 'none';
+    lmUpdateForm.reset();
+  });
+}
+
+if (lmUpdateForm) {
+  lmUpdateForm.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    if (!currentManejoPaquete) { showResult('Error','Paquete no disponible para actualizar'); return; }
+    const codigo = currentManejoPaquete.codigo_seguimiento || currentManejoPaquete.id;
+    if (!codigo) { showResult('Error','No se encontró identificador para el paquete'); return; }
+
+    const pesoVal = getNumberOrNull('lmPesoInput');
+    const tarifaVal = getNumberOrNull('lmTarifaInput');
+    const estadoVal = (document.getElementById('lmEstadoSelect').value||'').trim() || null;
+    const fechaVal = (document.getElementById('lmFechaInput').value||'').trim() || null;
+
+    if (pesoVal === null && tarifaVal === null && !estadoVal) {
+      showResult('Aviso','Ingresa al menos un campo para actualizar (peso, tarifa o estado).');
+      return;
+    }
+    if (estadoVal && !fechaVal) {
+      showResult('Aviso','Al cambiar el estado, la fecha es obligatoria.');
+      return;
+    }
+
+    const updateObj = {};
+    if (pesoVal !== null) updateObj.peso_libras = pesoVal;
+    if (tarifaVal !== null) updateObj.tarifa_usd = tarifaVal;
+    if (fechaVal) updateObj.fecha = fechaVal;
+    if (estadoVal) updateObj.estado = estadoVal;
+
+    showSpinner('Actualizando estado...');
+    try {
+      const endpoint = (currentManejoPaquete && currentManejoPaquete.codigo_seguimiento) ? `${API_BASE}/paquetes/${encodeURIComponent(currentManejoPaquete.codigo_seguimiento)}` : `${API_BASE}/paquetes/${encodeURIComponent(currentManejoPaquete.id)}`;
+      const res = await fetch(endpoint, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updateObj)
+      });
+      if (!res.ok) {
+        let errText = `Actualizar fallo ${res.status}`;
+        try { const j = await res.json(); if (j?.error) errText = j.error; } catch(_) {}
+        throw new Error(errText);
+      }
+      const result = await res.json().catch(()=>null);
+      hideSpinner();
+      showResult('Actualizado','El estado del paquete fue actualizado correctamente.');
+      // refresh manejo list and lightbox contents
+      lmUpdateFormWrap.style.display = 'none';
+      lmUpdateForm.reset();
+      if (secciones.manejo && secciones.manejo.classList.contains('active')) await cargarManejo();
+      // reload lightbox data for same codigo
+      if (currentManejoPaquete && currentManejoPaquete.codigo_seguimiento) {
+        await openManejoLightbox({ codigo: currentManejoPaquete.codigo_seguimiento, id: currentManejoPaquete.id });
+      }
+    } catch(err){
+      hideSpinner();
+      console.error('Error actualizando desde lightbox:', err);
+      showResult('Error','No se pudo actualizar. Revisa la consola.');
+    }
+  });
+}
+
+const listaPedidos = $('listaPedidos');
+const lightboxPedido = $('lightbox-pedido');
+const closeLightboxPedidoBtn = document.querySelector('.close-lightbox-pedido');
+const lbNombre = $('lbNombre'), lbTelefono = $('lbTelefono');
+
+
+/* ============== LOCKS / STATS (accesibilidad corregida) ============== */
+let PASS_LOCK = null;
+let PASS_STATS = null;
+
+async function loadPasswords() {
+  try {
+    const resLock = await fetch(
+      'https://raw.githubusercontent.com/irvinforbusinesses/pass/main/passlock.txt?nocache=' + Date.now()
+    );
+    if (resLock.ok) PASS_LOCK = (await resLock.text()).trim();
+
+    const resStats = await fetch(
+      'https://raw.githubusercontent.com/irvinforbusinesses/pass/main/passlock.txt?nocache=' + Date.now()
+    );
+    if (resStats.ok) PASS_STATS = (await resStats.text()).trim();
+  } catch (err) {
+    console.error('Error loading passwords:', err);
+    showResult('Error', 'No se pudieron cargar las contraseñas. Intenta más tarde.');
+  }
+}
+
+const lockOverlay  = $('lockOverlay');
+const statsOverlay = $('statsOverlay');
+
+const lockPass   = $('lockPass');
+const lockSubmit = $('lockSubmit');
+const lockError  = $('lockError');
+
+const statsPass    = $('statsPass');
+const statsSubmit  = $('statsSubmit');
+const statsCancel  = $('statsCancel');
+const statsError   = $('statsError');
+
+const statsFrame   = $('estadisticasFrame');
+
+
+function tryUnlock(){
+  if(!lockPass) return;
+  if (lockPass.value === PASS_LOCK){
+    if(lockError) lockError.style.display = 'none';
+    
+    if(lockOverlay) hideModalByElement(lockOverlay);
+   
+    cargarRecord();
+    cargarManejo();
+    if (lockPass) lockPass.value = '';
+  } else {
+    if(lockError) lockError.style.display = 'block';
+  }
+}
+if(lockSubmit) lockSubmit.addEventListener('click', tryUnlock);
+if(lockPass) lockPass.addEventListener('keydown', (e)=>{ if(e.key === 'Enter') tryUnlock(); });
+
+function closeStats(){ if(statsOverlay) hideModalByElement(statsOverlay); }
+function loadStatsIfAuthorized(){
+  if(!statsPass) return;
+  if (statsPass.value === PASS_STATS){
+    if(statsError) statsError.style.display = 'none';
+    hideModalByElement(statsOverlay);
+    if (statsFrame && statsFrame.src !== 'https://nicaexpressway.github.io/web/hiddenstatshandle$.html'){
+      statsFrame.src = 'https://nicaexpressway.github.io/web/hiddenstatshandle$.html';
+    }
+    mostrarSeccion('estadisticas');
+    statsPass.value = '';
+  } else {
+    if(statsError) statsError.style.display = 'block';
+  }
+}
+if(statsSubmit) statsSubmit.addEventListener('click', loadStatsIfAuthorized);
+if(statsPass) statsPass.addEventListener('keydown', (e)=>{ if(e.key === 'Enter') loadStatsIfAuthorized(); });
+if(statsCancel) statsCancel.addEventListener('click', ()=>{ 
+  if (document.activeElement && statsOverlay.contains(document.activeElement)) try { document.activeElement.blur(); } catch(e){}
+  hideModalByElement(statsOverlay); 
+});
+
+let confettiTimeout = null;
+
+function triggerConfettiDesktop(){
+  const wrap = document.getElementById('confettiWrap');
+  if (!wrap) return;
+
+  const N = 200;
+  const colors = ['#1f3a66','#2F528F','#79A7E4'];
+
+  for (let i=0; i<N; i++){
+    const el = document.createElement('div');
+    const size = Math.floor(Math.random()*8)+6;
+    el.className = 'confetti';
+    el.style.position='absolute';
+    el.style.left = (Math.random()*100)+'%';
+    el.style.top = (-50 + Math.random()*-50) + 'px';
+    el.style.width = size+'px';
+    el.style.height = (size*0.6)+'px';
+    el.style.background = colors[Math.floor(Math.random()*colors.length)];
+    el.style.opacity = String(0.7 + Math.random()*0.3);
+    el.style.borderRadius='2px';
+    el.style.zIndex = 2500;
+
+    const destX = (Math.random()*500 - 250);
+    const destY = window.innerHeight + 100;
+    const duration = 5 + Math.random()*5;
+
+    el.style.transition = `transform ${duration}s ease-out, top ${duration}s linear, opacity ${duration}s linear`;
+
+    wrap.appendChild(el);
+
+    requestAnimationFrame(()=>{
+      el.style.top = destY + 'px';
+      el.style.transform = `translateX(${destX}px) rotate(${Math.random()*360}deg)`;
+      el.style.opacity = '0';
+    });
+  }
+
+  if (confettiTimeout) clearTimeout(confettiTimeout);
+  confettiTimeout = setTimeout(()=>{ wrap.innerHTML=''; }, 11000);
+}
+
+function triggerConfetti(){
+  // choose mobile vs desktop roughly by width
+  if (window.innerWidth < 520) triggerConfettiMobile();
+  else triggerConfettiDesktop();
+}
+function triggerConfettiMobile(){
+  const wrap = document.getElementById('confettiWrap');
+  if (!wrap) return;
+
+  const N = 100;
+  const colors = ['#1f3a66','#2F528F','#79A7E4'];
+
+  for (let i=0; i<N; i++){
+    const el = document.createElement('div');
+    const size = Math.floor(Math.random()*8)+6;
+    el.className = 'confetti';
+    el.style.position='absolute';
+    el.style.left = (Math.random()*100)+'%';
+    el.style.top = (-50 + Math.random()*-50) + 'px';
+    el.style.width = size+'px';
+    el.style.height = (size*0.6)+'px';
+    el.style.background = colors[Math.floor(Math.random()*colors.length)];
+    el.style.opacity = String(0.7 + Math.random()*0.3);
+    el.style.borderRadius='2px';
+    el.style.zIndex = 2500;
+
+    const destX = (Math.random()*500 - 250);
+    const destY = window.innerHeight + 100;
+    const duration = 5 + Math.random()*5;
+
+    el.style.transition = `transform ${duration}s ease-out, top ${duration}s linear, opacity ${duration}s linear`;
+
+    wrap.appendChild(el);
+
+    requestAnimationFrame(()=>{
+      el.style.top = destY + 'px';
+      el.style.transform = `translateX(${destX}px) rotate(${Math.random()*360}deg)`;
+      el.style.opacity = '0';
+    });
+  }
+
+  if (confettiTimeout) clearTimeout(confettiTimeout);
+  confettiTimeout = setTimeout(()=>{ wrap.innerHTML=''; }, 11000);
+}
+
+window.addEventListener('load', async ()=> {
+  await loadPasswords();
+  try {
+    if (lockOverlay && lockOverlay.style.display !== 'none') {
+      setInert(appWrapper, true);
+      setTimeout(()=>{ try { if (lockPass) lockPass.focus(); } catch(e){} }, 120);
+    }
+  } catch(e){}
+});
+
+function escapeHtml(str){
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+</script>
+</body>
+</html>
