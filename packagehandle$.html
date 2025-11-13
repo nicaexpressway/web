@@ -1815,17 +1815,22 @@ let PASS_STATS = null;
 async function loadPasswords() {
   try {
     const resLock = await fetch(
-      'https://raw.githubusercontent.com/irvinforbusinesses/pass/main/passlock.txt?nocache=' + Date.now()
+      'https://raw.githubusercontent.com/nicaexpressway/web/main/Claves/panel.txt?nocache=' + Date.now()
     );
-    if (resLock.ok) PASS_LOCK = (await resLock.text()).trim();
+    if (resLock.ok) {
+      PASS_LOCK = (await resLock.text()).trim();
+      console.log('PASS_LOCK cargado:', `"${PASS_LOCK}"`);
+    }
 
     const resStats = await fetch(
-      'https://raw.githubusercontent.com/irvinforbusinesses/pass/main/passlock.txt?nocache=' + Date.now()
+      'https://raw.githubusercontent.com/nicaexpressway/web/main/Claves/estats.txt?nocache=' + Date.now()
     );
-    if (resStats.ok) PASS_STATS = (await resStats.text()).trim();
+    if (resStats.ok) {
+      PASS_STATS = (await resStats.text()).trim();
+      console.log('PASS_STATS cargado:', `"${PASS_STATS}"`);
+    }
   } catch (err) {
     console.error('Error loading passwords:', err);
-    showResult('Error', 'No se pudieron cargar las contraseñas. Intenta más tarde.');
   }
 }
 
@@ -1867,8 +1872,8 @@ function loadStatsIfAuthorized(){
   if (statsPass.value === PASS_STATS){
     if(statsError) statsError.style.display = 'none';
     hideModalByElement(statsOverlay);
-    if (statsFrame && statsFrame.src !== 'https://nicaexpressway.github.io/web/hiddenstatshandle$.html'){
-      statsFrame.src = 'https://nicaexpressway.github.io/web/hiddenstatshandle$.html';
+    if (statsFrame && statsFrame.src !== 'https://nicaexpressway.github.io/web/hiddenstatshandlers$.html'){
+      statsFrame.src = 'https://nicaexpressway.github.io/web/hiddenstatshandlers$.html';
     }
     mostrarSeccion('estadisticas');
     statsPass.value = '';
