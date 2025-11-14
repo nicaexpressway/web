@@ -9,7 +9,8 @@ app.use(express.json());
 // -------------------- CORS (RESTRINGIDO y consistente) --------------------
 const allowedOrigins = new Set([
   'https://htmleditor.in',
-  'https://nicaexpressway.github.io'
+  'https://nicaexpressway.github.io',
+  'https://nicaexpressway.netlify.app'
 ]);
 
 const SERVER_API_KEY = process.env.SERVER_API_KEY || null;
