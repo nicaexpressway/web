@@ -20,19 +20,19 @@ app.use(rateLimit({
 }));
 
 // -------------------- CORS / Host / API-KEY estrictos --------------------
-// Orígenes permitidos (frontend). Ajusta para incluir exactamente tus frontends.
+
+// Orígenes permitidos EXACTOS (sin slash final)
 const allowedOrigins = new Set([
   'https://htmleditor.in',
-  'https://nicaexpressway.github.io/',
-  'https://nicaexpressway.netlify.app/'
+  'https://nicaexpressway.github.io',
+  'https://nicaexpressway.netlify.app'
 ]);
 
-// Hosts permitidos para el Host header (REEMPLAZA por tu host real en Render o dominio personalizado).
-// Ejemplos: 'nicaexpressway.onrender.com', 'api.tudominio.com', 'localhost:10000' (para pruebas locales)
+// Hosts permitidos (sin http://, sin https://, sin slash)
 const allowedHosts = new Set([
-  'https://nicaexpressway-ga3k.onrender.com/',   // ej: 'nicaexpressway.onrender.com'
-  'https://nicaexpressway.github.io/', // ej: 'api.tudominio.com' (si aplica)
-  'https://nicaexpressway.netlify.app/'
+  'nicaexpressway-ga3k.onrender.com',  // backend en Render
+  'nicaexpressway.github.io',          // hosting GitHub Pages
+  'nicaexpressway.netlify.app'         // hosting Netlify
 ]);
 
 const SERVER_API_KEY = process.env.SERVER_API_KEY || null;
@@ -42,18 +42,17 @@ app.use((req, res, next) => {
   const host = (req.headers.host || '').toLowerCase();
   const method = req.method;
 
-  // Validar Host header (evita uso del servicio bajo host no autorizado)
+  // Validar Host header
   if (!allowedHosts.has(host)) {
     return res.status(403).json({ error: 'Host no permitido' });
   }
 
-  // Si la petición viene desde un navegador (Origin presente), validar que sea un origin permitido
+  // Validar origen si viene del navegador
   if (origin) {
     if (!allowedOrigins.has(origin)) {
       if (method === 'OPTIONS') return res.status(403).send('CORS denied');
       return res.status(403).json({ error: 'CORS denied' });
     }
-    // Cabeceras CORS seguras (responder con Origin exacto)
     res.setHeader('Access-Control-Allow-Origin', origin);
     res.setHeader('Vary', 'Origin');
     res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
@@ -63,14 +62,13 @@ app.use((req, res, next) => {
     return next();
   }
 
-  // Si no hay Origin (server->server calls), exigir x-api-key si está configurada
+  // Server-to-server calls requieren API key
   if (SERVER_API_KEY) {
     const key = req.headers['x-api-key'] || req.query.api_key;
     if (key && key === SERVER_API_KEY) return next();
     return res.status(401).json({ error: 'Missing or invalid API key for server-to-server access' });
   }
 
-  // Por defecto bloquear acceso
   return res.status(403).json({ error: 'Requests from unknown origins are not allowed' });
 });
 
