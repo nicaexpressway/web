@@ -798,7 +798,21 @@ Esta plataforma es de prueba, dog. Acción no disponible por el momento.
 </div>
 
 <script>
-const $ = id => document.getElementById(id); // $ shortcut
+// ------------------- helper: token operador (GLOBAL) -------------------
+// Inserta este bloque en la parte superior del script (antes de cualquier uso de getOperatorToken)
+window.getOperatorToken = function() {
+  // lee token guardado al loguear al operador
+  // la key esperada es 'operator_token' (puedes añadir fallback si usas otra key)
+  try {
+    return localStorage.getItem('operator_token') || localStorage.getItem('operatorToken') || '';
+  } catch (e) {
+    // en caso extraño de bloqueo de localStorage (modo incógnito, políticas), devolvemos vacío
+    console.warn('getOperatorToken: localStorage inaccesible', e);
+    return '';
+  }
+};
+
+  const $ = id => document.getElementById(id); // $ shortcut
 const appWrapper = $('app');
 
 function setInert(el, inert){
