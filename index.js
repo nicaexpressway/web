@@ -1,51 +1,77 @@
 require('dotenv').config();
 const express = require('express');
-const cors = require('cors');
+const cors = require('cors'); // mantengo por compatibilidad si lo usas en algún punto
 const { createClient } = require('@supabase/supabase-js');
+
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 
 const app = express();
 app.use(express.json());
 
-// -------------------- CORS (RESTRINGIDO y consistente) --------------------
+// -------------------- Seguridad básica (helmet + rate limit) --------------------
+app.use(helmet());
+
+app.use(rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 min
+  max: 200, // limite por IP — ajusta según tu tráfico
+  standardHeaders: true,
+  legacyHeaders: false
+}));
+
+// -------------------- CORS / Host / API-KEY estrictos --------------------
+// Orígenes permitidos (frontend). Ajusta para incluir exactamente tus frontends.
 const allowedOrigins = new Set([
   'https://htmleditor.in',
   'https://nicaexpressway.github.io',
   'https://nicaexpressway.netlify.app'
 ]);
 
+// Hosts permitidos para el Host header (REEMPLAZA por tu host real en Render o dominio personalizado).
+// Ejemplos: 'nicaexpressway.onrender.com', 'api.tudominio.com', 'localhost:10000' (para pruebas locales)
+const allowedHosts = new Set([
+  'REPLACE_WITH_YOUR_RENDER_HOST',   // ej: 'nicaexpressway.onrender.com'
+  'REPLACE_WITH_YOUR_CUSTOM_DOMAIN'  // ej: 'api.tudominio.com' (si aplica)
+]);
+
 const SERVER_API_KEY = process.env.SERVER_API_KEY || null;
 
 app.use((req, res, next) => {
   const origin = req.headers.origin;
+  const host = (req.headers.host || '').toLowerCase();
+  const method = req.method;
 
+  // Validar Host header (evita uso del servicio bajo host no autorizado)
+  if (!allowedHosts.has(host)) {
+    return res.status(403).json({ error: 'Host no permitido' });
+  }
+
+  // Si la petición viene desde un navegador (Origin presente), validar que sea un origin permitido
   if (origin) {
-    if (allowedOrigins.has(origin)) {
-      res.setHeader('Access-Control-Allow-Origin', origin);
-      res.setHeader('Vary', 'Origin');
-      res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
-      res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
-      // Si usas credenciales (cookies/auth) deja en true; si no, puedes quitarlo o poner false
-      res.setHeader('Access-Control-Allow-Credentials', 'true');
-
-      if (req.method === 'OPTIONS') return res.sendStatus(204);
-      return next();
-    } else {
-      if (req.method === 'OPTIONS') return res.status(403).send('CORS denied');
+    if (!allowedOrigins.has(origin)) {
+      if (method === 'OPTIONS') return res.status(403).send('CORS denied');
       return res.status(403).json({ error: 'CORS denied' });
     }
+    // Cabeceras CORS seguras (responder con Origin exacto)
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Vary', 'Origin');
+    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-API-KEY');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    if (method === 'OPTIONS') return res.sendStatus(204);
+    return next();
   }
+
+  // Si no hay Origin (server->server calls), exigir x-api-key si está configurada
   if (SERVER_API_KEY) {
     const key = req.headers['x-api-key'] || req.query.api_key;
-    if (key && key === SERVER_API_KEY) {
-      // Allow server request (no CORS headers needed, es server->server)
-      return next();
-    }
+    if (key && key === SERVER_API_KEY) return next();
     return res.status(401).json({ error: 'Missing or invalid API key for server-to-server access' });
   }
 
+  // Por defecto bloquear acceso
   return res.status(403).json({ error: 'Requests from unknown origins are not allowed' });
 });
-
 
 // -------------------- Supabase client --------------------
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -58,13 +84,10 @@ if (!SUPABASE_URL || !SUPABASE_KEY) {
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // -------------------- HELPERS --------------------
-
 function getDateInTimeZone(tz = 'America/New_York') {
   try {
-    // 'en-CA' produce formato YYYY-MM-DD
     return new Intl.DateTimeFormat('en-CA', { timeZone: tz }).format(new Date());
   } catch (e) {
-    // fallback a UTC date si Intl no está disponible por alguna razón
     return new Date().toISOString().split('T')[0];
   }
 }
@@ -79,7 +102,6 @@ function normalizeTextSafe(val) {
 }
 
 function parseTipoEnvioIdFromReq(req) {
-  // 1) si vienen id explícito
   const candidateId = req.body.tipo_envio_id ?? req.body.tipoEnvioId ?? req.body.tipo_envio;
   if (candidateId !== undefined && candidateId !== null) {
     const parsed = Number(candidateId);
@@ -199,8 +221,43 @@ async function pushEstadoToHistorial(codigo, estado, fecha) {
   }
 }
 
+// -------------------- Middlewares de autorización --------------------
+
+// Middleware simple para validar una API key server->server (x-api-key)
+function requireApiKey(req, res, next) {
+  const key = req.headers['x-api-key'];
+  if (!key || key !== process.env.SERVER_API_KEY) {
+    return res.status(403).json({ error: 'Invalid API key' });
+  }
+  next();
+}
+
+// Middleware para validar token de Supabase (operador).
+// El frontend operador debe enviar Authorization: Bearer <token>
+async function requireOperatorAuth(req, res, next) {
+  const authHeader = req.headers.authorization || '';
+  const token = authHeader.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'Missing auth token' });
+
+  try {
+    const { data, error } = await supabase.auth.getUser(token);
+    if (error || !data || !data.user) {
+      return res.status(401).json({ error: 'Invalid token' });
+    }
+    // Opcional: verifica metadata/role del usuario
+    // if (!data.user.user_metadata?.is_operator) return res.status(403).json({ error: 'Forbidden' });
+
+    req.operatorUser = data.user;
+    return next();
+  } catch (e) {
+    console.error('RequireOperatorAuth error', e);
+    return res.status(500).json({ error: 'server error' });
+  }
+}
+
 // -------------------- RECORDATORIOS --------------------
-app.post('/recordatorios', async (req, res) => {
+// Protegemos creación y borrado de recordatorios (solo operadores)
+app.post('/recordatorios', requireOperatorAuth, async (req, res) => {
   try {
     const titulo = req.body.titulo ?? req.body.title ?? null;
     const descripcion = req.body.descripcion ?? req.body.description ?? null;
@@ -260,7 +317,7 @@ app.get('/recordatorios/:id', async (req, res) => {
   }
 });
 
-app.delete('/recordatorios/:id', async (req, res) => {
+app.delete('/recordatorios/:id', requireOperatorAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const { data, error } = await supabase
@@ -280,11 +337,17 @@ app.delete('/recordatorios/:id', async (req, res) => {
 });
 
 // -------------------- PAQUETES --------------------
-app.post('/paquetes', async (req, res) => {
+// Crear paquete (PROTEGIDO: solo operadores deben crear paquetes)
+app.post('/paquetes', requireOperatorAuth, async (req, res) => {
   try {
     const nombre_cliente = req.body.nombre_cliente ?? req.body.nombre ?? req.body.cliente ?? null;
     const codigo_seguimiento = req.body.codigo_seguimiento ?? req.body.codigo ?? null;
     const telefono = req.body.telefono ?? req.body.phone ?? null;
+
+    // valida codigo minimo si quieres (opcional)
+    if (!codigo_seguimiento || typeof codigo_seguimiento !== 'string' || codigo_seguimiento.trim() === '') {
+      return res.status(400).json({ error: 'codigo_seguimiento required' });
+    }
 
     const tipo_envio_id = parseTipoEnvioIdFromReq(req);
 
@@ -292,8 +355,6 @@ app.post('/paquetes', async (req, res) => {
     const tarifa_usd = req.body.tarifa_usd ?? req.body.tarifa ?? null;
 
     const fecha_ingreso = req.body.fecha_ingreso ?? getDateInTimeZone('America/New_York');
-
-    const fecha_estado = req.body.fecha_ingreso ?? req.body.fecha ?? fecha_ingreso;
 
     const insertObj = {
       nombre_cliente,
@@ -325,6 +386,8 @@ app.post('/paquetes', async (req, res) => {
     return res.status(500).json({ error: 'server error' });
   }
 });
+
+// Lecturas públicas (GET) para paquetería
 app.get('/paquetes', async (req, res) => {
   try {
     const { codigo } = req.query;
@@ -362,7 +425,8 @@ app.get('/paquetes/:id', async (req, res) => {
   }
 });
 
-app.put('/paquetes/:codigo_seguimiento', async (req, res) => {
+// Actualizar paquete (PROTEGIDO: operador)
+app.put('/paquetes/:codigo_seguimiento', requireOperatorAuth, async (req, res) => {
   try {
     const { codigo_seguimiento } = req.params;
 
@@ -404,13 +468,11 @@ app.put('/paquetes/:codigo_seguimiento', async (req, res) => {
       }
     }
 
-    // Si enviaron estado -> lo empujamos al historial (tabla 'historial')
     if (estado) {
       try {
         await pushEstadoToHistorial(codigo_seguimiento, estado, fecha_para_estado);
       } catch (e) {
         console.error('pushEstadoToHistorial error:', e);
-        // no hacemos fallar la respuesta principal por un fallo en historial
       }
     }
 
@@ -422,9 +484,8 @@ app.put('/paquetes/:codigo_seguimiento', async (req, res) => {
   }
 });
 
-
-app.patch('/paquetes/:identifier', async (req, res, next) => {
-  // redirigimos a la misma lógica de PUT manejada arriba
+// PATCH (compatibilidad) - también protegido
+app.patch('/paquetes/:identifier', requireOperatorAuth, async (req, res, next) => {
   req.params.codigo_seguimiento = req.params.identifier;
   return app._router.handle(req, res, next);
 });
@@ -448,24 +509,23 @@ app.get('/historial', async (req, res) => {
     }
     if (!data) return res.status(404).json({ error: 'Historial no encontrado' });
 
-  try {
-  const pRes = await supabase
-    .from('paquetes')
-    .select('fecha_ingreso')
-    .eq('codigo_seguimiento', codigo)
-    .limit(1)
-    .maybeSingle();
+    try {
+      const pRes = await supabase
+        .from('paquetes')
+        .select('fecha_ingreso')
+        .eq('codigo_seguimiento', codigo)
+        .limit(1)
+        .maybeSingle();
       if (!pRes.error && pRes.data) {
-    data.fecha_ingreso = pRes.data.fecha_ingreso || null;
-    if (!data.fecha1 || String(data.fecha1).trim() === '') {
-    data.fecha1 = pRes.data.fecha_ingreso || null;
+        data.fecha_ingreso = pRes.data.fecha_ingreso || null;
+        if (!data.fecha1 || String(data.fecha1).trim() === '') {
+          data.fecha1 = pRes.data.fecha_ingreso || null;
+        }
+      }
+    } catch (e) {
+      console.warn('No se pudo recuperar fecha_ingreso para historial:', e);
     }
- }
 
-} catch (e) {
-  console.warn('No se pudo recuperar fecha_ingreso para historial:', e);
-  // no fatal, devolvemos historial sin la fecha_ingreso adicional
-}
     return res.json(data);
   } catch (err) {
     console.error('GET /historial error:', err);
@@ -512,7 +572,6 @@ app.get('/stats', async (req, res) => {
     const tipoMap = { 'aereo': 1, 'maritimo': 2 };
     const tipoId = tipoMap[filter] ?? null;
 
-    // 1) traer paquetes (filtrando por tipo si aplica) -> necesitamos codigo_seguimiento, tarifa_usd, peso_libras
     let paquetesQuery = supabase.from('paquetes').select('codigo_seguimiento, tarifa_usd, peso_libras, tipo_envio_id');
     if (tipoId) paquetesQuery = paquetesQuery.eq('tipo_envio_id', tipoId);
     const paquetesFiltered = await paquetesQuery;
@@ -587,8 +646,8 @@ app.get('/stats', async (req, res) => {
 
     return res.json({
       counts,
-      ganancias,      
-      total_pounds,    
+      ganancias,
+      total_pounds,
       total: (enviadosCount + bodegaCount + caminoCount + aduanaCount)
     });
   } catch (err) {
@@ -596,8 +655,10 @@ app.get('/stats', async (req, res) => {
     return res.status(500).json({ error: 'server error' });
   }
 });
+
 /* -------------------- PEDIDOS -------------------- */
 
+// POST /pedidos - público (clientes pueden crear pedidos)
 app.post('/pedidos', async (req, res) => {
   try {
     const nombre = req.body.nombre ?? req.body.nombreSolicitar ?? req.body.nombre_cliente ?? null;
@@ -613,7 +674,7 @@ app.post('/pedidos', async (req, res) => {
       const tipoRaw = (req.body.tipo ?? req.body.tipoEnvio ?? req.body.tipoEnvioSolicitar ?? '').toString().toLowerCase();
       if (tipoRaw.includes('aer')) tipo_envio_id = 1;
       else if (tipoRaw.includes('mar')) tipo_envio_id = 2;
-      else tipo_envio_id = null; // dejar null si no se puede inferir
+      else tipo_envio_id = null;
     }
 
     const peso_aprox = (req.body.peso_aprox ?? req.body.peso ?? req.body.pesoSolicitar ?? null);
@@ -652,7 +713,6 @@ app.get('/pedidos', async (req, res) => {
     let query = supabase.from('pedidos').select('*').order('id', { ascending: false });
 
     if (nombre) {
-      
       const escaped = nombre.replace(/%/g, '\\%').replace(/'/g, "''");
       query = query.ilike('nombre', `%${escaped}%`);
     } else if (telefono) {
@@ -693,7 +753,6 @@ app.get('/pedidos/:id', async (req, res) => {
 });
 
 app.get('/wake', (req, res) => res.status(200).json({ ok: true, timestamp: Date.now() }));
-
 
 // -------------------- START SERVER --------------------
 const PORT = process.env.PORT || 10000;
