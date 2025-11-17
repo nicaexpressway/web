@@ -1,6 +1,6 @@
 require('dotenv').config();
 const express = require('express');
-const cors = require('cors'); // mantengo por compatibilidad si lo usas en algún punto
+const cors = require('cors'); // lo dejamos por compatibilidad
 const { createClient } = require('@supabase/supabase-js');
 
 const helmet = require('helmet');
@@ -28,7 +28,7 @@ const allowedOrigins = new Set([
   'https://nicaexpressway.netlify.app'
 ]);
 
-// Hosts permitidos (sin http://, sin https://, sin slash)
+// Hosts permitidos (sin http://, sin https://, sin slash, sin puerto)
 const allowedHosts = new Set([
   'nicaexpressway-ga3k.onrender.com',  // backend en Render
   'nicaexpressway.github.io',          // hosting GitHub Pages
@@ -39,7 +39,9 @@ const SERVER_API_KEY = process.env.SERVER_API_KEY || null;
 
 app.use((req, res, next) => {
   const origin = req.headers.origin;
-  const host = (req.headers.host || '').toLowerCase();
+  // canonicalize host: remove port if present
+  const rawHost = (req.headers.host || '').toLowerCase();
+  const host = rawHost.replace(/:\d+$/, '');
   const method = req.method;
 
   // Validar Host header
@@ -236,16 +238,22 @@ function requireApiKey(req, res, next) {
 async function requireOperatorAuth(req, res, next) {
   const authHeader = req.headers.authorization || '';
   const token = authHeader.split(' ')[1];
-  if (!token) return res.status(401).json({ error: 'Missing auth token' });
+
+  // Debug logs mínimos (quita después de testear)
+  console.log('[auth] requireOperatorAuth: authHeader present?', !!authHeader);
+
+  if (!token) {
+    console.warn('[auth] Missing token. Headers:', Object.keys(req.headers));
+    return res.status(401).json({ error: 'Missing auth token' });
+  }
 
   try {
+    // Supabase v2: verify token -> getUser
     const { data, error } = await supabase.auth.getUser(token);
     if (error || !data || !data.user) {
+      console.warn('[auth] token invalid or getUser error:', error && error.message);
       return res.status(401).json({ error: 'Invalid token' });
     }
-    // Opcional: verifica metadata/role del usuario
-    // if (!data.user.user_metadata?.is_operator) return res.status(403).json({ error: 'Forbidden' });
-
     req.operatorUser = data.user;
     return next();
   } catch (e) {
@@ -343,7 +351,6 @@ app.post('/paquetes', requireOperatorAuth, async (req, res) => {
     const codigo_seguimiento = req.body.codigo_seguimiento ?? req.body.codigo ?? null;
     const telefono = req.body.telefono ?? req.body.phone ?? null;
 
-    // valida codigo minimo si quieres (opcional)
     if (!codigo_seguimiento || typeof codigo_seguimiento !== 'string' || codigo_seguimiento.trim() === '') {
       return res.status(400).json({ error: 'codigo_seguimiento required' });
     }
@@ -389,9 +396,15 @@ app.post('/paquetes', requireOperatorAuth, async (req, res) => {
 // Lecturas públicas (GET) para paquetería
 app.get('/paquetes', async (req, res) => {
   try {
-    const { codigo } = req.query;
+    const rawCodigo = req.query.codigo ?? req.query.codigo_seguimiento ?? null;
+    const codigo = (typeof rawCodigo === 'string') ? rawCodigo.trim() : null;
+
     let query = supabase.from('paquetes').select('*');
-    if (codigo) query = query.eq('codigo_seguimiento', codigo);
+
+    if (codigo) {
+      query = query.eq('codigo_seguimiento', codigo);
+    }
+
     const { data, error } = await query;
     if (error) {
       console.error('Supabase get paquetes error:', error);
@@ -495,7 +508,8 @@ app.get('/historial', async (req, res) => {
     const { codigo } = req.query;
     if (!codigo) return res.status(400).json({ error: 'codigo query required' });
 
-    const { data, error } = await supabase
+    // intentar traer historial
+    let { data, error } = await supabase
       .from('historial')
       .select('*')
       .eq('codigo_seguimiento', codigo)
@@ -506,23 +520,57 @@ app.get('/historial', async (req, res) => {
       console.error('Supabase get historial error:', error);
       return res.status(400).json({ error: error.message || error });
     }
-    if (!data) return res.status(404).json({ error: 'Historial no encontrado' });
 
-    try {
-      const pRes = await supabase
-        .from('paquetes')
-        .select('fecha_ingreso')
-        .eq('codigo_seguimiento', codigo)
-        .limit(1)
-        .maybeSingle();
-      if (!pRes.error && pRes.data) {
-        data.fecha_ingreso = pRes.data.fecha_ingreso || null;
-        if (!data.fecha1 || String(data.fecha1).trim() === '') {
-          data.fecha1 = pRes.data.fecha_ingreso || null;
+    if (!data) {
+      // no existe historial -> intentar crear fila mínima (copiando fecha_ingreso si existe)
+      try {
+        const pRes = await supabase
+          .from('paquetes')
+          .select('fecha_ingreso')
+          .eq('codigo_seguimiento', codigo)
+          .limit(1)
+          .maybeSingle();
+        const fecha_ingreso = (!pRes.error && pRes.data) ? pRes.data.fecha_ingreso : null;
+
+        const createRes = await supabase
+          .from('historial')
+          .insert([{
+            codigo_seguimiento: codigo,
+            estado1: null, fecha1: fecha_ingreso,
+            estado2: null, fecha2: null,
+            estado3: null, fecha3: null,
+            estado4: null, fecha4: null
+          }])
+          .select()
+          .maybeSingle();
+
+        if (createRes.error) {
+          console.warn('No se pudo crear historial automaticamente:', createRes.error);
+          return res.status(404).json({ error: 'Historial no encontrado' });
         }
+        data = createRes.data;
+      } catch (e) {
+        console.warn('Fallo al crear historial automaticamente:', e);
+        return res.status(404).json({ error: 'Historial no encontrado' });
       }
-    } catch (e) {
-      console.warn('No se pudo recuperar fecha_ingreso para historial:', e);
+    } else {
+      // si existe historial, enriquecer con fecha_ingreso si hace falta (comportamiento anterior)
+      try {
+        const pRes = await supabase
+          .from('paquetes')
+          .select('fecha_ingreso')
+          .eq('codigo_seguimiento', codigo)
+          .limit(1)
+          .maybeSingle();
+        if (!pRes.error && pRes.data) {
+          data.fecha_ingreso = pRes.data.fecha_ingreso || null;
+          if (!data.fecha1 || String(data.fecha1).trim() === '') {
+            data.fecha1 = pRes.data.fecha_ingreso || null;
+          }
+        }
+      } catch (e) {
+        console.warn('No se pudo recuperar fecha_ingreso para historial:', e);
+      }
     }
 
     return res.json(data);
@@ -535,29 +583,68 @@ app.get('/historial', async (req, res) => {
 // -------------------- SEARCH --------------------
 app.post('/paquetes/search', async (req, res) => {
   try {
-    const { nombre, telefono } = req.body ?? {};
+    let { nombre, telefono, codigo } = req.body ?? {};
+    nombre = (typeof nombre === 'string') ? nombre.trim() : null;
+    telefono = (typeof telefono === 'string') ? telefono.trim() : null;
+    codigo = (typeof codigo === 'string') ? codigo.trim() : null;
 
-    if (!nombre && !telefono) {
-      return res.status(400).json({ error: 'Se requiere nombre o telefono para buscar' });
+    if (!nombre && !telefono && !codigo) {
+      return res.status(400).json({ error: 'Se requiere nombre, telefono o codigo para buscar' });
     }
 
-    let query = supabase.from('paquetes').select('*');
-
-    if (nombre && telefono) {
-      const escapedName = nombre.replace(/%/g, '\\%').replace(/'/g, "''");
-      query = query.or(`nombre_cliente.ilike.%${escapedName}%,telefono.eq.${telefono}`);
-    } else if (nombre) {
-      query = query.ilike('nombre_cliente', `%${nombre}%`);
-    } else if (telefono) {
-      query = query.eq('telefono', telefono);
+    // Si viene codigo, buscar por codigo_seguimiento directamente
+    if (codigo) {
+      const q = supabase.from('paquetes').select('*').eq('codigo_seguimiento', codigo);
+      const { data, error } = await q;
+      if (error) {
+        console.error('Search by codigo error:', error);
+        return res.status(400).json({ error: error.message || error });
+      }
+      return res.json(data || []);
     }
 
-    const { data, error } = await query;
-    if (error) {
-      console.error('Supabase paquetes search error:', error);
-      return res.status(400).json({ error: error.message || error });
+    // Construir búsqueda por nombre/telefono con fallback si alguna columna no existe
+    const escapedName = nombre ? nombre.replace(/%/g, '\\%').replace(/'/g, "''") : null;
+
+    // Intento 1: buscar en nombre_cliente y nombre (en una sola or)
+    try {
+      let orExpr = [];
+      if (escapedName) orExpr.push(`nombre_cliente.ilike.%${escapedName}%`);
+      if (escapedName) orExpr.push(`nombre.ilike.%${escapedName}%`);
+      if (telefono) orExpr.push(`telefono.eq.${telefono}`);
+      const orString = orExpr.join(',');
+      const q = supabase.from('paquetes').select('*').or(orString);
+      const { data, error } = await q;
+      if (error) {
+        // puede deberse a columna inexistente -> caemos al fallback
+        throw error;
+      }
+      return res.json(data || []);
+    } catch (firstErr) {
+      console.warn('Search first attempt failed, fallback to safer queries:', firstErr?.message || firstErr);
+      // Fallback: intentar buscar solo en nombre_cliente y telefono (columnas que sí deberías tener)
+      try {
+        let query = supabase.from('paquetes').select('*');
+        if (nombre && telefono) {
+          const escaped = nombre.replace(/%/g, '\\%').replace(/'/g, "''");
+          query = query.or(`nombre_cliente.ilike.%${escaped}%,telefono.eq.${telefono}`);
+        } else if (nombre) {
+          const escaped = nombre.replace(/%/g, '\\%').replace(/'/g, "''");
+          query = query.ilike('nombre_cliente', `%${escaped}%`);
+        } else if (telefono) {
+          query = query.eq('telefono', telefono);
+        }
+        const { data, error } = await query;
+        if (error) {
+          console.error('Fallback search error:', error);
+          return res.status(400).json({ error: error.message || error });
+        }
+        return res.json(data || []);
+      } catch (fallbackErr) {
+        console.error('Final fallback search error:', fallbackErr);
+        return res.status(500).json({ error: 'server error' });
+      }
     }
-    return res.json(data || []);
   } catch (err) {
     console.error('POST /paquetes/search error:', err);
     return res.status(500).json({ error: 'server error' });
