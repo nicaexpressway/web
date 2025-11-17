@@ -44,27 +44,28 @@ app.use((req, res, next) => {
   const host = rawHost.replace(/:\d+$/, '');
   const method = req.method;
 
-  // Validar Host header
+  // 1) Si la petición viene de un navegador (Origin presente) -> validar Origin PRIMERO
+  if (origin) {
+    if (allowedOrigins.has(origin)) {
+      // Responder CORS rápidamente para solicitudes desde frontends autorizados
+      res.setHeader('Access-Control-Allow-Origin', origin);
+      res.setHeader('Vary', 'Origin');
+      res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-API-KEY');
+      res.setHeader('Access-Control-Allow-Credentials', 'true');
+      if (method === 'OPTIONS') return res.sendStatus(204);
+      return next();
+    } else {
+      if (method === 'OPTIONS') return res.status(403).send('CORS denied');
+      return res.status(403).json({ error: 'CORS denied' });
+    }
+  }
+
+  // 2) Si no hay Origin (server->server), entonces validar Host + API key
   if (!allowedHosts.has(host)) {
     return res.status(403).json({ error: 'Host no permitido' });
   }
 
-  // Validar origen si viene del navegador
-  if (origin) {
-    if (!allowedOrigins.has(origin)) {
-      if (method === 'OPTIONS') return res.status(403).send('CORS denied');
-      return res.status(403).json({ error: 'CORS denied' });
-    }
-    res.setHeader('Access-Control-Allow-Origin', origin);
-    res.setHeader('Vary', 'Origin');
-    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-API-KEY');
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-    if (method === 'OPTIONS') return res.sendStatus(204);
-    return next();
-  }
-
-  // Server-to-server calls requieren API key
   if (SERVER_API_KEY) {
     const key = req.headers['x-api-key'] || req.query.api_key;
     if (key && key === SERVER_API_KEY) return next();
