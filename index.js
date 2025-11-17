@@ -23,8 +23,8 @@ app.use(rateLimit({
 // Orígenes permitidos (frontend). Ajusta para incluir exactamente tus frontends.
 const allowedOrigins = new Set([
   'https://htmleditor.in',
-  'https://nicaexpressway.github.io',
-  'https://nicaexpressway.netlify.app'
+  'https://nicaexpressway.github.io/',
+  'https://nicaexpressway.netlify.app/'
 ]);
 
 // Hosts permitidos para el Host header (REEMPLAZA por tu host real en Render o dominio personalizado).
