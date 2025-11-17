@@ -2215,23 +2215,29 @@ if (btnCerrarConfirm) btnCerrarConfirm.addEventListener('click', (e)=>{
   });
 
 })();
+ document.addEventListener('DOMContentLoaded', () => {
   const form = document.querySelector("form");
+  if (!form) return;
 
-form.addEventListener("submit", (e) => {
-  const nombre = document.getElementById("nombreBuscar").value.trim();
-  const telefono = document.getElementById("telefonoBuscar").value.trim();
+  form.addEventListener("submit", (e) => {
+    const nombre = (document.getElementById("nombreBuscar")?.value || '').trim();
+    const telefono = (document.getElementById("telefonoBuscar")?.value || '').trim();
 
-  if (!nombre) {
-    alert("Por favor ingrese su nombre y apellido.");
-    e.preventDefault();
-    return;
-  }
-
-  if (!/^[0-9]{8,10}$/.test(telefono)) {
-    alert("El teléfono debe tener entre 8 y 10 dígitos numéricos.");
-    e.preventDefault();
-  }
+    if (!nombre) {
+      alert("Por favor ingresa tu nombre.");
+      e.preventDefault();
+      return;
+    }
+    // Validación simple para teléfono (ajusta según formato)
+    if (telefono && !/^\d{8,10}$/.test(telefono)) {
+      alert("El teléfono debe tener entre 8 y 10 dígitos.");
+      e.preventDefault();
+      return;
+    }
+    // si quieres, aquí haces submit o fetch
+  });
 });
+
 
 </script>
 </body>
