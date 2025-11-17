@@ -1002,11 +1002,14 @@ if (formRecord) formRecord.addEventListener('submit', async (e) => {
   if (!titulo || !descripcion || !fecha_limite) return;
   showSpinner('Agregando recordatorio...');
   try {
-    const res = await fetch(`${API_BASE}/recordatorios`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+   const headers = { 'Content-Type': 'application/json' };
+     const token = getOperatorToken();
+     if (token) headers['Authorization'] = 'Bearer ' + token;
+     const res = await fetch(`${API_BASE}/recordatorios`, {
+       method: 'POST',
+     headers,
       body: JSON.stringify({ titulo, descripcion, fecha_limite })
-    });
+     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     hideSpinner();
     formRecord.reset();
@@ -1037,9 +1040,13 @@ if (btnConfirmEliminar) btnConfirmEliminar.addEventListener('click', async () =>
   if (recordatorioIdAEliminar !== null) {
     showSpinner('Eliminando recordatorio...');
     try {
-      const res = await fetch(`${API_BASE}/recordatorios/${recordatorioIdAEliminar}`, {
-        method: 'DELETE'
-      });
+  const headers = {};
+ const token = getOperatorToken();
+if (token) headers['Authorization'] = 'Bearer ' + token;
+  const res = await fetch(`${API_BASE}/recordatorios/${recordatorioIdAEliminar}`, {
+  method: 'DELETE',
+     headers
+   });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       hideSpinner();
       hideModalByElement(popEliminarConfirm);
@@ -1123,11 +1130,14 @@ if (formAgregar) formAgregar.addEventListener('submit', async (e) => {
 
   showSpinner('Registrando paquete...');
   try {
-    const res = await fetch(`${API_BASE}/paquetes`, {
+   const headers = { 'Content-Type': 'application/json' };
+   const token = getOperatorToken();
+  if (token) headers['Authorization'] = 'Bearer ' + token;
+  const res = await fetch(`${API_BASE}/paquetes`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nombre_cliente: nombre, codigo_seguimiento: codigo, telefono, tipo_envio: tipo })
-    });
+ headers,
+ body: JSON.stringify({ nombre_cliente: nombre, codigo_seguimiento: codigo, telefono, tipo_envio: tipo })
+   });
     if (!res.ok) {
       let errText = `Registro falló ${res.status}`;
       try { const j = await res.json(); if (j?.error) errText = j.error; } catch(_) {}
@@ -1189,11 +1199,14 @@ if (formActualizar) formActualizar.addEventListener('submit', async (e) => {
 
   showSpinner('Actualizando estado...');
   try {
-    const res = await fetch(`${API_BASE}/paquetes/${encodeURIComponent(codigoSeg)}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(updateObj)
-    });
+  const headers = { 'Content-Type': 'application/json' };
+  const token = getOperatorToken();
+   if (token) headers['Authorization'] = 'Bearer ' + token;
+     const res = await fetch(`${API_BASE}/paquetes/${encodeURIComponent(codigoSeg)}`, {
+  method: 'PUT',
+headers,
+ body: JSON.stringify(updateObj)
+  });
     if (!res.ok) {
       let errText = `Actualizar falló ${res.status}`;
       try { const j = await res.json(); if (j?.error) errText = j.error; } catch(_) {}
@@ -1773,11 +1786,15 @@ if (lmUpdateForm) {
     showSpinner('Actualizando estado...');
     try {
       const endpoint = (currentManejoPaquete && currentManejoPaquete.codigo_seguimiento) ? `${API_BASE}/paquetes/${encodeURIComponent(currentManejoPaquete.codigo_seguimiento)}` : `${API_BASE}/paquetes/${encodeURIComponent(currentManejoPaquete.id)}`;
-      const res = await fetch(endpoint, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updateObj)
-      });
+      const headers = { 'Content-Type': 'application/json' };
+      const token = getOperatorToken();
+    if (token) headers['Authorization'] = 'Bearer ' + token;
+  const res = await fetch(endpoint, {
+  method: 'PUT',
+   headers,
+ body: JSON.stringify(updateObj)
+  });
+
       if (!res.ok) {
         let errText = `Actualizar fallo ${res.status}`;
         try { const j = await res.json(); if (j?.error) errText = j.error; } catch(_) {}
