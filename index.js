@@ -30,8 +30,9 @@ const allowedOrigins = new Set([
 // Hosts permitidos para el Host header (REEMPLAZA por tu host real en Render o dominio personalizado).
 // Ejemplos: 'nicaexpressway.onrender.com', 'api.tudominio.com', 'localhost:10000' (para pruebas locales)
 const allowedHosts = new Set([
-  'REPLACE_WITH_YOUR_RENDER_HOST',   // ej: 'nicaexpressway.onrender.com'
-  'REPLACE_WITH_YOUR_CUSTOM_DOMAIN'  // ej: 'api.tudominio.com' (si aplica)
+  'https://nicaexpressway-ga3k.onrender.com/',   // ej: 'nicaexpressway.onrender.com'
+  'https://nicaexpressway.github.io/', // ej: 'api.tudominio.com' (si aplica)
+  'https://nicaexpressway.netlify.app/'
 ]);
 
 const SERVER_API_KEY = process.env.SERVER_API_KEY || null;
