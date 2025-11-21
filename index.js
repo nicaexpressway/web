@@ -25,8 +25,7 @@ app.use(rateLimit({
 const allowedOrigins = new Set([
   'https://htmleditor.in',
   'https://nicaexpressway.github.io',
-  'https://nicaexpressway.netlify.app',
-  'https://nicaexpressway-ga3k.onrender.com'
+  'https://nicaexpressway.netlify.app'
 ]);
 
 // Hosts permitidos (sin http://, sin https://, sin slash, sin puerto)
@@ -236,36 +235,17 @@ function requireApiKey(req, res, next) {
 }
 
 // Middleware para validar token de Supabase (operador).
-// El frontend operador debe enviar Authorization: Bearer <token>
+// ORIGINAL: validaba Authorization: Bearer <token> contra supabase.auth.getUser
+// CAMBIO: se revirtió la validación del token (NO-OP) tal como solicitaste.
+// Si luego quieres reactivar, reemplaza esta función por la implementación con supabase.auth.getUser.
 async function requireOperatorAuth(req, res, next) {
-  const authHeader = req.headers.authorization || '';
-  const token = authHeader.split(' ')[1];
-
-  // Debug logs mínimos (quita después de testear)
-  console.log('[auth] requireOperatorAuth: authHeader present?', !!authHeader);
-
-  if (!token) {
-    console.warn('[auth] Missing token. Headers:', Object.keys(req.headers));
-    return res.status(401).json({ error: 'Missing auth token' });
-  }
-
-  try {
-    // Supabase v2: verify token -> getUser
-    const { data, error } = await supabase.auth.getUser(token);
-    if (error || !data || !data.user) {
-      console.warn('[auth] token invalid or getUser error:', error && error.message);
-      return res.status(401).json({ error: 'Invalid token' });
-    }
-    req.operatorUser = data.user;
-    return next();
-  } catch (e) {
-    console.error('RequireOperatorAuth error', e);
-    return res.status(500).json({ error: 'server error' });
-  }
+  // intentionally bypassing operator token check - allowing access
+  return next();
 }
 
 // -------------------- RECORDATORIOS --------------------
 // Protegemos creación y borrado de recordatorios (solo operadores)
+// ahora requireOperatorAuth es NO-OP, por tanto las rutas quedan abiertas según tu petición
 app.post('/recordatorios', requireOperatorAuth, async (req, res) => {
   try {
     const titulo = req.body.titulo ?? req.body.title ?? null;
@@ -346,7 +326,7 @@ app.delete('/recordatorios/:id', requireOperatorAuth, async (req, res) => {
 });
 
 // -------------------- PAQUETES --------------------
-// Crear paquete (PROTEGIDO: solo operadores deben crear paquetes)
+// Crear paquete (PROTEGIDO: solo operadores) — ahora abierto porque el middleware es NO-OP
 app.post('/paquetes', requireOperatorAuth, async (req, res) => {
   try {
     const nombre_cliente = req.body.nombre_cliente ?? req.body.nombre ?? req.body.cliente ?? null;
@@ -439,7 +419,7 @@ app.get('/paquetes/:id', async (req, res) => {
   }
 });
 
-// Actualizar paquete (PROTEGIDO: operador)
+// Actualizar paquete (PROTEGIDO: operador) -> ahora abierto
 app.put('/paquetes/:codigo_seguimiento', requireOperatorAuth, async (req, res) => {
   try {
     const { codigo_seguimiento } = req.params;
@@ -498,7 +478,7 @@ app.put('/paquetes/:codigo_seguimiento', requireOperatorAuth, async (req, res) =
   }
 });
 
-// PATCH (compatibilidad) - también protegido
+// PATCH (compatibilidad) - también abierto ahora
 app.patch('/paquetes/:identifier', requireOperatorAuth, async (req, res, next) => {
   req.params.codigo_seguimiento = req.params.identifier;
   return app._router.handle(req, res, next);
