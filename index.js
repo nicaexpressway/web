@@ -25,7 +25,7 @@ app.use(rateLimit({
 const allowedOrigins = new Set([
   'https://htmleditor.in',
   'https://nicaexpressway.github.io',
-  'https://nicaexpressway.netlify.app,
+  'https://nicaexpressway.netlify.app',
   'https://nicaexpressway-ga3k.onrender.com'
 ]);
 
