@@ -651,7 +651,7 @@ Esta plataforma es de prueba, dog. Acción no disponible por el momento.
   <div id="estadisticas-container">
     <iframe id="estadisticasFrame" src="" title="Estadísticas"></iframe>
   </div>
-  <a class="link-btn" href="https://nicaexpressway/web/hiddenstatshandle$.html" target="_blank">Vista Completa</a>
+  <a class="link-btn" href="https://nicaexpressway.netlify.app/rockcasterly693%$.html" target="_blank">Vista Completa</a>
 </section>
 
 <footer>
@@ -1199,7 +1199,7 @@ if (formActualizar) formActualizar.addEventListener('submit', async (e) => {
   const tarifa = getNumberOrNull('tarifaSeg');
   const fecha = $('fechaEstado').value || null;
 
-  if (!codigoSeg || !codigoSeg.match(/^\d{1,10}$/)) return showResult('Aviso', 'Código de seguimiento requerido (1-10 dígitos numéricos).');
+  if (!codigoSeg || !codigoSeg.match(/^\d{1}$/)) return showResult('Aviso', 'Código de seguimiento requerido (1-10 dígitos numéricos).');
 
   const updateObj = {};
   if (nombreSeg) updateObj.nombre_cliente = nombreSeg;
@@ -1516,7 +1516,7 @@ function mapStateSubtext(raw){
   if(!raw) return '';
   const r = raw.toString().toLowerCase();
   switch(r){
-    case 'recibido': return 'Paquete recibido por Nica Express Way';
+    case 'recibido': return 'Paquete recibido por Nica ExpressWay';
     case 'en_transito': return 'Paquete en camino';
     case 'en_aduana': return 'Paquete en aduanas';
     case 'listo_recoger': return 'Paquete listo para retirar';
@@ -1903,8 +1903,8 @@ function loadStatsIfAuthorized(){
   if (statsPass.value === PASS_STATS){
     if(statsError) statsError.style.display = 'none';
     hideModalByElement(statsOverlay);
-    if (statsFrame && statsFrame.src !== 'https://nicaexpressway.github.io/web/hiddenstatshandlers$.html'){
-      statsFrame.src = 'https://nicaexpressway.github.io/web/hiddenstatshandlers$.html';
+    if (statsFrame && statsFrame.src !== 'https://nicaexpressway.netlify.app/rockcasterly693%$.html'){
+      statsFrame.src = 'https://nicaexpressway.netlify.app/rockcasterly693%$.html';
     }
     mostrarSeccion('estadisticas');
     statsPass.value = '';
