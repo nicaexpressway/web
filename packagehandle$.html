@@ -1199,7 +1199,8 @@ if (formActualizar) formActualizar.addEventListener('submit', async (e) => {
   const tarifa = getNumberOrNull('tarifaSeg');
   const fecha = $('fechaEstado').value || null;
 
-  if (!codigoSeg || !codigoSeg.match(/^\d{1}$/)) return showResult('Aviso', 'Código de seguimiento requerido (1-10 dígitos numéricos).');
+if (!codigoSeg) return showResult('Aviso', 'Código de seguimiento requerido.');
+
 
   const updateObj = {};
   if (nombreSeg) updateObj.nombre_cliente = nombreSeg;
