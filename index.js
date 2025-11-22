@@ -246,7 +246,7 @@ async function requireOperatorAuth(req, res, next) {
 // -------------------- RECORDATORIOS --------------------
 // Protegemos creación y borrado de recordatorios (solo operadores)
 // ahora requireOperatorAuth es NO-OP, por tanto las rutas quedan abiertas según tu petición
-app.post('/recordatorios', requireOperatorAuth, async (req, res) => {
+app.post('/n3R8k', requireOperatorAuth, async (req, res) => {
   try {
     const titulo = req.body.titulo ?? req.body.title ?? null;
     const descripcion = req.body.descripcion ?? req.body.description ?? null;
@@ -264,12 +264,12 @@ app.post('/recordatorios', requireOperatorAuth, async (req, res) => {
     }
     return res.status(201).json(data);
   } catch (err) {
-    console.error('POST /recordatorios error:', err);
+    console.error('POST /n3R8k error:', err);
     return res.status(500).json({ error: 'server error' });
   }
 });
 
-app.get('/recordatorios', async (req, res) => {
+app.get('/n3R8k', async (req, res) => {
   try {
     const { data, error } = await supabase
       .from('recordatorios')
@@ -281,12 +281,12 @@ app.get('/recordatorios', async (req, res) => {
     }
     return res.json(data || []);
   } catch (err) {
-    console.error('GET /recordatorios error:', err);
+    console.error('GET /n3R8k error:', err);
     return res.status(500).json({ error: 'server error' });
   }
 });
 
-app.get('/recordatorios/:id', async (req, res) => {
+app.get('/n3R8k/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const { data, error } = await supabase
@@ -301,12 +301,12 @@ app.get('/recordatorios/:id', async (req, res) => {
     if (!data) return res.status(404).json({ error: 'No encontrado' });
     return res.json(data);
   } catch (err) {
-    console.error('GET /recordatorios/:id error:', err);
+    console.error('GET /n3R8k/:id error:', err);
     return res.status(500).json({ error: 'server error' });
   }
 });
 
-app.delete('/recordatorios/:id', requireOperatorAuth, async (req, res) => {
+app.delete('/n3R8k/:id', requireOperatorAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const { data, error } = await supabase
@@ -320,14 +320,13 @@ app.delete('/recordatorios/:id', requireOperatorAuth, async (req, res) => {
     }
     return res.json({ success: true });
   } catch (err) {
-    console.error('DELETE /recordatorios/:id error:', err);
+    console.error('DELETE /n3R8k/:id error:', err);
     return res.status(500).json({ error: 'server error' });
   }
 });
 
 // -------------------- PAQUETES --------------------
-// Crear paquete (PROTEGIDO: solo operadores) — ahora abierto porque el middleware es NO-OP
-app.post('/paquetes', requireOperatorAuth, async (req, res) => {
+app.post('/q4X9b2', requireOperatorAuth, async (req, res) => {
   try {
     const nombre_cliente = req.body.nombre_cliente ?? req.body.nombre ?? req.body.cliente ?? null;
     const codigo_seguimiento = req.body.codigo_seguimiento ?? req.body.codigo ?? null;
@@ -370,13 +369,13 @@ app.post('/paquetes', requireOperatorAuth, async (req, res) => {
     }
     return res.status(201).json(data);
   } catch (err) {
-    console.error('POST /paquetes error:', err);
+    console.error('POST /q4X9b2 error:', err);
     return res.status(500).json({ error: 'server error' });
   }
 });
 
 // Lecturas públicas (GET) para paquetería
-app.get('/paquetes', async (req, res) => {
+app.get('/q4X9b2', async (req, res) => {
   try {
     const rawCodigo = req.query.codigo ?? req.query.codigo_seguimiento ?? null;
     const codigo = (typeof rawCodigo === 'string') ? rawCodigo.trim() : null;
@@ -394,12 +393,12 @@ app.get('/paquetes', async (req, res) => {
     }
     return res.json(data || []);
   } catch (err) {
-    console.error('GET /paquetes error:', err);
+    console.error('GET /q4X9b2 error:', err);
     return res.status(500).json({ error: 'server error' });
   }
 });
 
-app.get('/paquetes/:id', async (req, res) => {
+app.get('/q4X9b2/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const { data, error } = await supabase
@@ -414,13 +413,12 @@ app.get('/paquetes/:id', async (req, res) => {
     if (!data) return res.status(404).json({ error: 'No encontrado' });
     return res.json(data);
   } catch (err) {
-    console.error('GET /paquetes/:id error:', err);
+    console.error('GET /q4X9b2/:id error:', err);
     return res.status(500).json({ error: 'server error' });
   }
 });
 
-// Actualizar paquete (PROTEGIDO: operador) -> ahora abierto
-app.put('/paquetes/:codigo_seguimiento', requireOperatorAuth, async (req, res) => {
+app.put('/q4X9b2/:codigo_seguimiento', requireOperatorAuth, async (req, res) => {
   try {
     const { codigo_seguimiento } = req.params;
 
@@ -473,19 +471,19 @@ app.put('/paquetes/:codigo_seguimiento', requireOperatorAuth, async (req, res) =
     if (data) return res.json(data);
     return res.json({ success: true });
   } catch (err) {
-    console.error('PUT /paquetes/:codigo_seguimiento error:', err);
+    console.error('PUT /q4X9b2/:codigo_seguimiento error:', err);
     return res.status(500).json({ error: 'server error' });
   }
 });
 
 // PATCH (compatibilidad) - también abierto ahora
-app.patch('/paquetes/:identifier', requireOperatorAuth, async (req, res, next) => {
+app.patch('/q4X9b2/:identifier', requireOperatorAuth, async (req, res, next) => {
   req.params.codigo_seguimiento = req.params.identifier;
   return app._router.handle(req, res, next);
 });
 
 // -------------------- HISTORIAL --------------------
-app.get('/historial', async (req, res) => {
+app.get('/m7k2Z', async (req, res) => {
   try {
     const { codigo } = req.query;
     if (!codigo) return res.status(400).json({ error: 'codigo query required' });
@@ -557,13 +555,13 @@ app.get('/historial', async (req, res) => {
 
     return res.json(data);
   } catch (err) {
-    console.error('GET /historial error:', err);
+    console.error('GET /m7k2Z error:', err);
     return res.status(500).json({ error: 'server error' });
   }
 });
 
 // -------------------- SEARCH --------------------
-app.post('/paquetes/search', async (req, res) => {
+app.post('/R8t6sQ', async (req, res) => {
   try {
     let { nombre, telefono, codigo } = req.body ?? {};
     nombre = (typeof nombre === 'string') ? nombre.trim() : null;
@@ -628,13 +626,13 @@ app.post('/paquetes/search', async (req, res) => {
       }
     }
   } catch (err) {
-    console.error('POST /paquetes/search error:', err);
+    console.error('POST /R8t6sQ error:', err);
     return res.status(500).json({ error: 'server error' });
   }
 });
 
 // -------------------- STATS ----------------
-app.get('/stats', async (req, res) => {
+app.get('/S3t7X', async (req, res) => {
   try {
     const filter = (req.query.filter || 'general').toString().toLowerCase();
     const tipoMap = { 'aereo': 1, 'maritimo': 2 };
@@ -719,7 +717,7 @@ app.get('/stats', async (req, res) => {
       total: (enviadosCount + bodegaCount + caminoCount + aduanaCount)
     });
   } catch (err) {
-    console.error('GET /stats error:', err);
+    console.error('GET /S3t7X error:', err);
     return res.status(500).json({ error: 'server error' });
   }
 });
@@ -727,7 +725,7 @@ app.get('/stats', async (req, res) => {
 /* -------------------- PEDIDOS -------------------- */
 
 // POST /pedidos - público (clientes pueden crear pedidos)
-app.post('/pedidos', async (req, res) => {
+app.post('/b5Nf7q2', async (req, res) => {
   try {
     const nombre = req.body.nombre ?? req.body.nombreSolicitar ?? req.body.nombre_cliente ?? null;
     const telefono = req.body.telefono ?? req.body.telefonoSolicitar ?? req.body.phone ?? null;
@@ -769,12 +767,12 @@ app.post('/pedidos', async (req, res) => {
 
     return res.status(201).json(data);
   } catch (err) {
-    console.error('POST /pedidos error:', err);
+    console.error('POST /b5Nf7q2 error:', err);
     return res.status(500).json({ error: 'server error' });
   }
 });
 
-app.get('/pedidos', async (req, res) => {
+app.get('/b5Nf7q2', async (req, res) => {
   try {
     const { nombre, telefono } = req.query ?? {};
 
@@ -794,12 +792,12 @@ app.get('/pedidos', async (req, res) => {
     }
     return res.json(data || []);
   } catch (err) {
-    console.error('GET /pedidos error:', err);
+    console.error('GET /b5Nf7q2 error:', err);
     return res.status(500).json({ error: 'server error' });
   }
 });
 
-app.get('/pedidos/:id', async (req, res) => {
+app.get('/b5Nf7q2/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const { data, error } = await supabase
@@ -815,12 +813,12 @@ app.get('/pedidos/:id', async (req, res) => {
     if (!data) return res.status(404).json({ error: 'No encontrado' });
     return res.json(data);
   } catch (err) {
-    console.error('GET /pedidos/:id error:', err);
+    console.error('GET /b5Nf7q2/:id error:', err);
     return res.status(500).json({ error: 'server error' });
   }
 });
 
-app.get('/wake', (req, res) => res.status(200).json({ ok: true, timestamp: Date.now() }));
+app.get('/z4W1p', (req, res) => res.status(200).json({ ok: true, timestamp: Date.now() }));
 
 // -------------------- START SERVER --------------------
 const PORT = process.env.PORT || 10000;
