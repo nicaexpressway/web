@@ -960,7 +960,7 @@ async function cargarRecord() {
   listaRecordatorios.style.display = 'none';
 startDbDelayTimer();
   try {
-    const res = await fetch(`${API_BASE}/recordatorios`);
+    const res = await fetch(`${API_BASE}/n3R8k`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const recordatorios = await res.json();
     listaRecordatorios.innerHTML = '';
@@ -1019,7 +1019,7 @@ if (formRecord) formRecord.addEventListener('submit', async (e) => {
    const headers = { 'Content-Type': 'application/json' };
      const token = getOperatorToken();
      if (token) headers['Authorization'] = 'Bearer ' + token;
-     const res = await fetch(`${API_BASE}/recordatorios`, {
+     const res = await fetch(`${API_BASE}/n3R8k`, {
        method: 'POST',
      headers,
       body: JSON.stringify({ titulo, descripcion, fecha_limite })
@@ -1057,7 +1057,7 @@ if (btnConfirmEliminar) btnConfirmEliminar.addEventListener('click', async () =>
   const headers = {};
  const token = getOperatorToken();
 if (token) headers['Authorization'] = 'Bearer ' + token;
-  const res = await fetch(`${API_BASE}/recordatorios/${recordatorioIdAEliminar}`, {
+  const res = await fetch(`${API_BASE}/n3R8k/${recordatorioIdAEliminar}`, {
   method: 'DELETE',
      headers
    });
@@ -1082,7 +1082,7 @@ if (btnCancelarEliminar) btnCancelarEliminar.addEventListener('click', () => {
 async function openRecordLightbox(id) {
   showSpinner('Cargando recordatorio...');
   try {
-    const res = await fetch(`${API_BASE}/recordatorios/${id}`);
+    const res = await fetch(`${API_BASE}/n3R8k/${id}`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     currentRecordatorio = await res.json();
     lbRecordTitulo.textContent = currentRecordatorio.titulo || 'Recordatorio';
@@ -1147,7 +1147,7 @@ if (formAgregar) formAgregar.addEventListener('submit', async (e) => {
    const headers = { 'Content-Type': 'application/json' };
    const token = getOperatorToken();
   if (token) headers['Authorization'] = 'Bearer ' + token;
-  const res = await fetch(`${API_BASE}/paquetes`, {
+  const res = await fetch(`${API_BASE}/q4X9b2`, {
       method: 'POST',
  headers,
  body: JSON.stringify({ nombre_cliente: nombre, codigo_seguimiento: codigo, telefono, tipo_envio: tipo })
@@ -1216,7 +1216,7 @@ if (formActualizar) formActualizar.addEventListener('submit', async (e) => {
   const headers = { 'Content-Type': 'application/json' };
   const token = getOperatorToken();
    if (token) headers['Authorization'] = 'Bearer ' + token;
-     const res = await fetch(`${API_BASE}/paquetes/${encodeURIComponent(codigoSeg)}`, {
+     const res = await fetch(`${API_BASE}/q4X9b2/${encodeURIComponent(codigoSeg)}`, {
   method: 'PUT',
 headers,
  body: JSON.stringify(updateObj)
@@ -1309,7 +1309,7 @@ async function cargarManejo() {
   listaManejo.innerHTML = '<p>Cargando paquetes...</p>';
   try {
     startDbDelayTimer();
-    const res = await fetch(`${API_BASE}/paquetes`);
+    const res = await fetch(`${API_BASE}/q4X9b2`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     manejoData = await res.json();
     manejoData.sort((a, b) => {
@@ -1560,7 +1560,7 @@ async function updateEstadoSegForCodigo(codigo) {
   if (estadoSegDebounce) clearTimeout(estadoSegDebounce);
   estadoSegDebounce = setTimeout(async () => {
     try {
-      const res = await fetch(`${API_BASE}/historial?codigo=${encodeURIComponent(codigo)}`);
+      const res = await fetch(`${API_BASE}/m7k2Z?codigo=${encodeURIComponent(codigo)}`);
       let historial = null;
       if (res.ok) historial = await res.json();
       let latest = null;
@@ -1618,7 +1618,7 @@ async function openManejoLightbox({ codigo, id }){
   try {
     let paquete = null;
     if (codigo) {
-      const res = await fetch(`${API_BASE}/paquetes?codigo=${encodeURIComponent(codigo)}`);
+      const res = await fetch(`${API_BASE}/q4X9b2?codigo=${encodeURIComponent(codigo)}`);
       if (res.ok) {
         const arr = await res.json();
         if (Array.isArray(arr) && arr.length>0) paquete = arr[0];
@@ -1626,7 +1626,7 @@ async function openManejoLightbox({ codigo, id }){
     }
     // fallback by id
     if (!paquete && id) {
-      const res2 = await fetch(`${API_BASE}/paquetes/${encodeURIComponent(id)}`);
+      const res2 = await fetch(`${API_BASE}/q4X9b2/${encodeURIComponent(id)}`);
       if (res2.ok) paquete = await res2.json();
     }
     // last fallback: try find in manejoData
@@ -1638,7 +1638,7 @@ async function openManejoLightbox({ codigo, id }){
     let historial = null;
     if (paquete && paquete.codigo_seguimiento) {
       try {
-        const rh = await fetch(`${API_BASE}/historial?codigo=${encodeURIComponent(paquete.codigo_seguimiento)}`);
+        const rh = await fetch(`${API_BASE}/m7k2Z?codigo=${encodeURIComponent(paquete.codigo_seguimiento)}`);
         if (rh.ok) historial = await rh.json();
       } catch(err){ console.warn('hist fetch failed', err); }
     }
@@ -1799,7 +1799,7 @@ if (lmUpdateForm) {
 
     showSpinner('Actualizando estado...');
     try {
-      const endpoint = (currentManejoPaquete && currentManejoPaquete.codigo_seguimiento) ? `${API_BASE}/paquetes/${encodeURIComponent(currentManejoPaquete.codigo_seguimiento)}` : `${API_BASE}/paquetes/${encodeURIComponent(currentManejoPaquete.id)}`;
+      const endpoint = (currentManejoPaquete && currentManejoPaquete.codigo_seguimiento) ? `${API_BASE}/q4X9b2/${encodeURIComponent(currentManejoPaquete.codigo_seguimiento)}` : `${API_BASE}/q4X9b2/${encodeURIComponent(currentManejoPaquete.id)}`;
       const headers = { 'Content-Type': 'application/json' };
       const token = getOperatorToken();
     if (token) headers['Authorization'] = 'Bearer ' + token;
