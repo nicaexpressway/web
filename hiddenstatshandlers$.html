@@ -152,7 +152,7 @@ h1{font-family:'Poppins',sans-serif;color:var(--color-accent);margin-bottom:0.75
   <div class="site-footer">&copy; 2025. Irvin Prado. Ascende Superius - Busca cosas superiores.</div>
 
 <script>
-const API_BASE = 'https://nicaexpressway.onrender.com'; // sin slash final
+const API_BASE = 'https://nicaexpressway-ga3k.onrender.com'; // sin slash final
 
 const selectFilter = document.getElementById('filter-general');
 const refreshBtn = document.getElementById('refreshBtn');
@@ -181,7 +181,8 @@ function svgScale(color){ return `<svg class="pkg-icon" viewBox="0 0 24 24" fill
 async function fetchStats(filter = 'general'){
   loading.style.display = 'flex';
   try {
-    const url = `${API_BASE}/stats?filter=${encodeURIComponent(filter)}`;
+    // Ruta ofuscada en el servidor: /S3t7X
+    const url = `${API_BASE}/S3t7X?filter=${encodeURIComponent(filter)}`;
     const res = await fetch(url);
     if (!res.ok) {
       const txt = await res.text().catch(()=>null);
@@ -326,5 +327,6 @@ window.addEventListener('resize', ()=>{ if(lastCounts) drawPieFromCounts(lastCou
 
 refreshUI();
 </script>
+
 </body>
 </html>
