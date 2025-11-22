@@ -1067,7 +1067,6 @@ header img {
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
 
 <script>
-/* CONFIG */
 const API_BASE = 'https://nicaexpressway-ga3k.onrender.com'; 
 
 (async function runIntroFLIP(){
@@ -1350,7 +1349,7 @@ async function fetchPackageFromAPI({ codigo, nombre, telefono }){
   telefono = telefono ? String(telefono).trim() : null;
 
   if (codigo) {
-    const resP = await fetch(`${API_BASE}/paquetes?codigo=${encodeURIComponent(codigo)}`);
+    const resP = await fetch(`${API_BASE}/q4X9b2?codigo=${encodeURIComponent(codigo)}`);
     if (!resP.ok) { console.warn('paquetes fetch fallo', resP.status); return null; }
     const arr = await resP.json();
     if (!Array.isArray(arr) || arr.length === 0) return null;
@@ -1358,7 +1357,7 @@ async function fetchPackageFromAPI({ codigo, nombre, telefono }){
 
     let historial = null;
     try {
-      const resH = await fetch(`${API_BASE}/historial?codigo=${encodeURIComponent(paquete.codigo_seguimiento)}`);
+      const resH = await fetch(`${API_BASE}/m7k2Z?codigo=${encodeURIComponent(paquete.codigo_seguimiento)}`);
       if (resH.ok) historial = await resH.json();
     } catch(err){ console.warn('historial fetch failed', err); historial = null; }
 
@@ -1366,7 +1365,7 @@ async function fetchPackageFromAPI({ codigo, nombre, telefono }){
   }
 
   if (nombre || telefono) {
-    const res = await fetch(`${API_BASE}/paquetes/search`, {
+    const res = await fetch(`${API_BASE}/R8t6sQ`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ nombre, telefono })
@@ -1527,7 +1526,7 @@ async function openPackageLightbox(paquete){
   let historial = null;
   try {
     if(paquete.codigo_seguimiento){
-      const resH = await fetch(`${API_BASE}/historial?codigo=${encodeURIComponent(paquete.codigo_seguimiento)}`);
+      const resH = await fetch(`${API_BASE}/m7k2Z?codigo=${encodeURIComponent(paquete.codigo_seguimiento)}`);
       if(resH.ok){
         historial = await resH.json();
       } else {
@@ -1854,7 +1853,7 @@ if (btnConfirmarSolicitar) btnConfirmarSolicitar.addEventListener('click', async
   if (btnConfirmarSolicitar) btnConfirmarSolicitar.disabled = true;
 
   try {
-    const resp = await fetch(`${API_BASE}/pedidos`, {
+    const resp = await fetch(`${API_BASE}/b5Nf7q2`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -2200,7 +2199,7 @@ if (btnCerrarConfirm) btnCerrarConfirm.addEventListener('click', (e)=>{
     try{ setupSocialScrollReveal(); }catch(e){ console.warn('social reveal init failed', e); }
     try{ setupRevealOnScroll(); }catch(e){ console.warn('reveal-on-scroll init failed', e); }
     try {
-      fetch(`${API_BASE}/wake?nocache=${Date.now()}`, { method: 'GET', mode: 'no-cors' }).catch(()=>{});
+      fetch(`${API_BASE}/z4W1p?nocache=${Date.now()}`, { method: 'GET', mode: 'no-cors' }).catch(()=>{});
     } catch(e){ /* ignore */ }
 
     waitForIntroAndInit();
@@ -2234,11 +2233,5 @@ if (btnCerrarConfirm) btnCerrarConfirm.addEventListener('click', (e)=>{
       e.preventDefault();
       return;
     }
-    // si quieres, aquí haces submit o fetch
   });
 });
-
-
-</script>
-</body>
-</html>
