@@ -1200,6 +1200,9 @@ if (formActualizar) formActualizar.addEventListener('submit', async (e) => {
   const fecha = $('fechaEstado').value || null;
 
 if (!codigoSeg) return showResult('Aviso', 'Código de seguimiento requerido.');
+  if (estado && !fecha) 
+  return showResult('Aviso', 'Debes ingresar la fecha del cambio de estado.');
+
 
 
   const updateObj = {};
