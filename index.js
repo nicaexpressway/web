@@ -571,9 +571,10 @@ app.get('/m7k2Z', async (req, res) => {
   }
 });
 
-// -------------------- SEARCH (reescrito: robusto y a prueba de columnas faltantes) --------------------
+// -------------------- SEARCH (reescrito: usa solo columnas existentes en 'paquetes') --------------------
 app.post('/R8t6sQ', async (req, res) => {
   try {
+    console.log('POST /R8t6sQ body:', req.body);
     let { nombre, telefono, codigo } = req.body ?? {};
     nombre = (typeof nombre === 'string') ? nombre.trim() : null;
     telefono = (typeof telefono === 'string') ? telefono.trim() : null;
@@ -598,9 +599,8 @@ app.post('/R8t6sQ', async (req, res) => {
     // sanitizar nombre para búsquedas ilike
     const escapedName = nombre ? nombre.replace(/%/g, '\\%').replace(/'/g, "''") : null;
 
-    // 2) Si vienen nombre y telefono -> intentar combinada, con fallback a otra columna
+    // 2) Si vienen nombre y telefono -> intentar combinada en 'nombre_cliente' + telefono
     if (nombre && telefono) {
-      // primer intento: buscar en nombre_cliente + telefono
       try {
         const { data, error } = await supabase
           .from('paquetes')
@@ -610,24 +610,23 @@ app.post('/R8t6sQ', async (req, res) => {
         if (error) throw error;
         return res.json(data || []);
       } catch (err1) {
-        console.warn('Search nombre+telefono: fallo en "nombre_cliente", intentando columna "nombre":', err1?.message || err1);
-        // fallback: intentar columna "nombre" + telefono
+        console.warn('Search nombre+telefono: fallo en "nombre_cliente":', err1?.message || err1);
+        // fallback razonable: buscar por telefono únicamente
         try {
           const { data, error } = await supabase
             .from('paquetes')
             .select('*')
-            .ilike('nombre', `%${escapedName}%`)
             .eq('telefono', telefono);
           if (error) throw error;
           return res.json(data || []);
         } catch (err2) {
-          console.error('Search nombre+telefono: ambos intentos fallaron:', err2);
+          console.error('Fallback telefono falló:', err2);
           return res.status(500).json({ error: 'server error' });
         }
       }
     }
 
-    // 3) Si solo viene nombre -> intentar nombre_cliente, luego nombre (fallback)
+    // 3) Si solo viene nombre -> buscar en nombre_cliente (no existe columna 'nombre' en paquetes)
     if (nombre) {
       try {
         const { data, error } = await supabase
@@ -637,18 +636,8 @@ app.post('/R8t6sQ', async (req, res) => {
         if (error) throw error;
         return res.json(data || []);
       } catch (err1) {
-        console.warn('Search nombre: fallo en "nombre_cliente", intentando columna "nombre":', err1?.message || err1);
-        try {
-          const { data, error } = await supabase
-            .from('paquetes')
-            .select('*')
-            .ilike('nombre', `%${escapedName}%`);
-          if (error) throw error;
-          return res.json(data || []);
-        } catch (err2) {
-          console.error('Search nombre: ambos intentos fallaron:', err2);
-          return res.status(500).json({ error: 'server error' });
-        }
+        console.warn('Search nombre: fallo en nombre_cliente:', err1?.message || err1);
+        return res.status(500).json({ error: 'server error' });
       }
     }
 
@@ -673,7 +662,7 @@ app.post('/R8t6sQ', async (req, res) => {
   }
 });
 
-// -------------------- STATS ----------------
+// -------------------- STATS ------------------
 app.get('/S3t7X', async (req, res) => {
   try {
     const filter = (req.query.filter || 'general').toString().toLowerCase();
