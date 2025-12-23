@@ -13,7 +13,6 @@ const rateLimit = require('express-rate-limit');
 const app = express();
 app.use(express.json());
 
-
 // -------------------- Seguridad básica (helmet + rate limit) --------------------
 app.use(helmet());
 
