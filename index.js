@@ -25,14 +25,14 @@ app.use(rateLimit({
 const allowedOrigins = new Set([
   'https://htmleditor.in',
   'https://nicaexpressway.github.io',
-  'https://nicaexpressway.netlify.app'
+  'https://nicaexpressway.pages.dev'
 ]);
 
 // Hosts permitidos (sin http://, sin https://, sin slash, sin puerto)
 const allowedHosts = new Set([
   'nicaexpressway-ga3k.onrender.com',  // backend en Render
   'nicaexpressway.github.io',          // hosting GitHub Pages
-  'nicaexpressway.netlify.app'         // hosting Netlify
+  'nicaexpressway.pages.dev'         // hosting Netlify
 ]);
 
 const SERVER_API_KEY = process.env.SERVER_API_KEY || null;
