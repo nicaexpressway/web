@@ -13,6 +13,9 @@ const rateLimit = require('express-rate-limit');
 const app = express();
 app.use(express.json());
 
+// Confíar en el proxy (necesario en plataformas como Render para leer X-Forwarded-For)
+app.set('trust proxy', 1); // confiar en el primer proxy
+
 // -------------------- Seguridad básica (helmet + rate limit) --------------------
 app.use(helmet());
 
