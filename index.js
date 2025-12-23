@@ -1,4 +1,8 @@
-require('dotenv').config();
+// Cargar .env solo en desarrollo local
+if (process.env.NODE_ENV !== 'production') {
+  require('dotenv').config();
+}
+
 const express = require('express');
 const cors = require('cors'); // lo dejamos por compatibilidad
 const { createClient } = require('@supabase/supabase-js');
@@ -8,6 +12,7 @@ const rateLimit = require('express-rate-limit');
 
 const app = express();
 app.use(express.json());
+
 
 // -------------------- Seguridad básica (helmet + rate limit) --------------------
 app.use(helmet());
