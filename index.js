@@ -32,7 +32,7 @@ const allowedOrigins = new Set([
 const allowedHosts = new Set([
   'nicaexpressway-ga3k.onrender.com',  // backend en Render
   'nicaexpressway.github.io',          // hosting GitHub Pages
-  'nicaexpressway.pages.dev'         // hosting Netlify
+  'nicaexpressway.pages.dev'           // hosting Pages
 ]);
 
 const SERVER_API_KEY = process.env.SERVER_API_KEY || null;
@@ -75,15 +75,24 @@ app.use((req, res, next) => {
   return res.status(403).json({ error: 'Requests from unknown origins are not allowed' });
 });
 
-// -------------------- Supabase client --------------------
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+// -------------------- Supabase client (lazy init para evitar problemas en deploy) --------------------
+let _supabaseClient = null;
 
-if (!SUPABASE_URL || !SUPABASE_KEY) {
-  console.error('FALTAN ENV: NEXT_PUBLIC_SUPABASE_URL y/o SUPABASE_SERVICE_ROLE_KEY');
+function getSupabaseClient() {
+  if (_supabaseClient) return _supabaseClient;
+
+  const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!SUPABASE_URL || !SUPABASE_KEY) {
+    // Lanzamos error controlado para que logs muestren claramente la falta de variables
+    throw new Error('FALTAN ENV: NEXT_PUBLIC_SUPABASE_URL y/o SUPABASE_SERVICE_ROLE_KEY');
+  }
+
+  // createClient puede lanzar si la URL no es válida; dejar que la excepción llegue a logs
+  _supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
+  return _supabaseClient;
 }
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // -------------------- HELPERS --------------------
 function getDateInTimeZone(tz = 'America/New_York') {
@@ -135,6 +144,7 @@ function parseTipoEnvioIdFromReq(req) {
 
 async function ensureHistorialRow(codigo) {
   try {
+    const supabase = getSupabaseClient();
     const { data, error } = await supabase
       .from('historial')
       .select('*')
@@ -165,6 +175,7 @@ async function pushEstadoToHistorial(codigo, estado, fecha) {
   try {
     if (!codigo) throw new Error('codigo_seguimiento requerido para actualizar historial');
 
+    const supabase = getSupabaseClient();
     const histRes = await supabase
       .from('historial')
       .select('*')
@@ -252,7 +263,7 @@ app.post('/n3R8k', requireOperatorAuth, async (req, res) => {
     const descripcion = req.body.descripcion ?? req.body.description ?? null;
     const fecha_limite = req.body.fecha_limite ?? req.body.date ?? null;
 
-    const { data, error } = await supabase
+    const { data, error } = await getSupabaseClient()
       .from('recordatorios')
       .insert([{ titulo, descripcion, fecha_limite }])
       .select()
@@ -271,7 +282,7 @@ app.post('/n3R8k', requireOperatorAuth, async (req, res) => {
 
 app.get('/n3R8k', async (req, res) => {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await getSupabaseClient()
       .from('recordatorios')
       .select('*')
       .order('fecha_limite', { ascending: true });
@@ -289,7 +300,7 @@ app.get('/n3R8k', async (req, res) => {
 app.get('/n3R8k/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { data, error } = await supabase
+    const { data, error } = await getSupabaseClient()
       .from('recordatorios')
       .select('*')
       .eq('id', id)
@@ -309,7 +320,7 @@ app.get('/n3R8k/:id', async (req, res) => {
 app.delete('/n3R8k/:id', requireOperatorAuth, async (req, res) => {
   try {
     const { id } = req.params;
-    const { data, error } = await supabase
+    const { data, error } = await getSupabaseClient()
       .from('recordatorios')
       .delete()
       .eq('id', id)
@@ -353,7 +364,7 @@ app.post('/q4X9b2', requireOperatorAuth, async (req, res) => {
       fecha_ingreso
     };
 
-    const { data, error } = await supabase
+    const { data, error } = await getSupabaseClient()
       .from('paquetes')
       .insert([insertObj])
       .select()
@@ -380,7 +391,7 @@ app.get('/q4X9b2', async (req, res) => {
     const rawCodigo = req.query.codigo ?? req.query.codigo_seguimiento ?? null;
     const codigo = (typeof rawCodigo === 'string') ? rawCodigo.trim() : null;
 
-    let query = supabase.from('paquetes').select('*');
+    let query = getSupabaseClient().from('paquetes').select('*');
 
     if (codigo) {
       query = query.eq('codigo_seguimiento', codigo);
@@ -401,7 +412,7 @@ app.get('/q4X9b2', async (req, res) => {
 app.get('/q4X9b2/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { data, error } = await supabase
+    const { data, error } = await getSupabaseClient()
       .from('paquetes')
       .select('*')
       .eq('id', id)
@@ -440,7 +451,7 @@ app.put('/q4X9b2/:codigo_seguimiento', requireOperatorAuth, async (req, res) => 
 
     let data = null;
     if (Object.keys(updateObj).length > 0) {
-      const dbRes = await supabase
+      const dbRes = await getSupabaseClient()
         .from('paquetes')
         .update(updateObj)
         .eq('codigo_seguimiento', codigo_seguimiento)
@@ -454,7 +465,7 @@ app.put('/q4X9b2/:codigo_seguimiento', requireOperatorAuth, async (req, res) => 
         return res.status(404).json({ error: 'No se encontró paquete con ese código de seguimiento' });
       }
     } else {
-      const check = await supabase.from('paquetes').select('id').eq('codigo_seguimiento', codigo_seguimiento).limit(1).maybeSingle();
+      const check = await getSupabaseClient().from('paquetes').select('id').eq('codigo_seguimiento', codigo_seguimiento).limit(1).maybeSingle();
       if (!check || !check.data) {
         return res.status(404).json({ error: 'No se encontró paquete con ese código de seguimiento' });
       }
@@ -489,7 +500,7 @@ app.get('/m7k2Z', async (req, res) => {
     if (!codigo) return res.status(400).json({ error: 'codigo query required' });
 
     // intentar traer historial
-    let { data, error } = await supabase
+    let { data, error } = await getSupabaseClient()
       .from('historial')
       .select('*')
       .eq('codigo_seguimiento', codigo)
@@ -504,7 +515,7 @@ app.get('/m7k2Z', async (req, res) => {
     if (!data) {
       // no existe historial -> intentar crear fila mínima (copiando fecha_ingreso si existe)
       try {
-        const pRes = await supabase
+        const pRes = await getSupabaseClient()
           .from('paquetes')
           .select('fecha_ingreso')
           .eq('codigo_seguimiento', codigo)
@@ -512,7 +523,7 @@ app.get('/m7k2Z', async (req, res) => {
           .maybeSingle();
         const fecha_ingreso = (!pRes.error && pRes.data) ? pRes.data.fecha_ingreso : null;
 
-        const createRes = await supabase
+        const createRes = await getSupabaseClient()
           .from('historial')
           .insert([{
             codigo_seguimiento: codigo,
@@ -536,7 +547,7 @@ app.get('/m7k2Z', async (req, res) => {
     } else {
       // si existe historial, enriquecer con fecha_ingreso si hace falta (comportamiento anterior)
       try {
-        const pRes = await supabase
+        const pRes = await getSupabaseClient()
           .from('paquetes')
           .select('fecha_ingreso')
           .eq('codigo_seguimiento', codigo)
@@ -574,7 +585,7 @@ app.post('/R8t6sQ', async (req, res) => {
 
     // Si viene codigo, buscar por codigo_seguimiento directamente
     if (codigo) {
-      const q = supabase.from('paquetes').select('*').eq('codigo_seguimiento', codigo);
+      const q = getSupabaseClient().from('paquetes').select('*').eq('codigo_seguimiento', codigo);
       const { data, error } = await q;
       if (error) {
         console.error('Search by codigo error:', error);
@@ -593,7 +604,7 @@ app.post('/R8t6sQ', async (req, res) => {
       if (escapedName) orExpr.push(`nombre.ilike.%${escapedName}%`);
       if (telefono) orExpr.push(`telefono.eq.${telefono}`);
       const orString = orExpr.join(',');
-      const q = supabase.from('paquetes').select('*').or(orString);
+      const q = getSupabaseClient().from('paquetes').select('*').or(orString);
       const { data, error } = await q;
       if (error) {
         // puede deberse a columna inexistente -> caemos al fallback
@@ -604,7 +615,7 @@ app.post('/R8t6sQ', async (req, res) => {
       console.warn('Search first attempt failed, fallback to safer queries:', firstErr?.message || firstErr);
       // Fallback: intentar buscar solo en nombre_cliente y telefono (columnas que sí deberías tener)
       try {
-        let query = supabase.from('paquetes').select('*');
+        let query = getSupabaseClient().from('paquetes').select('*');
         if (nombre && telefono) {
           const escaped = nombre.replace(/%/g, '\\%').replace(/'/g, "''");
           query = query.or(`nombre_cliente.ilike.%${escaped}%,telefono.eq.${telefono}`);
@@ -638,7 +649,7 @@ app.get('/S3t7X', async (req, res) => {
     const tipoMap = { 'aereo': 1, 'maritimo': 2 };
     const tipoId = tipoMap[filter] ?? null;
 
-    let paquetesQuery = supabase.from('paquetes').select('codigo_seguimiento, tarifa_usd, peso_libras, tipo_envio_id');
+    let paquetesQuery = getSupabaseClient().from('paquetes').select('codigo_seguimiento, tarifa_usd, peso_libras, tipo_envio_id');
     if (tipoId) paquetesQuery = paquetesQuery.eq('tipo_envio_id', tipoId);
     const paquetesFiltered = await paquetesQuery;
     if (paquetesFiltered.error) throw paquetesFiltered.error;
@@ -648,12 +659,12 @@ app.get('/S3t7X', async (req, res) => {
 
     let historialRes;
     if (codes.length > 0) {
-      historialRes = await supabase
+      historialRes = await getSupabaseClient()
         .from('historial')
         .select('codigo_seguimiento, estado1, estado2, estado3, estado4')
         .in('codigo_seguimiento', codes);
     } else {
-      historialRes = await supabase
+      historialRes = await getSupabaseClient()
         .from('historial')
         .select('codigo_seguimiento, estado1, estado2, estado3, estado4');
     }
@@ -754,7 +765,7 @@ app.post('/b5Nf7q2', async (req, res) => {
       peso_aprox
     };
 
-    const { data, error } = await supabase
+    const { data, error } = await getSupabaseClient()
       .from('pedidos')
       .insert([insertObj])
       .select()
@@ -776,7 +787,7 @@ app.get('/b5Nf7q2', async (req, res) => {
   try {
     const { nombre, telefono } = req.query ?? {};
 
-    let query = supabase.from('pedidos').select('*').order('id', { ascending: false });
+    let query = getSupabaseClient().from('pedidos').select('*').order('id', { ascending: false });
 
     if (nombre) {
       const escaped = nombre.replace(/%/g, '\\%').replace(/'/g, "''");
@@ -800,7 +811,7 @@ app.get('/b5Nf7q2', async (req, res) => {
 app.get('/b5Nf7q2/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { data, error } = await supabase
+    const { data, error } = await getSupabaseClient()
       .from('pedidos')
       .select('*')
       .eq('id', id)
