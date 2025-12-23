@@ -571,7 +571,7 @@ app.get('/m7k2Z', async (req, res) => {
   }
 });
 
-// -------------------- SEARCH --------------------
+// -------------------- SEARCH (reescrito: robusto y a prueba de columnas faltantes) --------------------
 app.post('/R8t6sQ', async (req, res) => {
   try {
     let { nombre, telefono, codigo } = req.body ?? {};
@@ -583,61 +583,92 @@ app.post('/R8t6sQ', async (req, res) => {
       return res.status(400).json({ error: 'Se requiere nombre, telefono o codigo para buscar' });
     }
 
-    // Si viene codigo, buscar por codigo_seguimiento directamente
+    const supabase = getSupabaseClient();
+
+    // 1) búsqueda por código (más precisa)
     if (codigo) {
-      const q = getSupabaseClient().from('paquetes').select('*').eq('codigo_seguimiento', codigo);
-      const { data, error } = await q;
+      const { data, error } = await supabase.from('paquetes').select('*').eq('codigo_seguimiento', codigo);
       if (error) {
         console.error('Search by codigo error:', error);
-        return res.status(400).json({ error: error.message || error });
+        return res.status(400).json({ error: error.message || 'search error' });
       }
       return res.json(data || []);
     }
 
-    // Construir búsqueda por nombre/telefono con fallback si alguna columna no existe
+    // sanitizar nombre para búsquedas ilike
     const escapedName = nombre ? nombre.replace(/%/g, '\\%').replace(/'/g, "''") : null;
 
-    // Intento 1: buscar en nombre_cliente y nombre (en una sola or)
-    try {
-      let orExpr = [];
-      if (escapedName) orExpr.push(`nombre_cliente.ilike.%${escapedName}%`);
-      if (escapedName) orExpr.push(`nombre.ilike.%${escapedName}%`);
-      if (telefono) orExpr.push(`telefono.eq.${telefono}`);
-      const orString = orExpr.join(',');
-      const q = getSupabaseClient().from('paquetes').select('*').or(orString);
-      const { data, error } = await q;
-      if (error) {
-        // puede deberse a columna inexistente -> caemos al fallback
-        throw error;
-      }
-      return res.json(data || []);
-    } catch (firstErr) {
-      console.warn('Search first attempt failed, fallback to safer queries:', firstErr?.message || firstErr);
-      // Fallback: intentar buscar solo en nombre_cliente y telefono (columnas que sí deberías tener)
+    // 2) Si vienen nombre y telefono -> intentar combinada, con fallback a otra columna
+    if (nombre && telefono) {
+      // primer intento: buscar en nombre_cliente + telefono
       try {
-        let query = getSupabaseClient().from('paquetes').select('*');
-        if (nombre && telefono) {
-          const escaped = nombre.replace(/%/g, '\\%').replace(/'/g, "''");
-          query = query.or(`nombre_cliente.ilike.%${escaped}%,telefono.eq.${telefono}`);
-        } else if (nombre) {
-          const escaped = nombre.replace(/%/g, '\\%').replace(/'/g, "''");
-          query = query.ilike('nombre_cliente', `%${escaped}%`);
-        } else if (telefono) {
-          query = query.eq('telefono', telefono);
-        }
-        const { data, error } = await query;
-        if (error) {
-          console.error('Fallback search error:', error);
-          return res.status(400).json({ error: error.message || error });
-        }
+        const { data, error } = await supabase
+          .from('paquetes')
+          .select('*')
+          .ilike('nombre_cliente', `%${escapedName}%`)
+          .eq('telefono', telefono);
+        if (error) throw error;
         return res.json(data || []);
-      } catch (fallbackErr) {
-        console.error('Final fallback search error:', fallbackErr);
-        return res.status(500).json({ error: 'server error' });
+      } catch (err1) {
+        console.warn('Search nombre+telefono: fallo en "nombre_cliente", intentando columna "nombre":', err1?.message || err1);
+        // fallback: intentar columna "nombre" + telefono
+        try {
+          const { data, error } = await supabase
+            .from('paquetes')
+            .select('*')
+            .ilike('nombre', `%${escapedName}%`)
+            .eq('telefono', telefono);
+          if (error) throw error;
+          return res.json(data || []);
+        } catch (err2) {
+          console.error('Search nombre+telefono: ambos intentos fallaron:', err2);
+          return res.status(500).json({ error: 'server error' });
+        }
       }
     }
+
+    // 3) Si solo viene nombre -> intentar nombre_cliente, luego nombre (fallback)
+    if (nombre) {
+      try {
+        const { data, error } = await supabase
+          .from('paquetes')
+          .select('*')
+          .ilike('nombre_cliente', `%${escapedName}%`);
+        if (error) throw error;
+        return res.json(data || []);
+      } catch (err1) {
+        console.warn('Search nombre: fallo en "nombre_cliente", intentando columna "nombre":', err1?.message || err1);
+        try {
+          const { data, error } = await supabase
+            .from('paquetes')
+            .select('*')
+            .ilike('nombre', `%${escapedName}%`);
+          if (error) throw error;
+          return res.json(data || []);
+        } catch (err2) {
+          console.error('Search nombre: ambos intentos fallaron:', err2);
+          return res.status(500).json({ error: 'server error' });
+        }
+      }
+    }
+
+    // 4) Si solo viene telefono -> búsqueda por teléfono exacto
+    if (telefono) {
+      const { data, error } = await supabase
+        .from('paquetes')
+        .select('*')
+        .eq('telefono', telefono);
+      if (error) {
+        console.error('Search telefono error:', error);
+        return res.status(400).json({ error: error.message || 'search error' });
+      }
+      return res.json(data || []);
+    }
+
+    // caso improbable: si llegamos aquí, devolver vacío
+    return res.json([]);
   } catch (err) {
-    console.error('POST /R8t6sQ error:', err);
+    console.error('POST /R8t6sQ error full:', err);
     return res.status(500).json({ error: 'server error' });
   }
 });
