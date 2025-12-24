@@ -37,7 +37,7 @@ const allowedOrigins = new Set([
 
 // Hosts permitidos (sin http://, sin https://, sin slash, sin puerto)
 const allowedHosts = new Set([
-  'nicaexpressway-ga3k.onrender.com',  // backend en Render
+  'nicaexpressway-iiw8.onrender.com',  // backend en Render
   'nicaexpressway.github.io',          // hosting GitHub Pages
   'nicaexpressway.pages.dev'           // hosting Pages
 ]);
