@@ -87,13 +87,13 @@ let _supabaseClient = null;
 
 function getSupabaseClient() {
   // 🔍 DEBUG REAL DE ENV (ESTO ES LO IMPORTANTE)
-  console.log('ENV CHECK:', {
-    NODE_ENV: process.env.NODE_ENV,
-    HAS_URL: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
-    HAS_SERVICE_KEY: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
-    URL_VALUE: process.env.NEXT_PUBLIC_SUPABASE_URL?.slice(0, 30),
-    KEY_LEN: process.env.SUPABASE_SERVICE_ROLE_KEY?.length
-  });
+console.log('ENV CHECK:', {
+  NODE_ENV: process.env.NODE_ENV,
+  HAS_URL: !!process.env.SUPABASE_URL,
+  HAS_SERVICE_KEY: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+  URL_VALUE: process.env.SUPABASE_URL?.slice(0, 30),
+  KEY_LEN: process.env.SUPABASE_SERVICE_ROLE_KEY?.length
+});
 
   if (_supabaseClient) return _supabaseClient;
 
