@@ -86,20 +86,28 @@ app.use((req, res, next) => {
 let _supabaseClient = null;
 
 function getSupabaseClient() {
+  // 🔍 DEBUG REAL DE ENV (ESTO ES LO IMPORTANTE)
+  console.log('ENV CHECK:', {
+    NODE_ENV: process.env.NODE_ENV,
+    HAS_URL: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+    HAS_SERVICE_KEY: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+    URL_VALUE: process.env.NEXT_PUBLIC_SUPABASE_URL?.slice(0, 30),
+    KEY_LEN: process.env.SUPABASE_SERVICE_ROLE_KEY?.length
+  });
+
   if (_supabaseClient) return _supabaseClient;
 
   const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!SUPABASE_URL || !SUPABASE_KEY) {
-    // Lanzamos error controlado para que logs muestren claramente la falta de variables
     throw new Error('FALTAN ENV: NEXT_PUBLIC_SUPABASE_URL y/o SUPABASE_SERVICE_ROLE_KEY');
   }
 
-  // createClient puede lanzar si la URL no es válida; dejar que la excepción llegue a logs
   _supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
   return _supabaseClient;
 }
+
 
 // -------------------- HELPERS --------------------
 function getDateInTimeZone(tz = 'America/New_York') {
