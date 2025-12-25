@@ -1,54 +1,69 @@
 // functions/R8t6sQ.js
 import { corsHeaders, authorize, dbAll } from './_shared.js';
 
+export async function onRequestOptions(context){
+  // preflight CORS
+  const origin = context.request.headers.get('origin') || '*';
+  return new Response(null, { status: 204, headers: corsHeaders(origin) });
+}
+
 export async function onRequestPost(context) {
   const { request, env } = context;
-  const auth = await authorize({ env, request, requireServerKey: false });
-  if (auth) return auth;
   const origin = request.headers.get('origin');
 
+  // autorización (igual que en otros endpoints)
+  const auth = await authorize({ env, request, requireServerKey: false });
+  if (auth) return auth;
+
+  // check DB binding
+  if (!env.DB) {
+    console.error('R8t6sQ: DB binding missing');
+    return new Response(JSON.stringify({ error: 'DB binding missing' }), { status: 500, headers: corsHeaders(origin) });
+  }
+
   try {
-    const body = await request.json();
-    let { nombre, telefono, codigo } = body ?? {};
-    nombre = (typeof nombre === 'string') ? nombre.trim() : null;
-    telefono = (typeof telefono === 'string') ? telefono.trim() : null;
-    codigo = (typeof codigo === 'string') ? codigo.trim() : null;
+    const body = await request.json().catch(()=> ({}));
+    let nombre = body.nombre ?? null;
+    let telefono = body.telefono ?? null;
+    let codigo = body.codigo ?? null;
 
-    if (!nombre && !telefono && !codigo) return new Response(JSON.stringify({ error: 'Se requiere nombre, telefono o codigo para buscar' }), { status: 400, headers: corsHeaders(origin) });
+    // normalizar
+    if (typeof nombre === 'string') nombre = nombre.trim();
+    if (typeof telefono === 'string') telefono = telefono.trim();
+    if (typeof codigo === 'string') codigo = codigo.trim();
 
+    // 1) búsqueda por código (más precisa) -> devolver array (consistencia con front)
     if (codigo) {
       const rows = await dbAll(env, `SELECT * FROM paquetes WHERE codigo_seguimiento = ?`, [codigo]);
       return new Response(JSON.stringify(rows || []), { headers: corsHeaders(origin) });
     }
 
-    const escapedName = nombre ? nombre.replace(/%/g, '\\%').replace(/'/g, "''") : null;
-
+    // 2) nombre + telefono -> buscar por nombre (LIKE) y telefono exacto
     if (nombre && telefono) {
-      try {
-        const rows = await dbAll(env, `SELECT * FROM paquetes WHERE lower(nombre_cliente) LIKE ? AND telefono = ?`, [`%${nombre.toLowerCase()}%`, telefono]);
-        if (rows && rows.length) return new Response(JSON.stringify(rows), { headers: corsHeaders(origin) });
-        const rows2 = await dbAll(env, `SELECT * FROM paquetes WHERE telefono = ?`, [telefono]);
-        return new Response(JSON.stringify(rows2 || []), { headers: corsHeaders(origin) });
-      } catch (e) {
-        console.warn('Search nombre+telefono failed:', e);
-        const rows2 = await dbAll(env, `SELECT * FROM paquetes WHERE telefono = ?`, [telefono]);
-        return new Response(JSON.stringify(rows2 || []), { headers: corsHeaders(origin) });
-      }
+      const q = `SELECT * FROM paquetes WHERE lower(nombre_cliente) LIKE ? AND telefono = ? ORDER BY id DESC`;
+      const rows = await dbAll(env, q, [`%${String(nombre).toLowerCase()}%`, telefono]);
+      return new Response(JSON.stringify(rows || []), { headers: corsHeaders(origin) });
     }
 
+    // 3) solo nombre -> LIKE en nombre_cliente
     if (nombre) {
-      const rows = await dbAll(env, `SELECT * FROM paquetes WHERE lower(nombre_cliente) LIKE ?`, [`%${nombre.toLowerCase()}%`]);
+      const q = `SELECT * FROM paquetes WHERE lower(nombre_cliente) LIKE ? ORDER BY id DESC`;
+      const rows = await dbAll(env, q, [`%${String(nombre).toLowerCase()}%`]);
       return new Response(JSON.stringify(rows || []), { headers: corsHeaders(origin) });
     }
 
+    // 4) solo telefono -> exact match
     if (telefono) {
-      const rows = await dbAll(env, `SELECT * FROM paquetes WHERE telefono = ?`, [telefono]);
+      const q = `SELECT * FROM paquetes WHERE telefono = ? ORDER BY id DESC`;
+      const rows = await dbAll(env, q, [telefono]);
       return new Response(JSON.stringify(rows || []), { headers: corsHeaders(origin) });
     }
 
+    // sin parámetros -> devolver vacío (o todos si prefieres)
     return new Response(JSON.stringify([]), { headers: corsHeaders(origin) });
-  } catch (e) {
-    console.error('POST /R8t6sQ error:', e);
-    return new Response(JSON.stringify({ error: 'server error' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+  } catch (err) {
+    console.error('R8t6sQ error:', err);
+    // devolver detalle mínimo para debug (puedes quitar err.message en prod)
+    return new Response(JSON.stringify({ error: 'server error', message: err && err.message ? err.message : String(err) }), { status: 500, headers: { 'Content-Type': 'application/json' } });
   }
 }
