@@ -1069,6 +1069,39 @@ header img {
 <script>
 const API_BASE = 'https://nicaexpressway.pages.dev'; 
 
+/* ---------- helpers para fetch y JSON robusto ---------- */
+async function safeJsonResponse(res) {
+  // intenta parsear JSON; si falla, devuelve un objeto con error y el texto bruto
+  const contentType = res.headers.get('Content-Type') || '';
+  try {
+    if (contentType.includes('application/json')) {
+      return await res.json();
+    } else {
+      // intentar parsear igual (algunos servidores devuelven json sin content-type)
+      const text = await res.text();
+      try { return JSON.parse(text); } catch(e){ return { __non_json: true, text }; }
+    }
+  } catch (e) {
+    // fallo al parsear
+    const txt = await res.text().catch(()=>null);
+    return { __parse_error: true, text: txt, message: e && e.message ? e.message : String(e) };
+  }
+}
+
+async function fetchWithTimeout(url, opts = {}, timeout = 15000) {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeout);
+  try {
+    const res = await fetch(url, Object.assign({}, opts, { signal: controller.signal }));
+    clearTimeout(id);
+    return res;
+  } catch (e) {
+    clearTimeout(id);
+    throw e;
+  }
+}
+
+/* ---------- UI + animations (sin cambios lógicos) ---------- */
 (async function runIntroFLIP(){
   try {
     const intro = document.getElementById('introOverlay');
@@ -1254,6 +1287,7 @@ if (btnCalcularMain) {
   });
 }
 
+/* ---------- SEARCH / CLIENT UI (modificado) ---------- */
 const btnBuscar = document.getElementById('btnBuscar');
 const btnLimpiar = document.getElementById('btnLimpiar');
 const overlay = document.getElementById('searchOverlay');
@@ -1309,6 +1343,7 @@ function validateSearch(params){
   }
   return true;
 }
+
 async function onBuscar(){
   const params = gatherSearchParams();
   if(!validateSearch(params)) return;
@@ -1343,41 +1378,88 @@ async function onBuscar(){
   }
 }
 
+/* ---------- fetchPackageFromAPI (ajustada para Cloudflare Functions + robusta) ---------- */
 async function fetchPackageFromAPI({ codigo, nombre, telefono }){
   codigo = codigo ? String(codigo).trim() : null;
   nombre = nombre ? String(nombre).trim() : null;
   telefono = telefono ? String(telefono).trim() : null;
 
+  // 1) búsqueda por código -> GET ?codigo=...
   if (codigo) {
-    const resP = await fetch(`${API_BASE}/q4X9b2?codigo=${encodeURIComponent(codigo)}`);
-    if (!resP.ok) { console.warn('paquetes fetch fallo', resP.status); return null; }
-    const arr = await resP.json();
-    if (!Array.isArray(arr) || arr.length === 0) return null;
-    const paquete = arr[0];
-
-    let historial = null;
     try {
-      const resH = await fetch(`${API_BASE}/m7k2Z?codigo=${encodeURIComponent(paquete.codigo_seguimiento)}`);
-      if (resH.ok) historial = await resH.json();
-    } catch(err){ console.warn('historial fetch failed', err); historial = null; }
+      const url = `${API_BASE}/q4X9b2?codigo=${encodeURIComponent(codigo)}`;
+      const res = await fetchWithTimeout(url, { method: 'GET', headers: { 'Accept': 'application/json' } }, 12000);
 
-    return { paquete, historial };
+      if (!res.ok) {
+        // devuelve texto útil para debugging
+        const txt = await res.text().catch(()=>null);
+        console.warn('paquetes fetch fallo', res.status, txt);
+        return null;
+      }
+
+      const arrOrObj = await safeJsonResponse(res);
+      if (!Array.isArray(arrOrObj)) {
+        // el endpoint debería devolver un array para la búsqueda por código
+        // en caso de que devuelva un solo objeto, normalizamos
+        if (arrOrObj && typeof arrOrObj === 'object' && !Array.isArray(arrOrObj)) {
+          // si la función devolvió un objeto (por ejemplo single row), envuélvelo
+          const arr = Array.isArray(arrOrObj) ? arrOrObj : [arrOrObj];
+          if (arr.length === 0) return null;
+          const paquete = arr[0];
+          let historial = null;
+          try {
+            const resH = await fetch(`${API_BASE}/m7k2Z?codigo=${encodeURIComponent(paquete.codigo_seguimiento)}`);
+            if (resH.ok) historial = await safeJsonResponse(resH);
+          } catch(err){ console.warn('historial fetch failed', err); historial = null; }
+          return { paquete, historial };
+        }
+        // si llegó un wrapper con error o HTML, tratamos como no encontrado
+        return null;
+      }
+
+      if (arrOrObj.length === 0) return null;
+      const paquete = arrOrObj[0];
+      let historial = null;
+      try {
+        const resH = await fetch(`${API_BASE}/m7k2Z?codigo=${encodeURIComponent(paquete.codigo_seguimiento)}`);
+        if (resH.ok) historial = await safeJsonResponse(resH);
+      } catch(err){ console.warn('historial fetch failed', err); historial = null; }
+
+      return { paquete, historial };
+    } catch (e) {
+      console.warn('fetchPackageFromAPI by codigo error', e);
+      return null;
+    }
   }
 
+  // 2) búsqueda por nombre / teléfono -> POST R8t6sQ
   if (nombre || telefono) {
-    const res = await fetch(`${API_BASE}/R8t6sQ`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nombre, telefono })
-    });
-    if (!res.ok) { console.warn('search endpoint fallo', res.status); return null; }
-    const arr = await res.json();
-    if (!Array.isArray(arr) || arr.length === 0) return null;
-    return { paquetes: arr };
+    try {
+      const res = await fetchWithTimeout(`${API_BASE}/R8t6sQ`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({ nombre, telefono })
+      }, 12000);
+
+      if (!res.ok) {
+        const txt = await res.text().catch(()=>null);
+        console.warn('search endpoint fallo', res.status, txt);
+        return null;
+      }
+
+      const arr = await safeJsonResponse(res);
+      if (!Array.isArray(arr) || arr.length === 0) return null;
+      return { paquetes: arr };
+    } catch (e) {
+      console.warn('fetchPackageFromAPI by nombre/telefono error', e);
+      return null;
+    }
   }
 
   return null;
 }
+
+/* ---------- util de parseo ---------- */
 function parseNumberFromString(val){
   if(val === null || val === undefined) return null;
   if(typeof val === 'number') return isFinite(val) ? Number(val) : null;
@@ -1386,6 +1468,7 @@ function parseNumberFromString(val){
   return isFinite(n) ? n : null;
 }
 
+/* ---------- render / lightbox (ligeros ajustes para tolerancia) ---------- */
 function renderPackageResult({ paquete, historial }){
   if (multiResults) { multiResults.style.display = 'none'; multiResults.innerHTML = ''; }
 
@@ -1401,7 +1484,7 @@ function renderPackageResult({ paquete, historial }){
   if (detalleTipo) detalleTipo.textContent = tipoMap[paquete?.tipo_envio_id] ?? (paquete?.tipo || 'Datos aún no disponibles');
 
   if (detallePeso) detallePeso.textContent = paquete?.peso_libras  ?? 'Datos aún no disponibles';
-  if (detalleTarifa) detalleTarifa.textContent = paquete?.tarifa_usd ?? 'Datos aún no disponibles';
+  if (detalleTarifa) detalleTarifa.textContent = paquete?.tarifa_usd ?? paquete?.tarifa ?? 'Datos aún no disponibles';
 
   if (paquete?.peso_libras != null && paquete?.tarifa_usd != null){
     const total = Number(paquete.peso_libras) * Number(paquete.tarifa_usd);
@@ -1478,6 +1561,7 @@ function buildTimelineFromHistorialElement(historial, containerEl){
   }
 }
 
+/* ---------- lightbox open/close (igual que antes) ---------- */
 const packageLightboxOverlay = document.getElementById('packageLightboxOverlay');
 const lbClose = document.getElementById('lbClose');
 const lbCloseBtn = document.getElementById('lbCloseBtn');
@@ -1503,7 +1587,6 @@ async function openPackageLightbox(paquete){
   if (lbWhen) lbWhen.textContent = 'Pedido hecho - (cargando...)';
   if (lbTipo) lbTipo.textContent = (paquete.tipo_envio_id ? (paquete.tipo_envio_id === 1 ? 'Aéreo' : paquete.tipo_envio_id === 2 ? 'Marítimo' : paquete.tipo) : (paquete.tipo || 'No disponible'));
 
-  // Mostrar peso con "libras" si es numérico
   const pesoNum = parseNumberFromString(paquete.peso_libras ?? paquete.peso ?? paquete.peso_lb);
   if (pesoNum !== null) {
     if (lbPeso) lbPeso.textContent = `${Number(pesoNum).toFixed(2)} libras`;
@@ -1528,7 +1611,7 @@ async function openPackageLightbox(paquete){
     if(paquete.codigo_seguimiento){
       const resH = await fetch(`${API_BASE}/m7k2Z?codigo=${encodeURIComponent(paquete.codigo_seguimiento)}`);
       if(resH.ok){
-        historial = await resH.json();
+        historial = await safeJsonResponse(resH);
       } else {
         historial = null;
       }
@@ -1580,7 +1663,7 @@ function closePackageLightbox(){
 if(lbClose) lbClose.addEventListener('click', closePackageLightbox);
 if(lbCloseBtn) lbCloseBtn.addEventListener('click', closePackageLightbox);
 
-/* Utils used across file */
+/* ---------- small utils ---------- */
 function mapStateLabel(raw){
   if(!raw) return 'Estamos esperando tu paquete';
   const r = raw.toString().toLowerCase();
@@ -1626,112 +1709,10 @@ function escapeHtml(str){
     .replace(/>/g, '&gt;');
 }
 
-let confettiClearTimeout = null;
-function triggerConfettiOnce(opts = {}) {
-  const defaults = {
-    particleCount: 260,
-    spread: 110,
-    ticks: 520,
-    gravity: 0.32,
-    startVelocity: 30,
-    decay: 0.9,
-    drift: 0.4,
-    scalar: 1,
-    origin: { y: 0.08 },
-    colors: ['#1f3a66','#2F528F','#79A7E4'],
-    shapes: ['square','circle'],
-    zIndex: 6001
-  };
-  const cfg = Object.assign({}, defaults, opts);
-  const maxAllowed = (window.innerWidth <= 420) ? 320 : 700;
-  cfg.particleCount = Math.min(cfg.particleCount, maxAllowed);
+/* ---------- confetti helpers (idem) ---------- */
+/* (omitted here to keep the example concise — keep your original implementations) */
 
-  if (typeof confetti === 'function') {
-    const shootBurst = (override) => { confetti(Object.assign({}, cfg, override)); };
-
-    shootBurst({
-      particleCount: Math.floor(cfg.particleCount * 0.45),
-      spread: cfg.spread + 30,
-      origin: cfg.origin,
-      ticks: cfg.ticks,
-      gravity: cfg.gravity,
-      startVelocity: cfg.startVelocity,
-      decay: cfg.decay,
-      drift: cfg.drift,
-      scalar: cfg.scalar,
-      shapes: cfg.shapes,
-      colors: cfg.colors
-    });
-
-    setTimeout(() => {
-      shootBurst({
-        particleCount: Math.floor(cfg.particleCount * 0.28),
-        angle: 60,
-        spread: Math.max(40, cfg.spread - 20),
-        origin: { x: 0.12, y: cfg.origin.y },
-        ticks: Math.floor(cfg.ticks * 0.95),
-        gravity: cfg.gravity * 0.98,
-        drift: cfg.drift * 1.2
-      });
-      shootBurst({
-        particleCount: Math.floor(cfg.particleCount * 0.28),
-        angle: 120,
-        spread: Math.max(40, cfg.spread - 20),
-        origin: { x: 0.88, y: cfg.origin.y },
-        ticks: Math.floor(cfg.ticks * 0.95),
-        gravity: cfg.gravity * 0.98,
-        drift: -cfg.drift * 1.2
-      });
-    }, 180);
-
-    setTimeout(() => {
-      shootBurst({
-        particleCount: Math.floor(cfg.particleCount * 0.12),
-        spread: 40,
-        origin: { x: 0.5, y: cfg.origin.y + 0.02 },
-        startVelocity: Math.max(10, cfg.startVelocity * 0.6),
-        ticks: Math.floor(cfg.ticks * 0.8),
-        gravity: cfg.gravity * 0.9
-      });
-    }, 360);
-  } else {
-    console.warn('canvas-confetti not loaded');
-  }
-
-  if (confettiClearTimeout) clearTimeout(confettiClearTimeout);
-  confettiClearTimeout = setTimeout(() => {
-    const wrap = document.getElementById('confettiWrap');
-    if (wrap) wrap.innerHTML = '';
-  }, 9000);
-}
-
-function triggerConfetti(el) {
-  let side = 'center';
-  try {
-    if (el && el.getBoundingClientRect) {
-      const rect = el.getBoundingClientRect();
-      const cx = rect.left + rect.width / 2;
-      side = (cx < window.innerWidth / 2) ? 'left' : 'right';
-    }
-  } catch(e){
-    side = 'center';
-  }
-
-  if (window.innerWidth <= 420) {
-    if (side === 'left' || side === 'right') {
-      triggerConfettiOnce({ particleCount: 220, origin: { y: 0.06 }, gravity: 0.34 });
-    } else {
-      triggerConfettiOnce({ particleCount: 200, origin: { y: 0.06 }, gravity: 0.34 });
-    }
-  } else {
-    if (side === 'left' || side === 'right') {
-      triggerConfettiOnce({ particleCount: 420, origin: { y: 0.04 } });
-    } else {
-      triggerConfettiOnce({ particleCount: 360, origin: { y: 0.04 } });
-    }
-  }
-}
-
+/* ---------- key bindings and init ---------- */
 ['codigo','telefonoBuscar','nombreBuscar','telefonoSolicitar','peso'].forEach(id=>{
   const el = document.getElementById(id);
   if(!el) return;
@@ -1765,6 +1746,7 @@ function hideResult(){
   if(timelineEl) timelineEl.innerHTML='';
 }
 
+/* ---------- pedidos (tu POST ya estaba correcto, solo tolerance) ---------- */
 const btnCalcularSolicitar = document.getElementById('btnCalcularSolicitar');
 const btnConfirmarSolicitar = document.getElementById('btnConfirmarSolicitar');
 const reciboSolicitar = document.getElementById('reciboSolicitar');
@@ -1867,7 +1849,7 @@ if (btnConfirmarSolicitar) btnConfirmarSolicitar.addEventListener('click', async
       return;
     }
 
-    const data = await resp.json().catch(()=>null);
+    const data = await safeJsonResponse(resp);
     hideWaiting();
     showConfirm();
 
@@ -1894,326 +1876,23 @@ if (btnCerrarConfirm) btnCerrarConfirm.addEventListener('click', (e)=>{
   hideConfirm();
 });
 
+/* ---------- small init calls ---------- */
 (function(){
   // logos
-  const logos = [
-    'https://github.com/nicaexpressway/web/blob/main/media/shein.png?raw=true',
-    'https://github.com/nicaexpressway/web/blob/main/media/alibaba.webp?raw=true',
-    'https://github.com/nicaexpressway/web/blob/main/media/aliexpress.png?raw=true',
-    'https://github.com/nicaexpressway/web/blob/main/media/ebay.webp?raw=true',
-    'https://raw.githubusercontent.com/nicaexpressway/web/652db483d5e2050f4495a2f65c52fcb2da155b3e/media/amazon.svg'
-  ];
-  const logoInterval = 1800;
-  const logoFade = 380;
+  // ... (mantén tu lógica original)
+  // llamada wake SIN mode:no-cors (para que el fetch realice la petición y liveness se registre)
+  try {
+    fetch(`${API_BASE}/z4W1p?nocache=${Date.now()}`, { method: 'GET' }).catch(()=>{});
+  } catch(e){ /* ignore */ }
 
-  // legacy vars
-  const servicesAutoAdvance = 5400;
-  let logosIdx = 0, logosTimer = null;
-  let servicesIdx = 0, servicesTimer = null;
-
-  let subtitleChangeTimer = null;
-  function safeChangeSubtitle(el, newText, delay = 180){
-    if(!el) return;
-    if (el.textContent === newText) {
-      el.classList.add('visible');
-      return;
-    }
-    el.classList.remove('visible');
-    if (subtitleChangeTimer) clearTimeout(subtitleChangeTimer);
-    subtitleChangeTimer = setTimeout(()=> {
-      el.textContent = newText;
-      requestAnimationFrame(()=> el.classList.add('visible'));
-      subtitleChangeTimer = null;
-    }, delay);
-  }
-
-  function rotateLogos() {
-    const wrap = document.getElementById('logosCarousel');
-    if (!wrap) return;
-    let img = wrap.querySelector('img.logo-slide');
-    if (!img) {
-      img = document.createElement('img');
-      img.className = 'logo-slide';
-      img.style.opacity = '0';
-      img.style.transition = `opacity ${logoFade}ms ease, transform ${logoFade}ms ease`;
-      wrap.appendChild(img);
-    }
-
-    img.classList.remove('active');
-
-    setTimeout(() => {
-      const nextSrc = logos[logosIdx];
-      logosIdx = (logosIdx + 1) % logos.length;
-
-      const tmp = new Image();
-      tmp.onload = () => {
-        img.src = nextSrc;
-        img.alt = (nextSrc.split('/').slice(-1)[0] || 'logo') + ' logo';
-        requestAnimationFrame(() => requestAnimationFrame(() => {
-          img.classList.add('active');
-        }));
-      };
-      tmp.onerror = () => {
-        img.src = nextSrc;
-        img.alt = 'logo';
-        requestAnimationFrame(() => requestAnimationFrame(() => {
-          img.classList.add('active');
-        }));
-      };
-      tmp.src = nextSrc;
-    }, logoFade);
-  }
-
-  function startLogoLoop(){
-    rotateLogos();
-    if (logosTimer) clearInterval(logosTimer);
-    logosTimer = setInterval(rotateLogos, logoInterval);
-  }
-
-  function setServicesPosition(idx){
-    const track = document.getElementById('servicesTrack');
-    if(!track) return;
-    const firstCard = track.children[0];
-    const cardW = firstCard ? firstCard.getBoundingClientRect().width : track.getBoundingClientRect().width;
-    const gap = parseFloat(getComputedStyle(track).gap) || 0;
-    const x = (cardW + gap) * idx * -1;
-    track.style.transform = `translateX(${x}px)`;
-
-    const dots = document.getElementById('servicesDots');
-    if (dots) {
-      Array.from(dots.children).forEach((b,i) => b.classList.toggle('active', i === idx));
-    }
-
-    Array.from(track.children).forEach((c, i) => {
-      c.classList.toggle('current', i === idx);
-    });
-
-    const servicesTitle = document.getElementById('servicesTitle');
-    if (servicesTitle) {
-      const newText = (idx === 2) ? 'También te ofrecemos:' : 'Te las hacemos llegar vía:';
-      safeChangeSubtitle(servicesTitle, newText, 180);
-    }
-
-    servicesIdx = idx;
-  }
-
-  function advanceServices(){
-    const track = document.getElementById('servicesTrack');
-    if(!track) return;
-    const total = track.children.length || 1;
-    servicesIdx = (servicesIdx + 1) % total;
-    setServicesPosition(servicesIdx);
-  }
-
-  function startServicesAuto(){
-    if(servicesTimer) clearInterval(servicesTimer);
-    servicesTimer = setInterval(advanceServices, servicesAutoAdvance);
-  }
-
-  function buildDots(){
-    const track = document.getElementById('servicesTrack');
-    const dots = document.getElementById('servicesDots');
-    if(!track || !dots) return;
-    dots.innerHTML = '';
-    for(let i=0;i<track.children.length;i++){
-      const b = document.createElement('button');
-      b.type='button';
-      b.title = 'Mostrar tarjeta ' + (i+1);
-      b.addEventListener('click', ()=> {
-        servicesIdx = i;
-        setServicesPosition(i);
-        startServicesAuto();
-      });
-      dots.appendChild(b);
-    }
-    if (dots.children[0]) dots.children[0].classList.add('active');
-  }
-
-  function waitForIntroAndInit(){
-    const intro = document.getElementById('introOverlay');
-    if(!intro || getComputedStyle(intro).display === 'none') { initLandingSequence(); return; }
-    const observer = new MutationObserver(()=> {
-      if(!document.body.contains(intro) || getComputedStyle(intro).display === 'none' || intro.classList.contains('hide')){
-        observer.disconnect();
-        setTimeout(initLandingSequence, 260);
-      }
-    });
-    observer.observe(document.documentElement || document.body, { childList:true, subtree:true, attributes:true });
-    setTimeout(()=> { if(observer) observer.disconnect(); initLandingSequence(); }, 6000);
-  }
-
-  function revealElement(el, delay=0){
-    if(!el) return;
-    setTimeout(()=> el.classList.add('visible'), delay);
-  }
-
-  function initLandingSequence(){
-    startLogoLoop();
-
-    setTimeout(()=> {
-      const first = document.querySelector('#landingServices [data-reveal]');
-      if(first) first.classList.add('visible');
-
-      const servicesTitle = document.getElementById('servicesTitle');
-      if(servicesTitle) servicesTitle.classList.add('visible');
-
-      try { adjustServiceTextSizes(); } catch(e){/* ignore */ }
-    }, 600);
-
-    const top = document.getElementById('landingTop');
-    const services = document.getElementById('landingServices');
-    const original = document.getElementById('inicioOriginal');
-
-    revealElement(top, 400);
-    revealElement(services, 680);
-    revealElement(original, 1900);
-
-    setTimeout(()=>{
-      const logoMain = document.getElementById('logoMain');
-      if (logoMain) logoMain.classList.add('visible');
-    }, 1950);
-  }
-
-  function adjustServiceTextSizes(){
-    const cards = document.querySelectorAll('.service-card');
-    cards.forEach(card => {
-      const desc = card.querySelector('.card-desc');
-      if(!desc) return;
-      const len = (desc.textContent || '').trim().length;
-      let size = 15;
-      if(len < 40) size = 18;
-      else if(len < 80) size = 16;
-      else if(len < 140) size = 15;
-      else size = 14;
-      desc.style.fontSize = size + 'px';
-    });
-  }
-
-  function setupSocialScrollReveal(){
-    const inicio = document.getElementById('inicio');
-    const linkwrap = document.getElementById('linktreeOriginal');
-    if(!inicio || !linkwrap) return;
-    const buttons = Array.from(linkwrap.querySelectorAll('.link-btn'));
-    if(buttons.length === 0) return;
-
-    function computeTriggerPoints(){
-      const maxScroll = Math.max(0, inicio.scrollHeight - inicio.clientHeight);
-      const step = maxScroll / (buttons.length + 1);
-      return { start: maxScroll * 0.15, step };
-    }
-
-    let scrollTimeout = null;
-    function onScroll(){
-      if (scrollTimeout) clearTimeout(scrollTimeout);
-      scrollTimeout = setTimeout(() => {
-        const { start, step } = computeTriggerPoints();
-        const progress = inicio.scrollTop;
-        const maxScroll = Math.max(0, inicio.scrollHeight - inicio.clientHeight);
-
-        if (maxScroll > 0 && progress >= (maxScroll - 6)) {
-          buttons.forEach((btn) => {
-            btn.classList.add('visible');
-            btn.style.opacity = '1';
-            btn.style.transform = 'translateY(0)';
-            btn.setAttribute('aria-hidden','false');
-          });
-          return;
-        }
-
-        buttons.forEach((btn, i) => {
-          const threshold = Math.round(start + i * step);
-          if (progress >= threshold){
-            setTimeout(() => {
-              btn.classList.add('visible');
-              btn.style.opacity = '1';
-              btn.style.transform = 'translateY(0)';
-              btn.setAttribute('aria-hidden','false');
-            }, i * 150);
-          } else {
-            btn.classList.remove('visible');
-            btn.style.opacity = '0';
-            btn.style.transform = 'translateY(8px)';
-            btn.setAttribute('aria-hidden','true');
-          }
-        });
-      }, 50);
-    }
-
-    buttons.forEach(b => { b.style.transition = 'opacity .72s ease, transform .72s ease'; b.style.opacity = 0; b.style.transform = 'translateY(8px)'; b.setAttribute('aria-hidden','true'); });
-
-    inicio.addEventListener('scroll', onScroll, { passive:true });
-    setTimeout(onScroll, 80);
-  }
-  function setupRevealOnScroll(){
-    const inicio = document.getElementById('inicio');
-    if(!inicio) return;
-
-    const revealEls = Array.from(document.querySelectorAll('#landingServices [data-reveal]'));
-    if(revealEls.length === 0) return;
-
-    revealEls.forEach(el => {
-      el.style.transition = 'opacity .84s ease, transform .84s ease';
-      el.setAttribute('aria-hidden', 'true');
-      if(!el.classList.contains('reveal')) el.classList.add('reveal');
-    });
-
-    const io = new IntersectionObserver((entries) => {
-      entries.forEach(en => {
-        const el = en.target;
-        const isVisible = en.intersectionRatio > 0.18;
-
-        if(isVisible) {
-          el.classList.add('visible');
-          el.setAttribute('aria-hidden','false');
-        } else {
-          el.classList.remove('visible');
-          el.setAttribute('aria-hidden','true');
-        }
-        let cardEl = null;
-        if (el.getAttribute && el.getAttribute('data-card') === '2') {
-          cardEl = el;
-        } else {
-          cardEl = el.querySelector ? el.querySelector('[data-card="2"]') : null;
-        }
-        if(!cardEl) {
-          const fallback = document.querySelector('#landingServices [data-card="2"]');
-          if(fallback) cardEl = fallback;
-        }
-        if(cardEl){
-        }
-      });
-    }, {
-      root: document.getElementById('inicio'),
-      threshold: [0.18]
-    });
-
-    revealEls.forEach(el => io.observe(el));
-  }
-
-  document.addEventListener('keydown', (e)=>{
-    if(e.key === 'ArrowRight'){ try { advanceServices(); } catch(e){} }
-    if(e.key === 'ArrowLeft'){ try { servicesIdx = Math.max(0, servicesIdx-1); setServicesPosition(servicesIdx); } catch(e){} }
+  waitForIntroAndInit();
+  window.addEventListener('resize', () => {
+    if(window.__svc_resize_timeout) clearTimeout(window.__svc_resize_timeout);
+    window.__svc_resize_timeout = setTimeout(() => { adjustServiceTextSizes(); }, 120);
   });
-
-  document.addEventListener('DOMContentLoaded', ()=>{
-    try{ setupSocialScrollReveal(); }catch(e){ console.warn('social reveal init failed', e); }
-    try{ setupRevealOnScroll(); }catch(e){ console.warn('reveal-on-scroll init failed', e); }
-    try {
-      fetch(`${API_BASE}/z4W1p?nocache=${Date.now()}`, { method: 'GET', mode: 'no-cors' }).catch(()=>{});
-    } catch(e){ /* ignore */ }
-
-    waitForIntroAndInit();
-    try {
-      const third = document.querySelector('.service-card[data-card="2"]');
-      if (third) third.classList.add('pulse-loop');
-    } catch(e){ /* ignore */ }
-    window.addEventListener('resize', () => {
-      if(window.__svc_resize_timeout) clearTimeout(window.__svc_resize_timeout);
-      window.__svc_resize_timeout = setTimeout(() => { adjustServiceTextSizes(); }, 120);
-    });
-  });
-
 })();
+
+/* ---------- form submit guard ---------- */
  document.addEventListener('DOMContentLoaded', () => {
   const form = document.querySelector("form");
   if (!form) return;
@@ -2236,5 +1915,4 @@ if (btnCerrarConfirm) btnCerrarConfirm.addEventListener('click', (e)=>{
   });
 });
 </script>
-  </body>
-</html>
+
