@@ -812,7 +812,7 @@ window.getOperatorToken = function() {
   }
 };
 
-  const $ = id => document.getElementById(id); // $ shortcut
+const $ = id => document.getElementById(id); // $ shortcut
 const appWrapper = $('app');
 
 function setInert(el, inert){
@@ -946,7 +946,7 @@ const btnConfirmEliminar = $('btnConfirmEliminar');
 const btnCancelarEliminar = $('btnCancelarEliminar');
 const lightboxRecordatorio = $('lightbox-recordatorio');
 const closeLightboxBtn = document.querySelector('.close-lightbox');
-const btnEliminarLightbox = lightboxRecordatorio.querySelector('.btn-eliminar');
+const btnEliminarLightbox = lightboxRecordatorio ? lightboxRecordatorio.querySelector('.btn-eliminar') : null;
 const lbRecordTitulo = $('lbRecordTitulo');
 const lbRecordDesc = $('lbRecordDesc');
 const lbRecordFecha = $('lbRecordFecha');
@@ -958,7 +958,7 @@ const loadingRecordatorios = $('loadingRecordatorios');
 async function cargarRecord() {
   loadingRecordatorios.style.display = 'block';
   listaRecordatorios.style.display = 'none';
-startDbDelayTimer();
+  startDbDelayTimer();
   try {
     const res = await fetch(`${API_BASE}/n3R8k`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -988,15 +988,15 @@ startDbDelayTimer();
         listaRecordatorios.appendChild(div);
       });
     }
-if (recordatorios.length > 5) {
-  listaRecordatorios.classList.add('embedded-scroll');
-} else {
-  listaRecordatorios.classList.remove('embedded-scroll');
-}
-if (recordatorios.length > 10) {
-  showResult('Aviso', 'Hay demasiados recordatorios, revisa qué recordatorios no necesitas y elimínalos, para mantener la base de datos lo más optimizada posible');
-}
-clearDbDelayTimer();
+    if (recordatorios.length > 5) {
+      listaRecordatorios.classList.add('embedded-scroll');
+    } else {
+      listaRecordatorios.classList.remove('embedded-scroll');
+    }
+    if (recordatorios.length > 10) {
+      showResult('Aviso', 'Hay demasiados recordatorios, revisa qué recordatorios no necesitas y elimínalos, para mantener la base de datos lo más optimizada posible');
+    }
+    clearDbDelayTimer();
     loadingRecordatorios.style.display = 'none';
     listaRecordatorios.style.display = 'block';
   } catch (err) {
@@ -1016,14 +1016,14 @@ if (formRecord) formRecord.addEventListener('submit', async (e) => {
   if (!titulo || !descripcion || !fecha_limite) return;
   showSpinner('Agregando recordatorio...');
   try {
-   const headers = { 'Content-Type': 'application/json' };
-     const token = getOperatorToken();
-     if (token) headers['Authorization'] = 'Bearer ' + token;
-     const res = await fetch(`${API_BASE}/n3R8k`, {
-       method: 'POST',
-     headers,
+    const headers = { 'Content-Type': 'application/json' };
+    const token = getOperatorToken();
+    if (token) headers['Authorization'] = 'Bearer ' + token;
+    const res = await fetch(`${API_BASE}/n3R8k`, {
+      method: 'POST',
+      headers,
       body: JSON.stringify({ titulo, descripcion, fecha_limite })
-     });
+    });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     hideSpinner();
     formRecord.reset();
@@ -1054,13 +1054,14 @@ if (btnConfirmEliminar) btnConfirmEliminar.addEventListener('click', async () =>
   if (recordatorioIdAEliminar !== null) {
     showSpinner('Eliminando recordatorio...');
     try {
-  const headers = {};
- const token = getOperatorToken();
-if (token) headers['Authorization'] = 'Bearer ' + token;
-  const res = await fetch(`${API_BASE}/n3R8k/${recordatorioIdAEliminar}`, {
-  method: 'DELETE',
-     headers
-   });
+      const headers = {};
+      const token = getOperatorToken();
+      if (token) headers['Authorization'] = 'Bearer ' + token;
+      // <-- Cambio: usar query param ?id=... en vez de path /n3R8k/{id}
+      const res = await fetch(`${API_BASE}/n3R8k?id=${encodeURIComponent(recordatorioIdAEliminar)}`, {
+        method: 'DELETE',
+        headers
+      });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       hideSpinner();
       hideModalByElement(popEliminarConfirm);
@@ -1082,25 +1083,25 @@ if (btnCancelarEliminar) btnCancelarEliminar.addEventListener('click', () => {
 async function openRecordLightbox(id) {
   showSpinner('Cargando recordatorio...');
   try {
-    const res = await fetch(`${API_BASE}/n3R8k/${id}`);
+    // <-- Cambio: obtener recordatorio por query param ?id=
+    const res = await fetch(`${API_BASE}/n3R8k?id=${encodeURIComponent(id)}`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     currentRecordatorio = await res.json();
     lbRecordTitulo.textContent = currentRecordatorio.titulo || 'Recordatorio';
     lbRecordDesc.textContent = currentRecordatorio.descripcion || '';
     lbRecordFecha.textContent = `Fecha: ${currentRecordatorio.fecha_limite || ''}`;
 
-const todayMiami = new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' });
+    const todayMiami = new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' });
 
-let recDate;
-if (typeof currentRecordatorio.fecha_limite === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(currentRecordatorio.fecha_limite)) {
-  // ya viene como YYYY-MM-DD -> úsala tal cual
-  recDate = currentRecordatorio.fecha_limite;
-} else {
+    let recDate;
+    if (typeof currentRecordatorio.fecha_limite === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(currentRecordatorio.fecha_limite)) {
+      // ya viene como YYYY-MM-DD -> úsala tal cual
+      recDate = currentRecordatorio.fecha_limite;
+    } else {
+      recDate = new Date(currentRecordatorio.fecha_limite).toLocaleDateString('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' });
+    }
 
-  recDate = new Date(currentRecordatorio.fecha_limite).toLocaleDateString('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' });
-}
-
-const shouldBlink = (todayMiami >= recDate);
+    const shouldBlink = (todayMiami >= recDate);
 
     if (recDate === todayMiami) {
       lightboxRecordatorio.querySelector('.lightbox-content').classList.add('lightbox-due-today');
@@ -1135,7 +1136,9 @@ const mensajeAgregar = $('mensajeAgregar');
 if (formAgregar) formAgregar.addEventListener('submit', async (e) => {
   e.preventDefault();
   const nombre = $('nombre').value.trim();
-  const codigo = $('codigo').value.trim() || null;
+  // <-- Cambio: garantizar codigo no vacío para evitar 400 del backend
+  const codigoRaw = $('codigo').value.trim();
+  const codigo = codigoRaw || `AUTO-${Date.now()}`;
   const telCode = $('telCode').value;
   const telefonoDigits = $('telefonoDigits').value.trim();
   const telefono = `${telCode}${telefonoDigits}`;
@@ -1144,14 +1147,14 @@ if (formAgregar) formAgregar.addEventListener('submit', async (e) => {
 
   showSpinner('Registrando paquete...');
   try {
-   const headers = { 'Content-Type': 'application/json' };
-   const token = getOperatorToken();
-  if (token) headers['Authorization'] = 'Bearer ' + token;
-  const res = await fetch(`${API_BASE}/q4X9b2`, {
+    const headers = { 'Content-Type': 'application/json' };
+    const token = getOperatorToken();
+    if (token) headers['Authorization'] = 'Bearer ' + token;
+    const res = await fetch(`${API_BASE}/q4X9b2`, {
       method: 'POST',
- headers,
- body: JSON.stringify({ nombre_cliente: nombre, codigo_seguimiento: codigo, telefono, tipo_envio: tipo })
-   });
+      headers,
+      body: JSON.stringify({ nombre_cliente: nombre, codigo_seguimiento: codigo, telefono, tipo_envio: tipo })
+    });
     if (!res.ok) {
       let errText = `Registro falló ${res.status}`;
       try { const j = await res.json(); if (j?.error) errText = j.error; } catch(_) {}
@@ -1199,11 +1202,8 @@ if (formActualizar) formActualizar.addEventListener('submit', async (e) => {
   const tarifa = getNumberOrNull('tarifaSeg');
   const fecha = $('fechaEstado').value || null;
 
-if (!codigoSeg) return showResult('Aviso', 'Código de seguimiento requerido.');
-  if (estado && !fecha) 
-  return showResult('Aviso', 'Debes ingresar la fecha del cambio de estado.');
-
-
+  if (!codigoSeg) return showResult('Aviso', 'Código de seguimiento requerido.');
+  if (estado && !fecha) return showResult('Aviso', 'Debes ingresar la fecha del cambio de estado.');
 
   const updateObj = {};
   if (nombreSeg) updateObj.nombre_cliente = nombreSeg;
@@ -1217,14 +1217,15 @@ if (!codigoSeg) return showResult('Aviso', 'Código de seguimiento requerido.');
 
   showSpinner('Actualizando estado...');
   try {
-  const headers = { 'Content-Type': 'application/json' };
-  const token = getOperatorToken();
-   if (token) headers['Authorization'] = 'Bearer ' + token;
-     const res = await fetch(`${API_BASE}/q4X9b2/${encodeURIComponent(codigoSeg)}`, {
-  method: 'PUT',
-headers,
- body: JSON.stringify(updateObj)
-  });
+    const headers = { 'Content-Type': 'application/json' };
+    const token = getOperatorToken();
+    if (token) headers['Authorization'] = 'Bearer ' + token;
+    // <-- Cambio: usar query param ?codigo=... en vez de /q4X9b2/{codigo}
+    const res = await fetch(`${API_BASE}/q4X9b2?codigo=${encodeURIComponent(codigoSeg)}`, {
+      method: 'PUT',
+      headers,
+      body: JSON.stringify(updateObj)
+    });
     if (!res.ok) {
       let errText = `Actualizar falló ${res.status}`;
       try { const j = await res.json(); if (j?.error) errText = j.error; } catch(_) {}
@@ -1628,10 +1629,16 @@ async function openManejoLightbox({ codigo, id }){
         if (Array.isArray(arr) && arr.length>0) paquete = arr[0];
       }
     }
-    // fallback by id
+    // fallback by id (cambio: query param ?id= instead of path)
     if (!paquete && id) {
-      const res2 = await fetch(`${API_BASE}/q4X9b2/${encodeURIComponent(id)}`);
-      if (res2.ok) paquete = await res2.json();
+      const res2 = await fetch(`${API_BASE}/q4X9b2?id=${encodeURIComponent(id)}`);
+      if (res2.ok) {
+        // endpoint returns single object for ?id= (our backend returns row)
+        const maybe = await res2.json();
+        // support both array or single object
+        if (Array.isArray(maybe) && maybe.length>0) paquete = maybe[0];
+        else paquete = maybe;
+      }
     }
     // last fallback: try find in manejoData
     if (!paquete && manejoData && manejoData.length) {
@@ -1778,6 +1785,7 @@ if (lmUpdateForm) {
   lmUpdateForm.addEventListener('submit', async (e)=>{
     e.preventDefault();
     if (!currentManejoPaquete) { showResult('Error','Paquete no disponible para actualizar'); return; }
+    // cuando currentManejoPaquete tiene codigo usamos ?codigo=, si no usamos ?id=
     const codigo = currentManejoPaquete.codigo_seguimiento || currentManejoPaquete.id;
     if (!codigo) { showResult('Error','No se encontró identificador para el paquete'); return; }
 
@@ -1803,15 +1811,19 @@ if (lmUpdateForm) {
 
     showSpinner('Actualizando estado...');
     try {
-      const endpoint = (currentManejoPaquete && currentManejoPaquete.codigo_seguimiento) ? `${API_BASE}/q4X9b2/${encodeURIComponent(currentManejoPaquete.codigo_seguimiento)}` : `${API_BASE}/q4X9b2/${encodeURIComponent(currentManejoPaquete.id)}`;
+      // <-- Cambio: usamos query param para el PUT
+      const endpoint = currentManejoPaquete && currentManejoPaquete.codigo_seguimiento
+        ? `${API_BASE}/q4X9b2?codigo=${encodeURIComponent(currentManejoPaquete.codigo_seguimiento)}`
+        : `${API_BASE}/q4X9b2?id=${encodeURIComponent(currentManejoPaquete.id)}`;
+
       const headers = { 'Content-Type': 'application/json' };
       const token = getOperatorToken();
-    if (token) headers['Authorization'] = 'Bearer ' + token;
-  const res = await fetch(endpoint, {
-  method: 'PUT',
-   headers,
- body: JSON.stringify(updateObj)
-  });
+      if (token) headers['Authorization'] = 'Bearer ' + token;
+      const res = await fetch(endpoint, {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify(updateObj)
+      });
 
       if (!res.ok) {
         let errText = `Actualizar fallo ${res.status}`;
