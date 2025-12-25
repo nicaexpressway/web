@@ -1,12 +1,12 @@
-// functions/n3R8k.js
 import { corsHeaders, authorize, dbAll, dbFirst, dbRun } from './_shared.js';
 
 export async function onRequestPost(context) {
   const { request, env } = context;
-  const auth = await authorize({ env, request, requireServerKey: true });
+  // permitir desde frontend (igual que en tu server antiguo)
+  const auth = await authorize({ env, request, requireServerKey: false });
   if (auth) return auth;
-
   const origin = request.headers.get('origin');
+
   try {
     const body = await request.json().catch(()=>({}));
     const titulo = body.titulo ?? body.title ?? null;
@@ -38,7 +38,6 @@ export async function onRequestGet(context) {
     const id = url.searchParams.get('id') || null;
 
     if (id) {
-      // devolver uno solo
       const row = await dbFirst(env, `SELECT * FROM recordatorios WHERE id = ?`, [id]);
       if (!row) return new Response(JSON.stringify({ error: 'not_found' }), { status: 404, headers: corsHeaders(origin) });
       return new Response(JSON.stringify(row), { headers: corsHeaders(origin) });
@@ -54,16 +53,17 @@ export async function onRequestGet(context) {
 
 export async function onRequestDelete(context) {
   const { request, env } = context;
-  const auth = await authorize({ env, request, requireServerKey: true });
+  // hacemos pública la eliminación (como en tu antiguo servidor). 
+  // Si prefieres exigir API key, cambia `requireServerKey` a true y envía el header desde backend.
+  const auth = await authorize({ env, request, requireServerKey: false });
   if (auth) return auth;
   const origin = request.headers.get('origin');
 
   try {
     const url = new URL(request.url);
-    // preferir siempre searchParam para Cloudflare Pages
     let id = url.searchParams.get('id') || null;
 
-    // también admitir body { id: ... } por si algún cliente lo manda
+    // also accept body { id: ... } just in case
     if (!id) {
       try {
         const body = await request.json().catch(()=>null);
@@ -75,7 +75,6 @@ export async function onRequestDelete(context) {
       return new Response(JSON.stringify({ error: 'id required' }), { status: 400, headers: corsHeaders(origin) });
     }
 
-    // validar número cuando corresponda
     const idNum = Number(id);
     if (!Number.isFinite(idNum)) {
       return new Response(JSON.stringify({ error: 'invalid id' }), { status: 400, headers: corsHeaders(origin) });
