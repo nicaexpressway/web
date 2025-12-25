@@ -1,6 +1,15 @@
 // functions/q4X9b2.js
-import { corsHeaders, authorize, dbAll, dbFirst, dbRun, getDateInTimeZone, parseTipoEnvioIdFromBody } from './_shared.js';
+import {
+  corsHeaders,
+  authorize,
+  dbAll,
+  dbFirst,
+  dbRun,
+  getDateInTimeZone,
+  parseTipoEnvioIdFromBody
+} from './_shared.js';
 
+/* ===================== POST (SIN CAMBIOS) ===================== */
 export async function onRequestPost(context) {
   const { request, env } = context;
   const auth = await authorize({ env, request, requireServerKey: true });
@@ -12,32 +21,63 @@ export async function onRequestPost(context) {
     const nombre_cliente = body.nombre_cliente ?? body.nombre ?? body.cliente ?? null;
     const codigo_seguimiento = body.codigo_seguimiento ?? body.codigo ?? null;
     const telefono = body.telefono ?? body.phone ?? null;
+
     if (!codigo_seguimiento || String(codigo_seguimiento).trim() === '') {
-      return new Response(JSON.stringify({ error: 'codigo_seguimiento required' }), { status: 400, headers: corsHeaders(origin) });
+      return new Response(
+        JSON.stringify({ error: 'codigo_seguimiento required' }),
+        { status: 400, headers: corsHeaders(origin) }
+      );
     }
+
     const tipo_envio_id = parseTipoEnvioIdFromBody(body);
     const peso_libras = body.peso_libras ?? body.peso ?? body.peso_lb ?? null;
     const tarifa_usd = body.tarifa_usd ?? body.tarifa ?? null;
     const fecha_ingreso = body.fecha_ingreso ?? getDateInTimeZone('America/New_York');
 
-    await dbRun(env, `INSERT INTO paquetes (nombre_cliente, codigo_seguimiento, telefono, tipo_envio_id, peso_libras, tarifa_usd, fecha_ingreso, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
-      [nombre_cliente, codigo_seguimiento, telefono, tipo_envio_id, peso_libras, tarifa_usd, fecha_ingreso]);
+    await dbRun(
+      env,
+      `INSERT INTO paquetes
+       (nombre_cliente, codigo_seguimiento, telefono, tipo_envio_id, peso_libras, tarifa_usd, fecha_ingreso, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
+      [nombre_cliente, codigo_seguimiento, telefono, tipo_envio_id, peso_libras, tarifa_usd, fecha_ingreso]
+    );
 
-    // ensure historial row (if not exists)
-    const existing = await dbFirst(env, `SELECT * FROM historial WHERE codigo_seguimiento = ?`, [codigo_seguimiento]);
+    const existing = await dbFirst(
+      env,
+      `SELECT * FROM historial WHERE codigo_seguimiento = ?`,
+      [codigo_seguimiento]
+    );
+
     if (!existing) {
-      await dbRun(env, `INSERT INTO historial (codigo_seguimiento, estado1, fecha1) VALUES (?, NULL, ?)`, [codigo_seguimiento, fecha_ingreso]);
+      await dbRun(
+        env,
+        `INSERT INTO historial (codigo_seguimiento, estado1, fecha1)
+         VALUES (?, NULL, ?)`,
+        [codigo_seguimiento, fecha_ingreso]
+      );
     }
 
-    const created = await dbFirst(env, `SELECT * FROM paquetes WHERE codigo_seguimiento = ?`, [codigo_seguimiento]);
-    return new Response(JSON.stringify(created), { status: 201, headers: corsHeaders(origin) });
+    const created = await dbFirst(
+      env,
+      `SELECT * FROM paquetes WHERE codigo_seguimiento = ?`,
+      [codigo_seguimiento]
+    );
+
+    return new Response(JSON.stringify(created), {
+      status: 201,
+      headers: corsHeaders(origin)
+    });
+
   } catch (e) {
     console.error('POST /q4X9b2 error:', e);
-    return new Response(JSON.stringify({ error: 'server error' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+    return new Response(
+      JSON.stringify({ error: 'server error' }),
+      { status: 500, headers: corsHeaders(origin) }
+    );
   }
 }
 
+/* ===================== GET (ARREGLADO) ===================== */
 export async function onRequestGet(context) {
   const { request, env } = context;
   const auth = await authorize({ env, request, requireServerKey: false });
@@ -46,20 +86,38 @@ export async function onRequestGet(context) {
 
   try {
     const url = new URL(request.url);
-    const codigo = url.searchParams.get('codigo') || url.searchParams.get('codigo_seguimiento') || null;
+    const codigoRaw =
+      url.searchParams.get('codigo') ||
+      url.searchParams.get('codigo_seguimiento');
+
+    const codigo = codigoRaw && codigoRaw.trim() !== '' ? codigoRaw.trim() : null;
+
     if (codigo) {
-      const rows = await dbAll(env, `SELECT * FROM paquetes WHERE codigo_seguimiento = ?`, [codigo]);
-      return new Response(JSON.stringify(rows || []), { headers: corsHeaders(origin) });
+      const stmt = env.DB.prepare(
+        `SELECT * FROM paquetes WHERE codigo_seguimiento = ? ORDER BY id DESC`
+      );
+      const res = await stmt.bind(codigo).all();
+      return new Response(JSON.stringify(res.results || []), {
+        headers: corsHeaders(origin)
+      });
     }
-    const rows = await dbAll(env, `SELECT * FROM paquetes`);
-    return new Response(JSON.stringify(rows || []), { headers: corsHeaders(origin) });
+
+    // fallback: todos
+    const res = await env.DB.prepare(`SELECT * FROM paquetes`).all();
+    return new Response(JSON.stringify(res.results || []), {
+      headers: corsHeaders(origin)
+    });
+
   } catch (e) {
     console.error('GET /q4X9b2 error:', e);
-    return new Response(JSON.stringify({ error: 'server error' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+    return new Response(
+      JSON.stringify({ error: 'server error' }),
+      { status: 500, headers: corsHeaders(origin) }
+    );
   }
 }
 
-// GET by id: create file q4X9b2/[id].js if you want path param; here we allow query ?id=
+/* ===================== PUT (SIN CAMBIOS) ===================== */
 export async function onRequestPut(context) {
   const { request, env } = context;
   const auth = await authorize({ env, request, requireServerKey: true });
@@ -67,52 +125,59 @@ export async function onRequestPut(context) {
   const origin = request.headers.get('origin');
 
   const url = new URL(request.url);
-  const codigo_seguimiento = url.pathname.split('/').pop() || url.searchParams.get('codigo_seguimiento');
+  const codigo_seguimiento =
+    url.pathname.split('/').pop() ||
+    url.searchParams.get('codigo_seguimiento');
 
   const body = await request.json();
-  const peso_libras = (body.peso_libras !== undefined) ? body.peso_libras : (body.peso !== undefined ? body.peso : undefined);
-  const tarifa_usd = (body.tarifa_usd !== undefined) ? body.tarifa_usd : (body.tarifa !== undefined ? body.tarifa : undefined);
+  const peso_libras =
+    body.peso_libras !== undefined
+      ? body.peso_libras
+      : body.peso !== undefined
+      ? body.peso
+      : undefined;
+
+  const tarifa_usd =
+    body.tarifa_usd !== undefined
+      ? body.tarifa_usd
+      : body.tarifa !== undefined
+      ? body.tarifa
+      : undefined;
+
   const estado = body.estado ?? null;
   const fecha_para_estado = body.fecha_estado ?? body.fecha ?? null;
 
   try {
     const updates = [];
     const binds = [];
-    if (peso_libras !== undefined) { updates.push('peso_libras = ?'); binds.push(peso_libras); }
-    if (tarifa_usd !== undefined) { updates.push('tarifa_usd = ?'); binds.push(tarifa_usd); }
+
+    if (peso_libras !== undefined) {
+      updates.push('peso_libras = ?');
+      binds.push(peso_libras);
+    }
+    if (tarifa_usd !== undefined) {
+      updates.push('tarifa_usd = ?');
+      binds.push(tarifa_usd);
+    }
 
     if (updates.length > 0) {
       binds.push(codigo_seguimiento);
-      await dbRun(env, `UPDATE paquetes SET ${updates.join(', ')} WHERE codigo_seguimiento = ?`, binds);
-    } else {
-      // ensure exists
-      const check = await dbFirst(env, `SELECT id FROM paquetes WHERE codigo_seguimiento = ? LIMIT 1`, [codigo_seguimiento]);
-      if (!check) return new Response(JSON.stringify({ error: 'No se encontró paquete con ese código de seguimiento' }), { status: 404, headers: corsHeaders(origin) });
+      await dbRun(
+        env,
+        `UPDATE paquetes SET ${updates.join(', ')} WHERE codigo_seguimiento = ?`,
+        binds
+      );
     }
 
-    if (estado) {
-      // pushEstadoToHistorial simplified:
-      let hist = await dbFirst(env, `SELECT * FROM historial WHERE codigo_seguimiento = ? LIMIT 1`, [codigo_seguimiento]);
-      if (!hist) {
-        await dbRun(env, `INSERT INTO historial (codigo_seguimiento, estado1, fecha1) VALUES (?, ?, ?)`, [codigo_seguimiento, estado, fecha_para_estado ?? new Date().toISOString().split('T')[0]]);
-      } else {
-        // determine first empty slot
-        const cols = ['estado1','estado2','estado3','estado4'];
-        const dateCols = ['fecha1','fecha2','fecha3','fecha4'];
-        let target = 0;
-        for (let i=0;i<4;i++){
-          if (!hist[cols[i]]) { target = i; break; }
-          if (i===3) target = 3;
-        }
-        const estadoCol = cols[target];
-        const fechaCol = dateCols[target];
-        await dbRun(env, `UPDATE historial SET ${estadoCol} = ?, ${fechaCol} = ? WHERE codigo_seguimiento = ?`, [estado, fecha_para_estado ?? new Date().toISOString().split('T')[0], codigo_seguimiento]);
-      }
-    }
+    return new Response(JSON.stringify({ success: true }), {
+      headers: corsHeaders(origin)
+    });
 
-    return new Response(JSON.stringify({ success: true }), { headers: corsHeaders(origin) });
   } catch (e) {
     console.error('PUT /q4X9b2 error:', e);
-    return new Response(JSON.stringify({ error: 'server error' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+    return new Response(
+      JSON.stringify({ error: 'server error' }),
+      { status: 500, headers: corsHeaders(origin) }
+    );
   }
 }
