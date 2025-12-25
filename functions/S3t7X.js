@@ -1,5 +1,24 @@
 // functions/S3t7X.js
-import { corsHeaders, authorize, dbAll } from './_shared.js';
+import { corsHeaders, authorize } from './_shared.js';
+
+async function runQuery(env, sql, bindings = []) {
+  if (!Array.isArray(bindings)) bindings = [];
+  const stmt = env.DB.prepare(sql);
+  try {
+    if (bindings.length > 0) {
+      const safe = bindings.map(b => (b === undefined ? null : b));
+      const res = await stmt.bind(...safe).all();
+      return res && Array.isArray(res.results) ? res.results : [];
+    } else {
+      const res = await stmt.all();
+      return res && Array.isArray(res.results) ? res.results : [];
+    }
+  } catch (err) {
+    err.__sql = sql;
+    err.__bindings = bindings;
+    throw err;
+  }
+}
 
 function normalizeState(v){
   if (v === null || v === undefined) return null;
@@ -18,7 +37,7 @@ export async function onRequestGet(context) {
   const { request, env } = context;
   const auth = await authorize({ env, request, requireServerKey: false });
   if (auth) return auth;
-  const origin = request.headers.get('origin');
+  const origin = request.headers.get('origin') || '*';
 
   try {
     const url = new URL(request.url);
@@ -32,17 +51,17 @@ export async function onRequestGet(context) {
       paquetesQuerySql += ' WHERE tipo_envio_id = ?';
       params.push(tipoId);
     }
-    const paquetesRes = await dbAll(env, paquetesQuerySql, params);
-    const paquetesList = paquetesRes || [];
+    const paquetesList = await runQuery(env, paquetesQuerySql, params);
 
-    const codes = paquetesList.map(p => p.codigo_seguimiento).filter(Boolean);
+    const codes = (paquetesList || []).map(p => p.codigo_seguimiento).filter(Boolean);
+
     let historialRows = [];
     if (codes.length > 0) {
-      // SQLite doesn't support IN with array binding easily, build placeholders
       const placeholders = codes.map(()=>'?').join(',');
-      historialRows = await dbAll(env, `SELECT codigo_seguimiento, estado1, estado2, estado3, estado4 FROM historial WHERE codigo_seguimiento IN (${placeholders})`, codes);
+      const sql = `SELECT codigo_seguimiento, estado1, estado2, estado3, estado4 FROM historial WHERE codigo_seguimiento IN (${placeholders})`;
+      historialRows = await runQuery(env, sql, codes);
     } else {
-      historialRows = await dbAll(env, `SELECT codigo_seguimiento, estado1, estado2, estado3, estado4 FROM historial`, []);
+      historialRows = await runQuery(env, `SELECT codigo_seguimiento, estado1, estado2, estado3, estado4 FROM historial`, []);
     }
 
     let enviadosCount = 0, bodegaCount = 0, caminoCount = 0, aduanaCount = 0;
@@ -70,9 +89,9 @@ export async function onRequestGet(context) {
       counts: { enviados: enviadosCount, bodega: bodegaCount, camino: caminoCount, aduana: aduanaCount },
       ganancias, total_pounds,
       total: (enviadosCount + bodegaCount + caminoCount + aduanaCount)
-    }), { headers: corsHeaders(origin) });
+    }), { headers: Object.assign({ 'Content-Type': 'application/json' }, corsHeaders(origin)) });
   } catch (e) {
-    console.error('GET /S3t7X error:', e);
-    return new Response(JSON.stringify({ error: 'server error' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+    console.error('GET /S3t7X error:', e?.message ?? e, { sql: e?.__sql, bindings: e?.__bindings });
+    return new Response(JSON.stringify({ error: 'server error', message: e?.message ?? String(e) }), { status: 500, headers: Object.assign({ 'Content-Type': 'application/json' }, corsHeaders(origin)) });
   }
 }
