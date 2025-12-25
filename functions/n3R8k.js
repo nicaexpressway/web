@@ -1,45 +1,12 @@
 // functions/n3R8k.js
-import { corsHeaders, authorize } from './_shared.js';
-
-async function runQuery(env, sql, bindings = []) {
-  if (!Array.isArray(bindings)) bindings = [];
-  const stmt = env.DB.prepare(sql);
-  try {
-    if (bindings.length > 0) {
-      const safeBindings = bindings.map(b => (b === undefined ? null : b));
-      const res = await stmt.bind(...safeBindings).all();
-      return res && Array.isArray(res.results) ? res.results : [];
-    } else {
-      const res = await stmt.all();
-      return res && Array.isArray(res.results) ? res.results : [];
-    }
-  } catch (err) {
-    err.__sql = sql;
-    err.__bindings = bindings;
-    throw err;
-  }
-}
-
-async function runExec(env, sql, bindings = []) {
-  if (!Array.isArray(bindings)) bindings = [];
-  const stmt = env.DB.prepare(sql);
-  try {
-    const safeBindings = bindings.map(b => (b === undefined ? null : b));
-    const res = await stmt.bind(...safeBindings).run();
-    return res || {};
-  } catch (err) {
-    err.__sql = sql;
-    err.__bindings = bindings;
-    throw err;
-  }
-}
+import { corsHeaders, authorize, dbAll, dbFirst, dbRun } from './_shared.js';
 
 export async function onRequestPost(context) {
   const { request, env } = context;
   const auth = await authorize({ env, request, requireServerKey: true });
   if (auth) return auth;
-  const origin = request.headers.get('origin') || '*';
 
+  const origin = request.headers.get('origin');
   try {
     const body = await request.json().catch(()=>({}));
     const titulo = body.titulo ?? body.title ?? null;
@@ -47,17 +14,16 @@ export async function onRequestPost(context) {
     const fecha_limite = body.fecha_limite ?? body.date ?? null;
 
     if (!titulo || !descripcion || !fecha_limite) {
-      return new Response(JSON.stringify({ error: 'missing fields' }), { status: 400, headers: corsHeaders(origin) });
+      return new Response(JSON.stringify({ error: 'missing_fields', message: 'titulo, descripcion y fecha_limite son requeridos' }), { status: 400, headers: corsHeaders(origin) });
     }
 
-    await runExec(env, `INSERT INTO recordatorios (titulo, descripcion, fecha_limite) VALUES (?, ?, ?)`, [titulo, descripcion, fecha_limite]);
+    await dbRun(env, `INSERT INTO recordatorios (titulo, descripcion, fecha_limite) VALUES (?, ?, ?)`, [titulo, descripcion, fecha_limite]);
 
-    const rows = await runQuery(env, `SELECT * FROM recordatorios ORDER BY id DESC LIMIT 1`);
-    const row = rows.length ? rows[0] : null;
-    return new Response(JSON.stringify(row), { headers: Object.assign({ 'Content-Type': 'application/json' }, corsHeaders(origin)) });
+    const row = await dbFirst(env, `SELECT * FROM recordatorios ORDER BY id DESC LIMIT 1`);
+    return new Response(JSON.stringify(row), { headers: corsHeaders(origin) });
   } catch (e) {
-    console.error('POST /n3R8k error:', e?.message ?? e, { sql: e?.__sql, bindings: e?.__bindings });
-    return new Response(JSON.stringify({ error: 'server error', message: e?.message ?? String(e) }), { status: 500, headers: Object.assign({ 'Content-Type': 'application/json' }, corsHeaders(origin)) });
+    console.error('POST /n3R8k error:', e);
+    return new Response(JSON.stringify({ error: 'server error', message: e?.message ?? String(e) }), { status: 500, headers: corsHeaders(origin) });
   }
 }
 
@@ -65,14 +31,24 @@ export async function onRequestGet(context) {
   const { request, env } = context;
   const auth = await authorize({ env, request, requireServerKey: false });
   if (auth) return auth;
-  const origin = request.headers.get('origin') || '*';
+  const origin = request.headers.get('origin');
 
   try {
-    const rows = await runQuery(env, `SELECT * FROM recordatorios ORDER BY fecha_limite ASC`);
-    return new Response(JSON.stringify(rows || []), { headers: Object.assign({ 'Content-Type': 'application/json' }, corsHeaders(origin)) });
+    const url = new URL(request.url);
+    const id = url.searchParams.get('id') || null;
+
+    if (id) {
+      // devolver uno solo
+      const row = await dbFirst(env, `SELECT * FROM recordatorios WHERE id = ?`, [id]);
+      if (!row) return new Response(JSON.stringify({ error: 'not_found' }), { status: 404, headers: corsHeaders(origin) });
+      return new Response(JSON.stringify(row), { headers: corsHeaders(origin) });
+    }
+
+    const rows = await dbAll(env, `SELECT * FROM recordatorios ORDER BY fecha_limite ASC`);
+    return new Response(JSON.stringify(rows || []), { headers: corsHeaders(origin) });
   } catch (e) {
-    console.error('GET /n3R8k error:', e?.message ?? e, { sql: e?.__sql, bindings: e?.__bindings });
-    return new Response(JSON.stringify({ error: 'server error', message: e?.message ?? String(e) }), { status: 500, headers: Object.assign({ 'Content-Type': 'application/json' }, corsHeaders(origin)) });
+    console.error('GET /n3R8k error:', e);
+    return new Response(JSON.stringify({ error: 'server error', message: e?.message ?? String(e) }), { status: 500, headers: corsHeaders(origin) });
   }
 }
 
@@ -80,25 +56,35 @@ export async function onRequestDelete(context) {
   const { request, env } = context;
   const auth = await authorize({ env, request, requireServerKey: true });
   if (auth) return auth;
-  const origin = request.headers.get('origin') || '*';
+  const origin = request.headers.get('origin');
 
   try {
     const url = new URL(request.url);
-    // extrae id tanto de path como de query param para ser tolerante
-    let id = url.pathname.split('/').pop() || url.searchParams.get('id') || null;
-    if (id === '' || id === 'n3R8k') id = null;
-    if (!id) {
-      // si el body trae id, aceptarlo (por compatibilidad)
-      const body = await request.json().catch(()=>({}));
-      id = body.id ?? null;
-    }
-    if (!id) return new Response(JSON.stringify({ error: 'id required' }), { status: 400, headers: corsHeaders(origin) });
+    // preferir siempre searchParam para Cloudflare Pages
+    let id = url.searchParams.get('id') || null;
 
-    // ejecutar delete
-    await runExec(env, `DELETE FROM recordatorios WHERE id = ?`, [id]);
-    return new Response(JSON.stringify({ success: true }), { headers: Object.assign({ 'Content-Type': 'application/json' }, corsHeaders(origin)) });
+    // también admitir body { id: ... } por si algún cliente lo manda
+    if (!id) {
+      try {
+        const body = await request.json().catch(()=>null);
+        if (body && body.id) id = String(body.id);
+      } catch(_) {}
+    }
+
+    if (!id) {
+      return new Response(JSON.stringify({ error: 'id required' }), { status: 400, headers: corsHeaders(origin) });
+    }
+
+    // validar número cuando corresponda
+    const idNum = Number(id);
+    if (!Number.isFinite(idNum)) {
+      return new Response(JSON.stringify({ error: 'invalid id' }), { status: 400, headers: corsHeaders(origin) });
+    }
+
+    await dbRun(env, `DELETE FROM recordatorios WHERE id = ?`, [idNum]);
+    return new Response(JSON.stringify({ success: true }), { headers: corsHeaders(origin) });
   } catch (e) {
-    console.error('DELETE /n3R8k error:', e?.message ?? e, { sql: e?.__sql, bindings: e?.__bindings });
-    return new Response(JSON.stringify({ error: 'server error', message: e?.message ?? String(e) }), { status: 500, headers: Object.assign({ 'Content-Type': 'application/json' }, corsHeaders(origin)) });
+    console.error('DELETE /n3R8k error:', e);
+    return new Response(JSON.stringify({ error: 'server error', message: e?.message ?? String(e) }), { status: 500, headers: corsHeaders(origin) });
   }
 }
