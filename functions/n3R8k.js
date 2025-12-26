@@ -1,4 +1,6 @@
-import { corsHeaders, authorize, dbAll, dbFirst, dbRun } from './_shared.js';
+// IMPORTACIÓN RESILIENTE: traemos todo como namespace y extraemos los helpers.
+import * as SHARED from './_shared.js';
+const { corsHeaders, authorize, dbAll, dbFirst, dbRun, getDateInTimeZone, parseTipoEnvioIdFromBody } = SHARED;
 
 export async function onRequestPost(context) {
   const { request, env } = context;
