@@ -13,24 +13,43 @@ export async function onRequestPost(context) {
   const origin = request.headers.get('origin');
 
   try {
-    const body = await request.json().catch(()=>({}));
+    const body = await request.json().catch(() => ({}));
     const titulo = body.titulo ?? body.title ?? null;
     const descripcion = body.descripcion ?? body.description ?? null;
     const fecha_limite = body.fecha_limite ?? body.date ?? null;
 
+    // Validación estricta
     if (!titulo || !descripcion || !fecha_limite) {
-      return new Response(JSON.stringify({ error: 'missing_fields', message: 'titulo, descripcion y fecha_limite son requeridos' }), { status: 400, headers: corsHeaders(origin) });
+      return new Response(
+        JSON.stringify({ error: 'missing_fields', message: 'titulo, descripcion y fecha_limite son requeridos' }),
+        { status: 400, headers: corsHeaders(origin) }
+      );
     }
 
-    await dbRun(env, `INSERT INTO recordatorios (titulo, descripcion, fecha_limite) VALUES (?, ?, ?)`, [titulo, descripcion, fecha_limite]);
+    // Validar que todo sea string
+    const tituloStr = String(titulo);
+    const descripcionStr = String(descripcion);
+    const fechaStr = String(fecha_limite);
+
+    console.log({ titulo: tituloStr, descripcion: descripcionStr, fecha_limite: fechaStr });
+
+    await dbRun(env, 
+      `INSERT INTO recordatorios (titulo, descripcion, fecha_limite) VALUES (?, ?, ?)`,
+      [tituloStr, descripcionStr, fechaStr]
+    );
 
     const row = await dbFirst(env, `SELECT * FROM recordatorios ORDER BY id DESC LIMIT 1`);
     return new Response(JSON.stringify(row), { headers: corsHeaders(origin) });
+
   } catch (e) {
     console.error('POST /n3R8k error:', e);
-    return new Response(JSON.stringify({ error: 'server error', message: e?.message ?? String(e) }), { status: 500, headers: corsHeaders(origin) });
+    return new Response(
+      JSON.stringify({ error: 'server error', message: e?.message ?? String(e) }),
+      { status: 500, headers: corsHeaders(origin) }
+    );
   }
 }
+
 
 export async function onRequestGet(context) {
   const { request, env } = context;
