@@ -1,3 +1,4 @@
+// functions/n3R8k.js
 import {
   authorize,
   corsHeaders,
@@ -50,7 +51,6 @@ export async function onRequestPost(context) {
   }
 }
 
-
 export async function onRequestGet(context) {
   const { request, env } = context;
   const auth = await authorize({ env, request, requireServerKey: false });
@@ -62,7 +62,7 @@ export async function onRequestGet(context) {
     const id = url.searchParams.get('id') || null;
 
     if (id) {
-      const row = await dbFirst(env, `SELECT * FROM recordatorios WHERE id = ?`, [id]);
+      const row = await dbFirst(env, `SELECT * FROM recordatorios WHERE id = ? LIMIT 1`, [id]);  // Agregué LIMIT 1 por consistencia
       if (!row) return new Response(JSON.stringify({ error: 'not_found' }), { status: 404, headers: corsHeaders(origin) });
       return new Response(JSON.stringify(row), { headers: corsHeaders(origin) });
     }
