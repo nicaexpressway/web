@@ -1,4 +1,16 @@
 // ... (import line stays the same)
+
+import {
+  authorize,
+  corsHeaders,
+  dbAll,
+  dbFirst,
+  dbRun,
+  getDateInTimeZone,
+  parseTipoEnvioIdFromBody
+} from './_shared.js';
+
+
 export async function onRequestPost(context) {
   const { request, env } = context;
   // permitir desde frontend (igual que en el server antiguo)
