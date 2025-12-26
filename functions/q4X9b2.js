@@ -1,5 +1,4 @@
-// ... (import line stays the same)
-
+// functions/q4X9b2.js
 import {
   authorize,
   corsHeaders,
@@ -10,10 +9,8 @@ import {
   parseTipoEnvioIdFromBody
 } from './_shared.js';
 
-
 export async function onRequestPost(context) {
   const { request, env } = context;
-  // permitir desde frontend (igual que en el server antiguo)
   const auth = await authorize({ env, request, requireServerKey: false });
   if (auth) return auth;
   const origin = request.headers.get('origin');
@@ -54,7 +51,6 @@ export async function onRequestPost(context) {
 
 export async function onRequestPut(context) {
   const { request, env } = context;
-  // permitir desde frontend (igualmente que antes)
   const auth = await authorize({ env, request, requireServerKey: false });
   if (auth) return auth;
   const origin = request.headers.get('origin');
@@ -121,6 +117,21 @@ export async function onRequestPut(context) {
     return new Response(JSON.stringify({ success: true }), { headers: corsHeaders(origin) });
   } catch (e) {
     console.error('PUT /q4X9b2 error:', e);
+    return new Response(JSON.stringify({ error: 'server error', message: e?.message ?? String(e) }), { status: 500, headers: corsHeaders(origin) });
+  }
+}
+
+export async function onRequestGet(context) {
+  const { request, env } = context;
+  const auth = await authorize({ env, request, requireServerKey: false });
+  if (auth) return auth;
+  const origin = request.headers.get('origin');
+
+  try {
+    const rows = await dbAll(env, `SELECT * FROM paquetes ORDER BY id DESC`);
+    return new Response(JSON.stringify(rows || []), { headers: corsHeaders(origin) });
+  } catch (e) {
+    console.error('GET /q4X9b2 error:', e);
     return new Response(JSON.stringify({ error: 'server error', message: e?.message ?? String(e) }), { status: 500, headers: corsHeaders(origin) });
   }
 }
