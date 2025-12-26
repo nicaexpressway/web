@@ -797,6 +797,7 @@ Esta plataforma es de prueba, dog. Acción no disponible por el momento.
   </div>
 </div>
 
+```html
 <script>
 // ------------------- helper: token operador (GLOBAL) -------------------
 // Inserta este bloque en la parte superior del script (antes de cualquier uso de getOperatorToken)
@@ -896,6 +897,38 @@ function getNumberOrNull(id){
   const num = Number(val);
   return isNaN(num) ? null : num;
 }
+
+// Helper fetchJson to standardize responses and errors
+async function fetchJson(url, options = {}) {
+  const res = await fetch(url, options);
+  if (!res.ok) {
+    // try to parse json error
+    let errText = `HTTP ${res.status}`;
+    try {
+      const txt = await res.text();
+      if (txt) {
+        try {
+          const j = JSON.parse(txt);
+          if (j?.error) errText = j.error;
+          else if (j?.message) errText = j.message;
+          else errText = txt;
+        } catch (e) {
+          errText = txt;
+        }
+      }
+    } catch (_) {}
+    throw new Error(errText);
+  }
+  // try parse json, if empty return null
+  const text = await res.text();
+  if (!text) return null;
+  try {
+    return JSON.parse(text);
+  } catch (e) {
+    return text;
+  }
+}
+
 const btnInicio = $('btnInicio');
 const btnManejo = $('btnManejo');
 const btnAgregar = $('btnAgregar');
@@ -1145,6 +1178,9 @@ if (btnAgregarRecord) btnAgregarRecord.addEventListener('click', () => showModal
 if (cerrarPopForm) cerrarPopForm.addEventListener('click', () => hideModalByElement(popFormRecord));
 if (cerrarPopConfirm) cerrarPopConfirm.addEventListener('click', () => hideModalByElement(popConfirm));
 
+// ---------------------------------------------------------
+// Resto del script (sin cambios funcionales principales)
+// ---------------------------------------------------------
 
 const formAgregar = $('formAgregar');
 const mensajeAgregar = $('mensajeAgregar');
@@ -2055,7 +2091,5 @@ function escapeHtml(str){
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;');
 }
-
 </script>
-</body>
-</html>
+```
