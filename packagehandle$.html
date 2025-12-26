@@ -21,11 +21,10 @@
   --color-gray: #F6F8FB;
   --color-text-dark: #1A1A1A;
   --modal-overlay-bg: rgba(0,0,0,0.45);
-  --lapis: #1f3a66; 
+  --lapis: #1f3a66;
   --red-delete: #f56565;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
-
 body {
   font-family: 'Inter', sans-serif;
   background: var(--color-bg);
@@ -34,10 +33,8 @@ body {
   max-width: 500px;
   margin: auto;
 }
-
 header { text-align: center; margin-bottom: 2rem; }
 h1 { font-family: 'Poppins', sans-serif; font-size: 1.8rem; color: var(--color-accent); }
-
 nav { display: flex; justify-content: center; gap: 0.5rem; margin-top: 1rem; flex-wrap: wrap; }
 nav button {
   flex: 1 1 28%;
@@ -57,27 +54,20 @@ nav button {
 nav button.inactive { background: #a0b6e0; }
 nav button#btnActualizar:hover { background: var(--lapis); }
 nav button#btnActualizar.active-nav { background: var(--lapis); }
-
 #btnPedidos { display: none; }
-
 section { background: var(--color-light); padding: 1.5rem; border-radius: 12px; margin-top: 1rem; display: none; }
-
 section.active { display: block; }
-
 /* Fade-in para secciones */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(6px); }
-  to   { opacity: 1; transform: translateY(0); }
+  to { opacity: 1; transform: translateY(0); }
 }
 .section-fade { animation: fadeIn .18s ease both; }
-
 label { display: block; margin: 1rem 0 0.5rem; font-weight: 600; }
 input, select, textarea { width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid #ccc; font-size: 1rem; }
 input::placeholder { color: #9aa3ad; }
 textarea { resize: vertical; }
-
 button.action-btn { margin-top: 1rem; background: var(--color-accent); color: white; border: none; padding: 0.75rem; font-size: 1rem; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer; }
-
 .recordatorio-item {
   background: var(--color-gray);
   padding: 0.75rem;
@@ -106,7 +96,6 @@ button.action-btn { margin-top: 1rem; background: var(--color-accent); color: wh
   white-space: nowrap;
 }
 .link-btn:hover { transform: translateY(-3px); background: #1f3a66; }
-
 .recordatorio-info {
   flex: 1;
   border-radius: 12px;
@@ -123,7 +112,6 @@ button.action-btn { margin-top: 1rem; background: var(--color-accent); color: wh
   transition: background 0.2s ease;
 }
 .btnEliminar:hover { background: #ff6b6b; }
-
 .modal-overlay, .authOverlay, .lightbox {
   position: fixed;
   inset: 0;
@@ -137,11 +125,9 @@ button.action-btn { margin-top: 1rem; background: var(--color-accent); color: wh
   opacity: 0;
   transition: opacity 0.3s ease;
 }
-
 .modal-overlay.modal-visible, .authOverlay.modal-visible, .lightbox.modal-visible {
   opacity: 1;
 }
-
 .modal-overlay .modal-inner,
 .authOverlay .authBox,
 .lightbox .lightbox-content {
@@ -156,7 +142,6 @@ button.action-btn { margin-top: 1rem; background: var(--color-accent); color: wh
   pointer-events: auto !important;
   z-index: 10001;
 }
-
 .lightbox-manejo .lightbox-inner {
   background: var(--color-light);
   padding: 1rem;
@@ -171,10 +156,8 @@ button.action-btn { margin-top: 1rem; background: var(--color-accent); color: wh
   pointer-events: auto !important;
   z-index: 10001;
 }
-
 .modal-visible { display: flex !important; animation: fadeIn .16s ease both; }
 .fade-in { animation: fadeIn .16s ease both; }
-
 .pop-result {
   position: fixed;
   inset: 0;
@@ -205,7 +188,6 @@ button.action-btn { margin-top: 1rem; background: var(--color-accent); color: wh
 .pop-result .title { font-weight: 700; color: var(--color-accent); margin-bottom: 8px; }
 .pop-result .msg { margin-bottom: 10px; }
 .pop-result .btn-close { background: var(--color-accent); color: white; border: none; padding: 10px 12px; border-radius: 8px; cursor: pointer; width: 100%; }
-
 .overlay-spinner {
   position: fixed;
   inset: 0;
@@ -240,12 +222,11 @@ button.action-btn { margin-top: 1rem; background: var(--color-accent); color: wh
   animation: spin 1s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
-
 .lightbox-content {
   background: #fff;
   padding: 20px;
   border-radius: 12px;
-  max-width: 360px; 
+  max-width: 360px;
   width: 92%;
   max-height: 70vh;
   overflow-y: auto;
@@ -271,25 +252,18 @@ button.action-btn { margin-top: 1rem; background: var(--color-accent); color: wh
   box-shadow: 0 2px 6px rgba(0,0,0,0.12);
 }
 .close-lightbox:hover, .close-lightbox-pedido:hover, .close-lightbox-manejo:hover { transform: translateY(-2px); }
-
 .lightbox-content p { white-space: pre-line; word-wrap: break-word; }
-
 .btn-eliminar { margin-top: 20px; padding: 10px 15px; border: none; background: #e74c3c; color: #fff; border-radius: 8px; cursor: pointer; transition: background 0.2s ease; }
 .btn-eliminar:hover { background: #c0392b; }
-
 #listaPedidos, #listaManejo { margin-top: 8px; }
 .pedido-type { font-weight:700; color:var(--color-accent); }
-
 .pedido-phone { color: var(--color-accent); text-decoration: underline; cursor: pointer; }
-
 .phone-row { display: flex; gap: 0.5rem; align-items: center; }
 .phone-row select { width: 35%; min-width: 110px; }
 .phone-row input { flex: 1; }
-
 .form-group { position: relative; }
 .tooltip { display: none; position: absolute; left: 0; top: -2rem; background: var(--color-light); color: var(--color-text-dark); padding: 0.35rem 0.55rem; border-radius: 6px; font-size: 0.9rem; font-family: 'Poppins', sans-serif; font-weight:600; white-space: normal; max-width: 95%; box-shadow: 0 4px 12px rgba(0,0,0,0.12); border: 1px solid #ccc; }
 .form-group:focus-within .tooltip { display: block; }
-
 .manejo-list { display:flex; flex-direction:column; gap:10px; margin-top:10px; }
 .manejo-item {
   background: #fff;
@@ -306,14 +280,12 @@ button.action-btn { margin-top: 1rem; background: var(--color-accent); color: wh
 .manejo-meta { display:flex; flex-direction:column; gap:4px; text-align:left; }
 .manejo-meta small { color:#666; font-size:0.92rem; }
 .manejo-right { text-align:right; min-width:80px; }
-
 .timeline{position:relative;padding-left:24px;border-left:2px solid rgba(47,82,143,0.08);margin-bottom:.5rem}
 .timeline-item{position:relative;padding:8px 12px;margin-bottom:.5rem}
 .timeline-item::before{content:"";position:absolute;left:-11px;top:8px;width:12px;height:12px;border-radius:50%;background:#fff;border:3px solid var(--color-accent)}
 .timeline-item .state{font-weight:700}
 .timeline-item .subtext{font-size:.9rem;color:#555;margin-top:.25rem}
 .timeline-item .fecha{font-size:.85rem;color:#666;margin-top:.25rem}
-
 .blink {
   animation: blinkAnim 0.9s step-start 0s infinite;
   box-shadow:0 0 0 4px rgba(47,82,143,0.06) inset;
@@ -322,7 +294,6 @@ button.action-btn { margin-top: 1rem; background: var(--color-accent); color: wh
 @keyframes blinkAnim {
   50% { opacity: 0.25; transform: translateY(-1px); }
 }
-
 /* recordatorio highlight for due today */
 .recordatorio-due-today {
   animation: blinkRed 1.2s ease-in-out infinite;
@@ -331,13 +302,10 @@ button.action-btn { margin-top: 1rem; background: var(--color-accent); color: wh
   0%, 100% { background-color: var(--color-gray); }
   50% { background-color: var(--red-delete); opacity: 0.7; }
 }
-
 #confettiWrap{pointer-events:none;position:fixed;left:0;top:0;width:100%;height:100%;overflow:hidden;z-index:20000}
-
 .pagination { display:flex; gap:8px; align-items:center; justify-content:center; margin-top:12px; }
 .page-btn { background:#fff; border:1px solid #e6eefb; padding:6px 10px; border-radius:8px; cursor:pointer; }
 .page-btn[disabled]{ opacity:0.45; cursor:not-allowed; }
-
 @media (max-width:420px){
   nav { gap:8px; }
   nav button { flex: 1 1 45%; min-width: 120px; font-size: 0.95rem; padding: 0.6rem; }
@@ -346,7 +314,6 @@ button.action-btn { margin-top: 1rem; background: var(--color-accent); color: wh
   .modal-overlay .modal-inner, .authOverlay .authBox { max-width: 92%; padding: 12px; }
   .lightbox-content { max-width: 94%; padding: 14px; }
 }
-
 #estadisticas-container { margin-top: 0.75rem; width: 100%; }
 #estadisticasFrame {
   width: 100%;
@@ -355,9 +322,7 @@ button.action-btn { margin-top: 1rem; background: var(--color-accent); color: wh
   border-radius: 12px;
   background: #fff;
 }
-
 .modal-inner, .authBox, .lightbox-content { max-height: 86vh; overflow-y: auto; }
-
 .btn { border: none; padding: 10px 12px; border-radius: 8px; cursor: pointer; font-weight:700; }
 .btn.primary { background: var(--color-accent); color: #fff; }
 .btn.primary:hover { background: var(--lapis); }
@@ -374,14 +339,10 @@ button.action-btn { margin-top: 1rem; background: var(--color-accent); color: wh
   .manejo-filters .filter-left, .manejo-filters .filter-right, .manejo-filters .filter-center { max-width:100%; min-width:0; }
   .manejo-filters .filter-center { order: 2; margin-top:8px; }
 }
-
 .authBox input[type="password"] { width: 100%; padding: 0.75rem; font-size: 1rem; border-radius: 8px; border: 1px solid #d0d7ea; margin-top: 8px; }
 .authError { display: none; color: #e74c3c; margin-top: 10px; font-weight: 700; }
-
 .hidden { display: none; }
-
 footer { color: #888; text-align: center; padding: 0.8rem 0.5rem; font-size: 0.8rem; margin-top: 1.5rem; }
-
 #lmUpdateForm .action-btn {
   margin-top: 0.5rem;
 }
@@ -399,7 +360,6 @@ footer { color: #888; text-align: center; padding: 0.8rem 0.5rem; font-size: 0.8
   border: none;
   color: white;
 }
-
 #lmToggleUpdate {
   display: flex;
   justify-content: center;
@@ -418,12 +378,9 @@ footer { color: #888; text-align: center; padding: 0.8rem 0.5rem; font-size: 0.8
   width: fit-content;
 }
 #lmToggleUpdate:hover { transform: translateY(-3px); background: #1f3a66; }
-
 #lbRecordDesc { white-space: pre-line; word-wrap: break-word; text-align: left; }
-
 /* Loading text style */
 #loadingRecordatorios { text-align: center; color: #666; font-size: 1rem; margin-top: 1rem; }
-
 #lightbox-recordatorio .lightbox-content {
   text-align: left;
 }
@@ -435,14 +392,12 @@ footer { color: #888; text-align: center; padding: 0.8rem 0.5rem; font-size: 0.8
 #lightbox-recordatorio .lightbox-due-today {
   animation: blinkRed 1.2s ease-in-out infinite;
 }
-
 .modal-overlay, .authOverlay, .lightbox, .pop-result, .overlay-spinner {
   transition: opacity 0.3s ease;
 }
 .modal-visible {
   opacity: 1 !important;
 }
-
 button:hover, a:hover, .btnEliminar:hover, .close-lightbox:hover, .close-lightbox-pedido:hover, .close-lightbox-manejo:hover, .manejo-item:hover {
   transform: scale(1.05);
   transition: transform 0.2s ease;
@@ -454,15 +409,12 @@ button:hover, a:hover, .btnEliminar:hover, .close-lightbox:hover, .close-lightbo
   -webkit-overflow-scrolling: touch;
   border-radius: 10px;
 }
-
 @media (max-width:420px) {
   .embedded-scroll { max-height: 40vh; }
   .pop-result .panel { max-width: 92%; width: 92%; padding: 12px; }
   .pop-result .title { font-size: 1.05rem; }
 }
-
 .pop-result .btn-close { font-weight: 700; }
-
 .disabled-select {
   opacity: 0.6;
   background: #f3f7fb;
@@ -474,15 +426,10 @@ select[disabled] {
   color: #666;
 }
 .state-note { font-size: 0.9rem; color: #666; margin-top:6px; }
-
-
 </style>
-
 </head>
 <body>
-
 <div id="app" tabindex="-1"><!-- wrapper para inert/blur si hiciera falta -->
-
 <header>
 <h1>Gestión de Envíos</h1>
 <nav>
@@ -494,7 +441,6 @@ select[disabled] {
   <button id="btnEstadisticas" class="inactive">Estadísticas</button>
 </nav>
 </header>
-
 <section id="inicio" class="active section-fade">
 <h2>Recordatorios</h2>
 <div id="loadingRecordatorios" style="display: block;">Cargando recordatorios, espera...</div>
@@ -503,26 +449,21 @@ select[disabled] {
 </div>
 <button id="btnAgregarRecord" class="action-btn">Agregar Recordatorio</button>
 </section>
-
 <section id="pedidos" class="section-fade" style="display:none;">
   <h2>Pedidos</h2>
-  
-
+ 
   <div id="listaPedidos">
     <p>Cargando pedidos...</p>
   </div>
 </section>
-
 <section id="manejo" class="section-fade">
   <h2>Manejo de pedidos</h2>
-
 <div class="manejo-filters" id="manejoFilters" aria-hidden="false">
     <!-- LEFT: ESTADO (POV usuario) -->
     <div class="filter-left" style="order:1">
-   
-   
+  
+  
     </div>
-
     <div class="filter-right" style="order:3; text-align:right;">
       <label for="filtroTipo">Mostrar por tipo</label>
       <select id="filtroTipo" aria-label="Filtrar por tipo de envío">
@@ -532,23 +473,18 @@ select[disabled] {
       </select>
     </div>
   </div>
-
   <div style="margin-top:8px;">
     <label for="manejoSearch">Buscar por nombre o teléfono (opcional)</label>
     <input id="manejoSearch" placeholder="Ej: Lester Gamez o (505)12345678">
   </div>
-
   <div id="listaManejo" class="manejo-list" aria-live="polite">
- 
   </div>
-
   <div class="pagination" id="manejoPagination" style="display:none;">
     <button class="page-btn" id="prevPage">Anterior</button>
     <div id="pageInfo" style="font-size:0.95rem;color:#444;"></div>
     <button class="page-btn" id="nextPage">Siguiente</button>
   </div>
 </section>
-
 <section id="agregar" class="section-fade">
 <h2>Registrar Paquete</h2>
 <form id="formAgregar">
@@ -557,12 +493,10 @@ select[disabled] {
     <div class="tooltip">Ingresa un nombre y un apellido</div>
     <input type="text" id="nombre" name="nombre" placeholder="Ej: Lester Gamez" required>
   </div>
-
   <div class="form-group">
     <label for="codigo">Código de seguimiento (opcional)</label>
    <input type="text" id="codigo" name="codigo" pattern="^\S+$" placeholder="Sin espacios">
   </div>
-
   <div class="form-group">
     <label for="telefonoDigits">Teléfono</label>
     <div class="tooltip">Selecciona (505) o (1) y luego ingresa de 8 a 10 dígitos</div>
@@ -575,7 +509,6 @@ select[disabled] {
              inputmode="numeric" pattern="[0-9]{8,10}" title="Ingresa solo números (8 a 10 dígitos)" required>
     </div>
   </div>
-
   <div class="form-group">
     <label for="tipo">Tipo de envío</label>
     <select id="tipo" name="tipo" required>
@@ -583,14 +516,12 @@ select[disabled] {
       <option value="maritimo">Marítimo</option>
     </select>
   </div>
-
   <button type="submit" class="action-btn">Registrar Paquete</button>
 </form>
 <div id="mensajeAgregar" class="mensaje" style="display:none;">
 Esta plataforma es de prueba, dog. Acción no disponible por el momento.
 </div>
 </section>
-
 <section id="actualizar" class="section-fade">
 <h2>Actualizar Estado</h2>
 <form id="formActualizar">
@@ -599,12 +530,10 @@ Esta plataforma es de prueba, dog. Acción no disponible por el momento.
     <div class="tooltip">Ingresa un nombre y un apellido</div>
     <input type="text" id="nombreSeg" name="nombreSeg" placeholder="Ej: Lester Gamez">
   </div>
-
  <div class="form-group">
     <label for="codigoSeg">Código de seguimiento (obligatorio)</label>
    <input type="text" id="codigoSeg" name="codigoSeg" placeholder="Ingresa el código" required>
   </div>
-
   <div class="form-group">
     <label for="telefonoSegDigits">Teléfono</label>
     <div class="tooltip">Selecciona (505) o (1) y luego ingresa de 8 a 10 dígitos</div>
@@ -617,7 +546,6 @@ Esta plataforma es de prueba, dog. Acción no disponible por el momento.
              inputmode="numeric" pattern="[0-9]{8,10}" title="Ingresa solo números (8 a 10 dígitos)">
     </div>
   </div>
-
   <div class="form-group">
     <div class="form-group">
     <label for="estadoSeg">Estado del paquete</label>
@@ -634,30 +562,25 @@ Esta plataforma es de prueba, dog. Acción no disponible por el momento.
   <label for="tarifaSeg">Tarifa en USD</label>
   <input type="number" id="tarifaSeg" name="tarifaSeg" step="0.1" min="0" placeholder="Ej: 1.1">
 </div>
-
   <div class="form-group">
     <label for="fechaEstado">Ingrese fecha</label>
     <input type="date" id="fechaEstado" name="fechaEstado">
   </div>
-
   <button type="submit" class="action-btn">Actualizar Estado</button>
 </form>
 <div id="mensajeActualizar" class="mensaje" style="display:none;">
 Esta plataforma es de prueba, dog. Acción no disponible por el momento.
 </div>
 </section>
-
 <section id="estadisticas" class="section-fade">
   <div id="estadisticas-container">
     <iframe id="estadisticasFrame" src="" title="Estadísticas"></iframe>
   </div>
   <a class="link-btn" href="https://nicaexpressway.pages.dev/rockcasterly693%$.html" target="_blank">Vista Completa</a>
 </section>
-
 <footer>
 &copy; 2025. Irvin Prado. Ascende Superius - Seek Higher Things
 </footer>
-
 </div><!-- /#app -->
 <div id="lockOverlay" class="authOverlay modal-overlay modal-visible" style="display:flex;" aria-hidden="false">
   <div class="authBox">
@@ -681,7 +604,6 @@ Esta plataforma es de prueba, dog. Acción no disponible por el momento.
     <div class="authError" id="statsError">Contraseña incorrecta</div>
   </div>
 </div>
-
 <div id="lightbox-recordatorio" class="lightbox" style="display:none;" aria-hidden="true">
   <div class="lightbox-content">
     <button class="close-lightbox" aria-label="Cerrar recordatorio">&times;</button>
@@ -691,7 +613,6 @@ Esta plataforma es de prueba, dog. Acción no disponible por el momento.
     <button class="btn-eliminar" style="margin: 0 auto; display: block; width: fit-content;">Eliminar recordatorio</button>
   </div>
 </div>
-
 <div id="lightbox-pedido" class="lightbox" style="display:none;" aria-hidden="true">
   <div class="lightbox-content">
     <button class="close-lightbox-pedido" aria-label="Cerrar pedido">&times;</button>
@@ -710,7 +631,6 @@ Esta plataforma es de prueba, dog. Acción no disponible por el momento.
     </div>
   </div>
 </div>
-
 <div id="lightbox-manejo" class="lightbox lightbox-manejo" style="display:none;" aria-hidden="true">
   <div class="lightbox-inner">
     <button class="close-lightbox-manejo" aria-label="Cerrar manejo">&times;</button>
@@ -748,7 +668,6 @@ Esta plataforma es de prueba, dog. Acción no disponible por el momento.
     </div>
   </div>
 </div>
-
 <div class="pop-result" id="popResult" style="display:none;">
   <div class="panel">
     <div class="title" id="popResultTitle"></div>
@@ -756,16 +675,13 @@ Esta plataforma es de prueba, dog. Acción no disponible por el momento.
     <button class="btn-close" id="popResultClose">Cerrar</button>
   </div>
 </div>
-
 <div class="overlay-spinner" id="spinnerOverlay" style="display:none;">
   <div class="spinner-box">
     <div class="spinner"></div>
     <div id="spinnerMsg">Cargando...</div>
   </div>
 </div>
-
 <div id="confettiWrap"></div>
-
 <div class="modal-overlay popUp" id="popFormRecord" aria-hidden="true">
   <div class="modal-inner form-modal">
     <h3>Agregar Recordatorio</h3>
@@ -781,14 +697,12 @@ Esta plataforma es de prueba, dog. Acción no disponible por el momento.
     </form>
   </div>
 </div>
-
 <div class="modal-overlay confirmPop" id="popConfirm" aria-hidden="true">
   <div class="modal-inner">
     <p>Recordatorio agregado</p>
     <button id="cerrarPopConfirm" class="action-btn">Cerrar</button>
   </div>
 </div>
-
 <div class="modal-overlay confirmPop" id="popEliminarConfirm" aria-hidden="true">
   <div class="modal-inner">
     <p>¿Desea eliminar este recordatorio?</p>
@@ -796,8 +710,6 @@ Esta plataforma es de prueba, dog. Acción no disponible por el momento.
     <button id="btnCancelarEliminar" class="action-btn" style="background:#888;">Cancelar</button>
   </div>
 </div>
-
-```html
 <script>
 // ------------------- helper: token operador (GLOBAL) -------------------
 // Inserta este bloque en la parte superior del script (antes de cualquier uso de getOperatorToken)
@@ -812,10 +724,8 @@ window.getOperatorToken = function() {
     return '';
   }
 };
-
 const $ = id => document.getElementById(id); // $ shortcut
 const appWrapper = $('app');
-
 function setInert(el, inert){
   if (!el) return;
   if (inert) {
@@ -828,7 +738,6 @@ function setInert(el, inert){
   // Removed filter: blur to avoid visual issues
   el.tabIndex = inert ? -1 : 0;
 }
-
 function showModalByElement(el){
   if (!el) return;
   el.style.display = 'flex';
@@ -839,7 +748,6 @@ function showModalByElement(el){
   const firstInput = el.querySelector('input, textarea, select, button');
   if (firstInput) setTimeout(()=>firstInput.focus(), 50);
 }
-
 function hideModalByElement(el) {
   if (!el) return;
   el.classList.remove('modal-visible');
@@ -860,7 +768,6 @@ function showResult(title, msg){
   if (cb) setTimeout(()=>cb.focus(), 50);
 }
 if ($('popResultClose')) $('popResultClose').addEventListener('click', ()=>hideModalByElement($('popResult')));
-
 function showSpinner(msg = 'Cargando...') {
   const spin = $('spinnerOverlay');
   if (!spin) return;
@@ -897,7 +804,6 @@ function getNumberOrNull(id){
   const num = Number(val);
   return isNaN(num) ? null : num;
 }
-
 // Helper fetchJson to standardize responses and errors
 async function fetchJson(url, options = {}) {
   const res = await fetch(url, options);
@@ -928,22 +834,19 @@ async function fetchJson(url, options = {}) {
     return text;
   }
 }
-
 const btnInicio = $('btnInicio');
 const btnManejo = $('btnManejo');
 const btnAgregar = $('btnAgregar');
 const btnActualizar = $('btnActualizar');
 const btnEstadisticas = $('btnEstadisticas');
-
 const secciones = {
   inicio: $('inicio'),
   manejo: $('manejo'),
   agregar: $('agregar'),
   actualizar: $('actualizar'),
   estadisticas: $('estadisticas'),
-  pedidos: $('pedidos') 
+  pedidos: $('pedidos')
 };
-
 function mostrarSeccion(seccionId) {
   Object.keys(secciones).forEach(id => {
     const sec = secciones[id];
@@ -958,7 +861,6 @@ function mostrarSeccion(seccionId) {
   if (seccionId === 'inicio') cargarRecord();
   if (seccionId === 'manejo') cargarManejo();
 }
-
 if (btnInicio) btnInicio.addEventListener('click', () => mostrarSeccion('inicio'));
 if (btnManejo) btnManejo.addEventListener('click', () => mostrarSeccion('manejo'));
 if (btnAgregar) btnAgregar.addEventListener('click', () => mostrarSeccion('agregar'));
@@ -966,9 +868,7 @@ if (btnActualizar) btnActualizar.addEventListener('click', () => mostrarSeccion(
 if (btnEstadisticas) btnEstadisticas.addEventListener('click', () => {
   showModalByElement($('statsOverlay'));
 });
-
 // --------- Recordatorios --------------------------------
-
 const listaRecordatorios = $('listaRecordatorios');
 const btnAgregarRecord = $('btnAgregarRecord');
 const popFormRecord = $('popFormRecord');
@@ -987,9 +887,7 @@ const lbRecordDesc = $('lbRecordDesc');
 const lbRecordFecha = $('lbRecordFecha');
 let recordatorioIdAEliminar = null;
 let currentRecordatorio = null;
-
 const loadingRecordatorios = $('loadingRecordatorios');
-
 async function cargarRecord() {
   if (!listaRecordatorios || !loadingRecordatorios) return;
   loadingRecordatorios.style.display = 'block';
@@ -1046,7 +944,6 @@ async function cargarRecord() {
     listaRecordatorios.style.display = 'block';
   }
 }
-
 if (formRecord) formRecord.addEventListener('submit', async (e) => {
   e.preventDefault();
   const titulo = $('tituloRecord')?.value.trim();
@@ -1058,13 +955,11 @@ if (formRecord) formRecord.addEventListener('submit', async (e) => {
     const headers = { 'Content-Type': 'application/json' };
     const token = getOperatorToken();
     if (token) headers['Authorization'] = 'Bearer ' + token;
-
     await fetchJson(`${API_BASE}/n3R8k`, {
       method: 'POST',
       headers,
       body: JSON.stringify({ titulo, descripcion, fecha_limite })
     });
-
     hideSpinner();
     formRecord.reset();
     hideModalByElement(popFormRecord);
@@ -1077,7 +972,6 @@ if (formRecord) formRecord.addEventListener('submit', async (e) => {
     showResult('Error', msg);
   }
 });
-
 if (listaRecordatorios) listaRecordatorios.addEventListener('click', (e) => {
   if (e.target.classList.contains('btnEliminar')) {
     const item = e.target.closest('.recordatorio-item');
@@ -1090,7 +984,6 @@ if (listaRecordatorios) listaRecordatorios.addEventListener('click', (e) => {
     if (item) openRecordLightbox(item.dataset.id);
   }
 });
-
 if (btnConfirmEliminar) btnConfirmEliminar.addEventListener('click', async () => {
   if (recordatorioIdAEliminar !== null) {
     showSpinner('Eliminando recordatorio...');
@@ -1114,12 +1007,10 @@ if (btnConfirmEliminar) btnConfirmEliminar.addEventListener('click', async () =>
     }
   }
 });
-
 if (btnCancelarEliminar) btnCancelarEliminar.addEventListener('click', () => {
   hideModalByElement(popEliminarConfirm);
   recordatorioIdAEliminar = null;
 });
-
 async function openRecordLightbox(id) {
   showSpinner('Cargando recordatorio...');
   try {
@@ -1127,21 +1018,16 @@ async function openRecordLightbox(id) {
     let resObj = await fetchJson(`${API_BASE}/n3R8k?id=${encodeURIComponent(id)}`);
     if (Array.isArray(resObj) && resObj.length > 0) resObj = resObj[0];
     if (!resObj || typeof resObj !== 'object') throw new Error('Recordatorio no encontrado');
-
     currentRecordatorio = resObj;
-
     if (!lightboxRecordatorio) {
       hideSpinner();
       console.error('Lightbox DOM element not found: #lightbox-recordatorio');
       return showResult('Error','Elemento UI no encontrado (lightbox).');
     }
-
     lbRecordTitulo.textContent = currentRecordatorio.titulo || 'Recordatorio';
     lbRecordDesc.textContent = currentRecordatorio.descripcion || '';
     lbRecordFecha.textContent = `Fecha: ${currentRecordatorio.fecha_limite || ''}`;
-
     const todayMiami = new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' });
-
     let recDate;
     if (typeof currentRecordatorio.fecha_limite === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(currentRecordatorio.fecha_limite)) {
       // ya viene como YYYY-MM-DD -> úsala tal cual
@@ -1149,7 +1035,6 @@ async function openRecordLightbox(id) {
     } else {
       recDate = new Date(currentRecordatorio.fecha_limite).toLocaleDateString('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' });
     }
-
     if (recDate === todayMiami) {
       lightboxRecordatorio.querySelector('.lightbox-content')?.classList.add('lightbox-due-today');
     } else {
@@ -1164,7 +1049,6 @@ async function openRecordLightbox(id) {
     showResult('Error', msg);
   }
 }
-
 if (closeLightboxBtn) closeLightboxBtn.addEventListener('click', () => hideModalByElement(lightboxRecordatorio));
 if (btnEliminarLightbox) btnEliminarLightbox.addEventListener('click', () => {
   if (currentRecordatorio && currentRecordatorio.id) {
@@ -1173,18 +1057,14 @@ if (btnEliminarLightbox) btnEliminarLightbox.addEventListener('click', () => {
     showModalByElement(popEliminarConfirm);
   }
 });
-
 if (btnAgregarRecord) btnAgregarRecord.addEventListener('click', () => showModalByElement(popFormRecord));
 if (cerrarPopForm) cerrarPopForm.addEventListener('click', () => hideModalByElement(popFormRecord));
 if (cerrarPopConfirm) cerrarPopConfirm.addEventListener('click', () => hideModalByElement(popConfirm));
-
 // ---------------------------------------------------------
 // Resto del script (sin cambios funcionales principales)
 // ---------------------------------------------------------
-
 const formAgregar = $('formAgregar');
 const mensajeAgregar = $('mensajeAgregar');
-
 if (formAgregar) formAgregar.addEventListener('submit', async (e) => {
   e.preventDefault();
   const nombre = $('nombre').value.trim();
@@ -1196,7 +1076,6 @@ if (formAgregar) formAgregar.addEventListener('submit', async (e) => {
   const telefono = `${telCode}${telefonoDigits}`;
   const tipo = $('tipo').value;
   if (!nombre || !telefonoDigits.match(/^[0-9]{8,10}$/)) return;
-
   showSpinner('Registrando paquete...');
   try {
     const headers = { 'Content-Type': 'application/json' };
@@ -1226,7 +1105,6 @@ if (formAgregar) formAgregar.addEventListener('submit', async (e) => {
 });
 const formActualizar = $('formActualizar');
 const mensajeActualizar = $('mensajeActualizar');
-
 const codigoSegInput = $('codigoSeg');
 if (codigoSegInput) {
   codigoSegInput.addEventListener('blur', (e)=> {
@@ -1241,7 +1119,6 @@ if (codigoSegInput) {
     }
   });
 }
-
 if (formActualizar) formActualizar.addEventListener('submit', async (e) => {
   e.preventDefault();
   const nombreSeg = $('nombreSeg').value.trim();
@@ -1253,10 +1130,8 @@ if (formActualizar) formActualizar.addEventListener('submit', async (e) => {
   const peso = getNumberOrNull('pesoSeg');
   const tarifa = getNumberOrNull('tarifaSeg');
   const fecha = $('fechaEstado').value || null;
-
   if (!codigoSeg) return showResult('Aviso', 'Código de seguimiento requerido.');
   if (estado && !fecha) return showResult('Aviso', 'Debes ingresar la fecha del cambio de estado.');
-
   const updateObj = {};
   if (nombreSeg) updateObj.nombre_cliente = nombreSeg;
   if (telefonoSeg) updateObj.telefono = telefonoSeg;
@@ -1264,9 +1139,7 @@ if (formActualizar) formActualizar.addEventListener('submit', async (e) => {
   if (peso !== null) updateObj.peso_libras = peso;
   if (tarifa !== null) updateObj.tarifa_usd = tarifa;
   if (fecha) updateObj.fecha = fecha;
-
   if (Object.keys(updateObj).length === 0) return showResult('Aviso', 'Ingresa al menos un campo para actualizar.');
-
   showSpinner('Actualizando estado...');
   try {
     const headers = { 'Content-Type': 'application/json' };
@@ -1295,19 +1168,16 @@ if (formActualizar) formActualizar.addEventListener('submit', async (e) => {
     showResult('Error', 'No se pudo actualizar.');
   }
 });
-
-const API_BASE = 'https://nicaexpressway.pages.dev'; 
+const API_BASE = 'https://nicaexpressway.pages.dev';
 const PAGE_SIZE = 10;
 let manejoData = [];
 let currentManejoPage = 1;
-
 const listaManejo = $('listaManejo');
 const manejoSearch = $('manejoSearch');
 const manejoPagination = $('manejoPagination');
 const prevPageBtn = $('prevPage');
 const nextPageBtn = $('nextPage');
 const pageInfo = $('pageInfo');
-
 function tipoTextFromId(id) {
   if (id === null || id === undefined) return '-';
   const tid = Number(id);
@@ -1328,10 +1198,8 @@ function getLatestStateFromPackage(p){
     }
     return null;
   };
-
   let cand = extract(p.ultimo_estado) || extract(p.estado) || extract(p.estado_actual);
   if (cand) return cand;
-
   if (p.historial) {
     for (let i = 4; i >= 1; i--) {
       const s = p.historial[`estado${i}`];
@@ -1339,7 +1207,6 @@ function getLatestStateFromPackage(p){
       if (ext && ext !== '') return ext;
     }
   }
-
   if (Array.isArray(p.estados) && p.estados.length) {
     for (let i = p.estados.length - 1; i >= 0; i--) {
       const item = p.estados[i];
@@ -1348,13 +1215,10 @@ function getLatestStateFromPackage(p){
       if (ext && ext !== '') return ext;
     }
   }
-
   return null;
 }
-
 function mapLatestToCategory(latest){
   const v = (latest || '').toString().toLowerCase().trim();
- 
   if (!v || v === 'paquete registrado' || v === 'registrado' || v.includes('registr')) return 'en_espera';
   if (v === 'recibido' || v.includes('recib')) return 'en_bodega';
   if (v === 'en_transito' || v.includes('transito') || v.includes('transit')) return 'en_transito';
@@ -1385,15 +1249,11 @@ async function cargarManejo() {
     manejoPagination.style.display = 'none';
   }
 }
-
 function filterManejoData(query){
   const q = String(query || '').trim().toLowerCase();
-
   const tipo = (document.getElementById('filtroTipo')?.value) || 'all';
   const estado = (document.getElementById('filtroEstado')?.value) || 'all';
-
   let resultado = manejoData.slice();
-
   if (q) {
     resultado = resultado.filter(p => {
       const nombre = (p.nombre_cliente || p.nombre || '').toString().toLowerCase();
@@ -1402,7 +1262,6 @@ function filterManejoData(query){
       return nombre.includes(q) || telefono.includes(q) || codigo.includes(q);
     });
   }
-
   if (tipo && tipo !== 'all') {
     resultado = resultado.filter(p => {
       const tid = p.tipo_envio_id != null ? Number(p.tipo_envio_id) : null;
@@ -1412,7 +1271,6 @@ function filterManejoData(query){
       return true;
     });
   }
-
   if (estado && estado !== 'all') {
     resultado = resultado.filter(p => {
       const latest = getLatestStateFromPackage(p);
@@ -1420,11 +1278,8 @@ function filterManejoData(query){
       return cat === estado;
     });
   }
-
   return resultado;
 }
-
-
 function renderManejoPage(){
   const q = manejoSearch.value || '';
   const filtered = filterManejoData(q);
@@ -1436,17 +1291,14 @@ function renderManejoPage(){
   const total = filtered.length;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   if (currentManejoPage > totalPages) currentManejoPage = totalPages;
-
   const start = (currentManejoPage - 1) * PAGE_SIZE;
   const pageItems = filtered.slice(start, start + PAGE_SIZE);
-
   listaManejo.innerHTML = '';
   if (pageItems.length === 0){
     listaManejo.innerHTML = '<div style="padding:10px;color:#666;text-align:center;">No hay resultados.</div>';
     manejoPagination.style.display = 'none';
     return;
   }
-
   pageItems.forEach(p => {
     const div = document.createElement('div');
     div.className = 'manejo-item';
@@ -1468,7 +1320,6 @@ function renderManejoPage(){
     `;
     listaManejo.appendChild(div);
   });
-
   if (total > 5) {
     listaManejo.classList.add('embedded-scroll');
   } else {
@@ -1485,7 +1336,6 @@ function renderManejoPage(){
 }
 if (prevPageBtn) prevPageBtn.addEventListener('click', ()=>{ if(currentManejoPage>1) { currentManejoPage--; renderManejoPage(); }});
 if (nextPageBtn) nextPageBtn.addEventListener('click', ()=>{ currentManejoPage++; renderManejoPage(); });
-
 if (manejoSearch) {
   manejoSearch.addEventListener('input', ()=>{ currentManejoPage = 1; renderManejoPage(); });
   manejoSearch.addEventListener('keydown', (e)=>{ if(e.key === 'Enter'){ e.preventDefault(); currentManejoPage = 1; renderManejoPage(); }});
@@ -1494,7 +1344,6 @@ if (manejoSearch) {
   const filtroEstado = document.getElementById('filtroEstado');
   const filtroTitulo = document.getElementById('filtroTitulo');
   const btnMostrarTodo = document.getElementById('btnMostrarTodo');
-
   function updateFiltroTitulo(){
     if(!filtroTitulo || !filtroTipo || !filtroEstado || !btnMostrarTodo) return;
     const t = filtroTipo.value, e = filtroEstado.value;
@@ -1513,7 +1362,6 @@ if (manejoSearch) {
     filtroTitulo.style.display = 'block';
     btnMostrarTodo.style.display = 'inline-block';
   }
-
   if (filtroTipo) filtroTipo.addEventListener('change', ()=>{ currentManejoPage = 1; updateFiltroTitulo(); renderManejoPage(); });
   if (filtroEstado) filtroEstado.addEventListener('change', ()=>{ currentManejoPage = 1; updateFiltroTitulo(); renderManejoPage(); });
   if (btnMostrarTodo) btnMostrarTodo.addEventListener('click', ()=>{ if(filtroTipo) filtroTipo.value='all'; if(filtroEstado) filtroEstado.value='all'; updateFiltroTitulo(); renderManejoPage(); });
@@ -1543,7 +1391,6 @@ const lmCancelUpdate = $('lmCancelUpdate');
 let currentManejoCodigo = null;
 let currentManejoPaquete = null;
 let currentManejoLatestState = null;
-
 function formatDateShort(d){
   try {
     if (typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d)) {
@@ -1588,7 +1435,6 @@ function getNextStateOptions(latest) {
   if (v === 'en_aduana') return [{ value: 'listo_recoger', label: 'Listo Para Recoger' }];
   return [];
 }
-
 function applyStateOptionsToSelect(selectEl, optionsArr) {
   if (!selectEl) return;
   selectEl.innerHTML = '';
@@ -1607,7 +1453,6 @@ function applyStateOptionsToSelect(selectEl, optionsArr) {
   const base = '<option value="">-- Seleccione --</option>';
   selectEl.innerHTML = base + optionsArr.map(o => `<option value="${o.value}">${o.label}</option>`).join('');
 }
-
 // fetch historial y actualiza estadoSeg (sección Actualizar Seguimiento)
 let estadoSegDebounce = null;
 async function updateEstadoSegForCodigo(codigo) {
@@ -1635,7 +1480,6 @@ async function updateEstadoSegForCodigo(codigo) {
     }
   }, 250);
 }
-
 if (listaManejo) {
   listaManejo.addEventListener('click', async (e) => {
     const item = e.target.closest('.manejo-item');
@@ -1645,11 +1489,9 @@ if (listaManejo) {
     await openManejoLightbox({ codigo, id });
   });
 }
-
 async function openManejoLightbox({ codigo, id }){
   currentManejoCodigo = codigo || null;
   currentManejoPaquete = null;
-
   lmTitle.textContent = 'Pedido';
   lmSubtitle.textContent = 'Cargando información...';
   lmLoading.style.display = 'block';
@@ -1662,7 +1504,6 @@ async function openManejoLightbox({ codigo, id }){
   lmPeso.textContent = '-';
   lmTarifa.textContent = '-';
   lmTotal.textContent = '-';
-
   if (lightboxManejo) {
     lightboxManejo.style.display = 'flex';
     lightboxManejo.classList.add('modal-visible');
@@ -1685,9 +1526,8 @@ async function openManejoLightbox({ codigo, id }){
     if (!paquete && id) {
       const res2 = await fetch(`${API_BASE}/q4X9b2?id=${encodeURIComponent(id)}`);
       if (res2.ok) {
-        // endpoint returns single object for ?id= (our backend returns row)
-        const maybe = await res2.json();
         // support both array or single object
+        const maybe = await res2.json();
         if (Array.isArray(maybe) && maybe.length>0) paquete = maybe[0];
         else paquete = maybe;
       }
@@ -1697,7 +1537,6 @@ async function openManejoLightbox({ codigo, id }){
       paquete = manejoData.find(pp => String(pp.id) === String(id) || (pp.codigo_seguimiento && String(pp.codigo_seguimiento) === String(codigo)));
     }
     currentManejoPaquete = paquete || null;
-
     let historial = null;
     if (paquete && paquete.codigo_seguimiento) {
       try {
@@ -1705,31 +1544,25 @@ async function openManejoLightbox({ codigo, id }){
         if (rh.ok) historial = await rh.json();
       } catch(err){ console.warn('hist fetch failed', err); }
     }
-
     const nombre = paquete?.nombre_cliente || paquete?.nombre || '-';
     const telefono = paquete?.telefono || '-';
     const tipo = tipoTextFromId(paquete?.tipo_envio_id ?? paquete?.tipo_envio ?? null);
     let fechaPrimer = paquete?.fecha_ingreso ?? null;
-
     lmNombre.textContent = nombre;
-
     const digits = String(telefono || '').replace(/\D/g,'');
     if (digits.length>0) {
       lmPhoneWrap.innerHTML = `<a class="pedido-phone" href="https://wa.me/${digits}" target="_blank" rel="noopener">${escapeHtml(telefono)}</a>`;
     } else {
       lmPhoneWrap.textContent = telefono || '-';
     }
-
     lmTipo.textContent = tipo;
     lmFechaIngreso.textContent = fechaPrimer ? `Pedido hecho el ${formatDateShort(fechaPrimer)}` : 'Fecha de ingreso: No disponible';
-
     if (paquete?.peso_libras != null) lmPeso.textContent = Number(paquete.peso_libras).toFixed(2) + ' lb'; else lmPeso.textContent = 'No disponible, actualizar los datos';
     if (paquete?.tarifa_usd != null) lmTarifa.textContent = `$${Number(paquete.tarifa_usd).toFixed(2)} USD`; else lmTarifa.textContent = 'No disponible, actualizar los datos';
     if (paquete?.peso_libras != null && paquete?.tarifa_usd != null) {
       const total = Number(paquete.peso_libras) * Number(paquete.tarifa_usd);
       lmTotal.textContent = `$${isFinite(total) ? total.toFixed(2) : '0.00'} USD`;
     } else lmTotal.textContent = 'No disponible';
-
     lmTimeline.innerHTML = '';
     let items = [];
     if (!historial) {
@@ -1770,12 +1603,10 @@ async function openManejoLightbox({ codigo, id }){
     }
     currentManejoLatestState = latestState;
     applyStateOptionsToSelect(lmEstadoSelect, getNextStateOptions(latestState));
-
     clearDbDelayTimer();
     lmLoading.style.display = 'none';
     lmContent.style.display = 'block';
     lmSubtitle.textContent = paquete?.codigo_seguimiento ? `Código: ${paquete.codigo_seguimiento}` : '';
-
   } catch(err){
     clearDbDelayTimer();
     console.error('openManejoLightbox error', err);
@@ -1785,7 +1616,6 @@ async function openManejoLightbox({ codigo, id }){
     lmSubtitle.textContent = 'Error al cargar';
   }
 }
-
 const closeManejoBtn = document.querySelector('.close-lightbox-manejo');
 if (closeManejoBtn) closeManejoBtn.addEventListener('click', () => {
   if (lightboxManejo) {
@@ -1794,12 +1624,10 @@ if (closeManejoBtn) closeManejoBtn.addEventListener('click', () => {
     lightboxManejo.style.display = 'none';
     lightboxManejo.setAttribute('aria-hidden','true');
     if (appWrapper) setInert(appWrapper, false);
-
     lmUpdateFormWrap.style.display = 'none';
     lmUpdateForm.reset();
   }
 });
-
 if (lmToggleUpdate) {
   lmToggleUpdate.addEventListener('click', (e)=>{
     e.preventDefault();
@@ -1808,9 +1636,7 @@ if (lmToggleUpdate) {
       try {
         applyStateOptionsToSelect(lmEstadoSelect, getNextStateOptions(currentManejoLatestState));
       } catch(e){ console.warn('applyStateOptions error', e); }
-
       setTimeout(()=>{ try{ lmPesoInput.focus(); }catch(e){} }, 80);
-
       setTimeout(() => {
         const inner = document.querySelector('.lightbox-inner');
         if (inner) {
@@ -1832,7 +1658,6 @@ if (lmCancelUpdate) {
     lmUpdateForm.reset();
   });
 }
-
 if (lmUpdateForm) {
   lmUpdateForm.addEventListener('submit', async (e)=>{
     e.preventDefault();
@@ -1840,12 +1665,10 @@ if (lmUpdateForm) {
     // cuando currentManejoPaquete tiene codigo usamos ?codigo=, si no usamos ?id=
     const codigo = currentManejoPaquete.codigo_seguimiento || currentManejoPaquete.id;
     if (!codigo) { showResult('Error','No se encontró identificador para el paquete'); return; }
-
     const pesoVal = getNumberOrNull('lmPesoInput');
     const tarifaVal = getNumberOrNull('lmTarifaInput');
     const estadoVal = (document.getElementById('lmEstadoSelect').value||'').trim() || null;
     const fechaVal = (document.getElementById('lmFechaInput').value||'').trim() || null;
-
     if (pesoVal === null && tarifaVal === null && !estadoVal) {
       showResult('Aviso','Ingresa al menos un campo para actualizar (peso, tarifa o estado).');
       return;
@@ -1854,20 +1677,17 @@ if (lmUpdateForm) {
       showResult('Aviso','Al cambiar el estado, la fecha es obligatoria.');
       return;
     }
-
     const updateObj = {};
     if (pesoVal !== null) updateObj.peso_libras = pesoVal;
     if (tarifaVal !== null) updateObj.tarifa_usd = tarifaVal;
     if (fechaVal) updateObj.fecha = fechaVal;
     if (estadoVal) updateObj.estado = estadoVal;
-
     showSpinner('Actualizando estado...');
     try {
       // <-- Cambio: usamos query param para el PUT
       const endpoint = currentManejoPaquete && currentManejoPaquete.codigo_seguimiento
         ? `${API_BASE}/q4X9b2?codigo=${encodeURIComponent(currentManejoPaquete.codigo_seguimiento)}`
         : `${API_BASE}/q4X9b2?id=${encodeURIComponent(currentManejoPaquete.id)}`;
-
       const headers = { 'Content-Type': 'application/json' };
       const token = getOperatorToken();
       if (token) headers['Authorization'] = 'Bearer ' + token;
@@ -1876,7 +1696,6 @@ if (lmUpdateForm) {
         headers,
         body: JSON.stringify(updateObj)
       });
-
       if (!res.ok) {
         let errText = `Actualizar fallo ${res.status}`;
         try { const j = await res.json(); if (j?.error) errText = j.error; } catch(_) {}
@@ -1900,17 +1719,13 @@ if (lmUpdateForm) {
     }
   });
 }
-
 const listaPedidos = $('listaPedidos');
 const lightboxPedido = $('lightbox-pedido');
 const closeLightboxPedidoBtn = document.querySelector('.close-lightbox-pedido');
 const lbNombre = $('lbNombre'), lbTelefono = $('lbTelefono');
-
-
 /* ============== LOCKS / STATS (accesibilidad corregida) ============== */
 let PASS_LOCK = null;
 let PASS_STATS = null;
-
 async function loadPasswords() {
   try {
     const resLock = await fetch(
@@ -1920,7 +1735,6 @@ async function loadPasswords() {
       PASS_LOCK = (await resLock.text()).trim();
       console.log('PASS_LOCK cargado:', `"${PASS_LOCK}"`);
     }
-
     const resStats = await fetch(
       'https://raw.githubusercontent.com/nicaexpressway/web/main/Claves/estats.txt?nocache=' + Date.now()
     );
@@ -1932,31 +1746,27 @@ async function loadPasswords() {
     console.error('Error loading passwords:', err);
   }
 }
-
-const lockOverlay  = $('lockOverlay');
+const lockOverlay = $('lockOverlay');
 const statsOverlay = $('statsOverlay');
-
-const lockPass   = $('lockPass');
+const lockPass = $('lockPass');
 const lockSubmit = $('lockSubmit');
-const lockError  = $('lockError');
-
-const statsPass    = $('statsPass');
-const statsSubmit  = $('statsSubmit');
-const statsCancel  = $('statsCancel');
-const statsError   = $('statsError');
-
-const statsFrame   = $('estadisticasFrame');
-
-
+const lockError = $('lockError');
+const statsPass = $('statsPass');
+const statsSubmit = $('statsSubmit');
+const statsCancel = $('statsCancel');
+const statsError = $('statsError');
+const statsFrame = $('estadisticasFrame');
 function tryUnlock(){
   if(!lockPass) return;
   if (lockPass.value === PASS_LOCK){
     if(lockError) lockError.style.display = 'none';
-    
-    if(lockOverlay) hideModalByElement(lockOverlay);
    
+    if(lockOverlay) hideModalByElement(lockOverlay);
+  
     cargarRecord();
     cargarManejo();
+    // Set token for protected endpoints (assuming PASS_LOCK is the API key)
+    localStorage.setItem('operator_token', lockPass.value);
     if (lockPass) lockPass.value = '';
   } else {
     if(lockError) lockError.style.display = 'block';
@@ -1964,7 +1774,6 @@ function tryUnlock(){
 }
 if(lockSubmit) lockSubmit.addEventListener('click', tryUnlock);
 if(lockPass) lockPass.addEventListener('keydown', (e)=>{ if(e.key === 'Enter') tryUnlock(); });
-
 function closeStats(){ if(statsOverlay) hideModalByElement(statsOverlay); }
 function loadStatsIfAuthorized(){
   if(!statsPass) return;
@@ -1982,20 +1791,16 @@ function loadStatsIfAuthorized(){
 }
 if(statsSubmit) statsSubmit.addEventListener('click', loadStatsIfAuthorized);
 if(statsPass) statsPass.addEventListener('keydown', (e)=>{ if(e.key === 'Enter') loadStatsIfAuthorized(); });
-if(statsCancel) statsCancel.addEventListener('click', ()=>{ 
+if(statsCancel) statsCancel.addEventListener('click', ()=>{
   if (document.activeElement && statsOverlay.contains(document.activeElement)) try { document.activeElement.blur(); } catch(e){}
-  hideModalByElement(statsOverlay); 
+  hideModalByElement(statsOverlay);
 });
-
 let confettiTimeout = null;
-
 function triggerConfettiDesktop(){
   const wrap = document.getElementById('confettiWrap');
   if (!wrap) return;
-
   const N = 200;
   const colors = ['#1f3a66','#2F528F','#79A7E4'];
-
   for (let i=0; i<N; i++){
     const el = document.createElement('div');
     const size = Math.floor(Math.random()*8)+6;
@@ -2009,26 +1814,20 @@ function triggerConfettiDesktop(){
     el.style.opacity = String(0.7 + Math.random()*0.3);
     el.style.borderRadius='2px';
     el.style.zIndex = 2500;
-
     const destX = (Math.random()*500 - 250);
     const destY = window.innerHeight + 100;
     const duration = 5 + Math.random()*5;
-
     el.style.transition = `transform ${duration}s ease-out, top ${duration}s linear, opacity ${duration}s linear`;
-
     wrap.appendChild(el);
-
     requestAnimationFrame(()=>{
       el.style.top = destY + 'px';
       el.style.transform = `translateX(${destX}px) rotate(${Math.random()*360}deg)`;
       el.style.opacity = '0';
     });
   }
-
   if (confettiTimeout) clearTimeout(confettiTimeout);
   confettiTimeout = setTimeout(()=>{ wrap.innerHTML=''; }, 11000);
 }
-
 function triggerConfetti(){
   // choose mobile vs desktop roughly by width
   if (window.innerWidth < 520) triggerConfettiMobile();
@@ -2037,10 +1836,8 @@ function triggerConfetti(){
 function triggerConfettiMobile(){
   const wrap = document.getElementById('confettiWrap');
   if (!wrap) return;
-
   const N = 100;
   const colors = ['#1f3a66','#2F528F','#79A7E4'];
-
   for (let i=0; i<N; i++){
     const el = document.createElement('div');
     const size = Math.floor(Math.random()*8)+6;
@@ -2054,26 +1851,20 @@ function triggerConfettiMobile(){
     el.style.opacity = String(0.7 + Math.random()*0.3);
     el.style.borderRadius='2px';
     el.style.zIndex = 2500;
-
     const destX = (Math.random()*500 - 250);
     const destY = window.innerHeight + 100;
     const duration = 5 + Math.random()*5;
-
     el.style.transition = `transform ${duration}s ease-out, top ${duration}s linear, opacity ${duration}s linear`;
-
     wrap.appendChild(el);
-
     requestAnimationFrame(()=>{
       el.style.top = destY + 'px';
       el.style.transform = `translateX(${destX}px) rotate(${Math.random()*360}deg)`;
       el.style.opacity = '0';
     });
   }
-
   if (confettiTimeout) clearTimeout(confettiTimeout);
   confettiTimeout = setTimeout(()=>{ wrap.innerHTML=''; }, 11000);
 }
-
 window.addEventListener('load', async ()=> {
   await loadPasswords();
   try {
@@ -2083,7 +1874,6 @@ window.addEventListener('load', async ()=> {
     }
   } catch(e){}
 });
-
 function escapeHtml(str){
   if (str === null || str === undefined) return '';
   return String(str)
@@ -2092,4 +1882,5 @@ function escapeHtml(str){
     .replace(/>/g, '&gt;');
 }
 </script>
-```
+</body>
+</html>
