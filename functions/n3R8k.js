@@ -1,11 +1,14 @@
-// IMPORTACIÓN RESILIENTE: traemos todo como namespace y extraemos los helpers.
-import * as SHARED from './_shared.js';
-const { corsHeaders, authorize, dbAll, dbFirst, dbRun, getDateInTimeZone, parseTipoEnvioIdFromBody } = SHARED;
+import {
+  authorize,
+  corsHeaders,
+  dbAll,
+  dbFirst,
+  dbRun
+} from './_shared.js';
 
 export async function onRequestPost(context) {
   const { request, env } = context;
-  // permitir desde frontend (igual que en tu server antiguo)
-  const auth = await authorize({ env, request, requireServerKey: false });
+  const auth = await authorize({ env, request, requireServerKey: true });
   if (auth) return auth;
   const origin = request.headers.get('origin');
 
@@ -55,9 +58,7 @@ export async function onRequestGet(context) {
 
 export async function onRequestDelete(context) {
   const { request, env } = context;
-  // hacemos pública la eliminación (como en tu antiguo servidor). 
-  // Si prefieres exigir API key, cambia `requireServerKey` a true y envía el header desde backend.
-  const auth = await authorize({ env, request, requireServerKey: false });
+  const auth = await authorize({ env, request, requireServerKey: true });
   if (auth) return auth;
   const origin = request.headers.get('origin');
 
@@ -65,7 +66,6 @@ export async function onRequestDelete(context) {
     const url = new URL(request.url);
     let id = url.searchParams.get('id') || null;
 
-    // also accept body { id: ... } just in case
     if (!id) {
       try {
         const body = await request.json().catch(()=>null);
