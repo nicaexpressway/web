@@ -1,8 +1,5 @@
-/* =========================
-   SHARED HELPERS – CLOUDFLARE
-   ========================= */
+// functions/_shared.js
 
-/* ---------- DOMINIOS PERMITIDOS ---------- */
 export const allowedOrigins = new Set([
   'https://htmleditor.in',
   'https://nicaexpressway.github.io',
@@ -17,7 +14,6 @@ export const allowedHosts = new Set([
 
 export const SERVER_API_KEY_NAME = 'SERVER_API_KEY';
 
-/* ---------- CORS ---------- */
 export function corsHeaders(origin) {
   return {
     'Access-Control-Allow-Origin': origin || '*',
@@ -29,12 +25,6 @@ export function corsHeaders(origin) {
   };
 }
 
-/* ---------- AUTH ---------- */
-/*
-  FIX CRÍTICO:
-  - authorize() NO debe consumir el body
-  - cualquier lectura usa request.clone()
-*/
 export async function authorize({ env, request, requireServerKey = false }) {
   try {
     const origin = request.headers.get('origin');
@@ -43,7 +33,6 @@ export async function authorize({ env, request, requireServerKey = false }) {
     const host = hostRaw.replace(/:\d+$/, '');
     const serverKey = env[SERVER_API_KEY_NAME] || null;
 
-    /* ---- 1) Requests desde navegador (CORS) ---- */
     if (origin) {
       if (allowedOrigins.has(origin)) {
         if (method === 'OPTIONS') {
@@ -61,7 +50,6 @@ export async function authorize({ env, request, requireServerKey = false }) {
       }
     }
 
-    /* ---- 2) Server-to-server ---- */
     if (!allowedHosts.has(host)) {
       return new Response(
         JSON.stringify({ error: 'Host no permitido' }),
@@ -103,7 +91,6 @@ export async function authorize({ env, request, requireServerKey = false }) {
   }
 }
 
-/* ---------- DB HELPERS (D1) ---------- */
 function assertDB(env) {
   if (!env?.DB) {
     throw new Error('D1 binding "DB" no existe');
@@ -112,29 +99,43 @@ function assertDB(env) {
 
 export async function dbAll(env, sql, params = []) {
   assertDB(env);
-  const p = env.DB.prepare(sql);
-  if (params.length) p.bind(...params);
-  const res = await p.all();
-  return res.results || [];
+  const safeParams = params.map(b => (b === undefined ? null : b));
+  const p = env.DB.prepare(sql).bind(...safeParams);
+  try {
+    const res = await p.all();
+    return res.results || [];
+  } catch (e) {
+    console.error('dbAll error:', { sql, safeParams, message: e.message });
+    throw e;
+  }
 }
 
 export async function dbFirst(env, sql, params = []) {
   assertDB(env);
-  const p = env.DB.prepare(sql);
-  if (params.length) p.bind(...params);
-  const r = await p.all();
-  return r.results?.[0] || null;
+  const safeParams = params.map(b => (b === undefined ? null : b));
+  const p = env.DB.prepare(sql).bind(...safeParams);
+  try {
+    const r = await p.all();
+    return r.results?.[0] || null;
+  } catch (e) {
+    console.error('dbFirst error:', { sql, safeParams, message: e.message });
+    throw e;
+  }
 }
 
 export async function dbRun(env, sql, params = []) {
   assertDB(env);
-  const p = env.DB.prepare(sql);
-  if (params.length) p.bind(...params);
-  await p.run();
-  return true;
+  const safeParams = params.map(b => (b === undefined ? null : b));
+  const p = env.DB.prepare(sql).bind(...safeParams);
+  try {
+    await p.run();
+    return true;
+  } catch (e) {
+    console.error('dbRun error:', { sql, safeParams, message: e.message });
+    throw e;
+  }
 }
 
-/* ---------- UTILS ---------- */
 export function getDateInTimeZone(tz = 'America/New_York') {
   try {
     return new Intl.DateTimeFormat('en-CA', { timeZone: tz }).format(new Date());
