@@ -576,7 +576,8 @@ Esta plataforma es de prueba, dog. Acción no disponible por el momento.
   <div id="estadisticas-container">
     <iframe id="estadisticasFrame" src="" title="Estadísticas"></iframe>
   </div>
-  <a class="link-btn" href="https://nicaexpressway.pages.dev/rockcasterly56$" target="_blank">Vista Completa</a>
+  <a class="link-btn" href="https://nicaexpressway.pages.dev/rockcasterly693%$.html" target="_blank">Vista Completa</a>
+  <button class="link-btn" id="btnManejoTarifas">Manejo de tarifas</button>
 </section>
 <footer>
 &copy; 2025. Irvin Prado. Ascende Superius - Seek Higher Things
@@ -708,6 +709,36 @@ Esta plataforma es de prueba, dog. Acción no disponible por el momento.
     <p>¿Desea eliminar este recordatorio?</p>
     <button id="btnConfirmEliminar" class="action-btn" style="background:#f56565;">Eliminar</button>
     <button id="btnCancelarEliminar" class="action-btn" style="background:#888;">Cancelar</button>
+  </div>
+</div>
+<div id="lightbox-tarifas" class="lightbox" style="display:none;" aria-hidden="true">
+  <div class="lightbox-content">
+    <button class="close-lightbox-tarifas" aria-label="Cerrar tarifas">&times;</button>
+    <h2>Manejo de tarifas</h2>
+    <form id="formTarifa">
+      <label for="tipoEnvioTarifa">Ingresa el tipo de envio a cambiar tarifa</label>
+      <select id="tipoEnvioTarifa" required>
+        <option value="">-- Seleccione --</option>
+        <option value="1">Aéreo</option>
+        <option value="2">Marítimo</option>
+      </select>
+      <label for="tarifaInput">Tarifa por libra</label>
+      <input type="number" id="tarifaInput" step="0.01" min="0" placeholder="Ej: 4.5" required>
+      <label for="tipoTarifa">Tipo de tarifa</label>
+      <select id="tipoTarifa" required>
+        <option value="">-- Seleccione --</option>
+        <option value="1">General</option>
+        <option value="2">Oferta</option>
+      </select>
+      <button type="submit" class="action-btn">Actualizar Tarifa</button>
+      <button type="button" id="cerrarTarifas" class="action-btn" style="background:#888;">Cancelar</button>
+    </form>
+  </div>
+</div>
+<div class="modal-overlay confirmPop" id="popTarifaConfirm" aria-hidden="true">
+  <div class="modal-inner">
+    <p>Tarifa actualizada</p>
+    <button id="cerrarTarifaConfirm" class="action-btn">Cerrar</button>
   </div>
 </div>
 <script>
@@ -1780,8 +1811,8 @@ function loadStatsIfAuthorized(){
   if (statsPass.value === PASS_STATS){
     if(statsError) statsError.style.display = 'none';
     hideModalByElement(statsOverlay);
-    if (statsFrame && statsFrame.src !== 'https://nicaexpressway.pages.dev/rockcasterly56$'){
-      statsFrame.src = 'https://nicaexpressway.pages.dev/rockcasterly56$';
+    if (statsFrame && statsFrame.src !== 'https://nicaexpressway.netlify.app/rockcasterly693%$.html'){
+      statsFrame.src = 'https://nicaexpressway.netlify.app/rockcasterly693%$.html';
     }
     mostrarSeccion('estadisticas');
     statsPass.value = '';
@@ -1881,6 +1912,45 @@ function escapeHtml(str){
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;');
 }
+const btnManejoTarifas = $('btnManejoTarifas');
+if (btnManejoTarifas) btnManejoTarifas.addEventListener('click', () => showModalByElement($('lightbox-tarifas')));
+const closeTarifasBtn = document.querySelector('.close-lightbox-tarifas');
+if (closeTarifasBtn) closeTarifasBtn.addEventListener('click', () => hideModalByElement($('lightbox-tarifas')));
+const cerrarTarifas = $('cerrarTarifas');
+if (cerrarTarifas) cerrarTarifas.addEventListener('click', () => hideModalByElement($('lightbox-tarifas')));
+const formTarifa = $('formTarifa');
+if (formTarifa) formTarifa.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const tipoEnvio = $('tipoEnvioTarifa').value;
+  const tarifa = getNumberOrNull('tarifaInput');
+  const tipoTarifa = $('tipoTarifa').value;
+  if (!tipoEnvio || tarifa === null || !tipoTarifa) {
+    showResult('Error', 'Todos los campos son requeridos.');
+    return;
+  }
+  showSpinner('Actualizando tarifa...');
+  try {
+    const headers = { 'Content-Type': 'application/json' };
+    const token = getOperatorToken();
+    if (token) headers['Authorization'] = 'Bearer ' + token;
+    await fetchJson(`${API_BASE}/t5R9m1`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ tipo_envio: Number(tipoEnvio), tarifa, tipo: Number(tipoTarifa) })
+    });
+    hideSpinner();
+    formTarifa.reset();
+    hideModalByElement($('lightbox-tarifas'));
+    $('popTarifaConfirm').querySelector('p').textContent = 'Tarifa actualizada';
+    showModalByElement($('popTarifaConfirm'));
+  } catch (err) {
+    hideSpinner();
+    console.error('Error actualizando tarifa:', err);
+    const msg = err?.message || 'No se pudo actualizar la tarifa.';
+    showResult('Error', msg);
+  }
+});
+if ($('cerrarTarifaConfirm')) $('cerrarTarifaConfirm').addEventListener('click', () => hideModalByElement($('popTarifaConfirm')));
 </script>
 </body>
 </html>
