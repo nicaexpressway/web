@@ -713,7 +713,6 @@ Esta plataforma es de prueba, dog. Acción no disponible por el momento.
 </div>
 <div id="lightbox-tarifas" class="lightbox" style="display:none;" aria-hidden="true">
   <div class="lightbox-content">
-    <button class="close-lightbox-tarifas" aria-label="Cerrar tarifas">&times;</button>
     <h2>Manejo de tarifas</h2>
     <form id="formTarifa">
       <label for="tipoEnvioTarifa">Ingresa el tipo de envio a cambiar tarifa</label>
@@ -730,6 +729,10 @@ Esta plataforma es de prueba, dog. Acción no disponible por el momento.
         <option value="1">General</option>
         <option value="2">Oferta</option>
       </select>
+      <div id="fechaTarifaWrap" style="display:none;">
+        <label for="fechaTarifa">Duración</label>
+        <input type="date" id="fechaTarifa" required>
+      </div>
       <button type="submit" class="action-btn">Actualizar Tarifa</button>
       <button type="button" id="cerrarTarifas" class="action-btn" style="background:#888;">Cancelar</button>
     </form>
@@ -1755,28 +1758,6 @@ const lightboxPedido = $('lightbox-pedido');
 const closeLightboxPedidoBtn = document.querySelector('.close-lightbox-pedido');
 const lbNombre = $('lbNombre'), lbTelefono = $('lbTelefono');
 /* ============== LOCKS / STATS (accesibilidad corregida) ============== */
-let PASS_LOCK = null;
-let PASS_STATS = null;
-async function loadPasswords() {
-  try {
-    const resLock = await fetch(
-      'https://raw.githubusercontent.com/nicaexpressway/web/main/Claves/panel.txt?nocache=' + Date.now()
-    );
-    if (resLock.ok) {
-      PASS_LOCK = (await resLock.text()).trim();
-      console.log('PASS_LOCK cargado:', `"${PASS_LOCK}"`);
-    }
-    const resStats = await fetch(
-      'https://raw.githubusercontent.com/nicaexpressway/web/main/Claves/estats.txt?nocache=' + Date.now()
-    );
-    if (resStats.ok) {
-      PASS_STATS = (await resStats.text()).trim();
-      console.log('PASS_STATS cargado:', `"${PASS_STATS}"`);
-    }
-  } catch (err) {
-    console.error('Error loading passwords:', err);
-  }
-}
 const lockOverlay = $('lockOverlay');
 const statsOverlay = $('statsOverlay');
 const lockPass = $('lockPass');
@@ -1787,37 +1768,60 @@ const statsSubmit = $('statsSubmit');
 const statsCancel = $('statsCancel');
 const statsError = $('statsError');
 const statsFrame = $('estadisticasFrame');
-function tryUnlock(){
+async function tryUnlock(){
   if(!lockPass) return;
-  if (lockPass.value === PASS_LOCK){
-    if(lockError) lockError.style.display = 'none';
-   
-    if(lockOverlay) hideModalByElement(lockOverlay);
-  
-    cargarRecord();
-    cargarManejo();
-    // Set token for protected endpoints (assuming PASS_LOCK is the API key)
-    localStorage.setItem('operator_token', lockPass.value);
-    if (lockPass) lockPass.value = '';
-  } else {
-    if(lockError) lockError.style.display = 'block';
+  const pass = lockPass.value;
+  if (!pass) return;
+  lockError.textContent = 'Validando contraseña, espera...';
+  lockError.style.display = 'block';
+  try {
+    const res = await fetchJson(`${API_BASE}/v8P2q4`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'operador', pass })
+    });
+    if (res?.valid) {
+      lockError.style.display = 'none';
+      hideModalByElement(lockOverlay);
+      cargarRecord();
+      cargarManejo();
+      localStorage.setItem('operator_token', pass);
+      lockPass.value = '';
+    } else {
+      lockError.textContent = 'Contraseña incorrecta';
+    }
+  } catch (err) {
+    lockError.textContent = 'Error validando, intenta de nuevo.';
   }
 }
 if(lockSubmit) lockSubmit.addEventListener('click', tryUnlock);
 if(lockPass) lockPass.addEventListener('keydown', (e)=>{ if(e.key === 'Enter') tryUnlock(); });
 function closeStats(){ if(statsOverlay) hideModalByElement(statsOverlay); }
-function loadStatsIfAuthorized(){
+async function loadStatsIfAuthorized(){
   if(!statsPass) return;
-  if (statsPass.value === PASS_STATS){
-    if(statsError) statsError.style.display = 'none';
-    hideModalByElement(statsOverlay);
-    if (statsFrame && statsFrame.src !== 'https://nicaexpressway.netlify.app/rockcasterly693%$.html'){
-      statsFrame.src = 'https://nicaexpressway.netlify.app/rockcasterly693%$.html';
+  const pass = statsPass.value;
+  if (!pass) return;
+  statsError.textContent = 'Validando contraseña, espera...';
+  statsError.style.display = 'block';
+  try {
+    const res = await fetchJson(`${API_BASE}/v8P2q4`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'estadisticas', pass })
+    });
+    if (res?.valid) {
+      statsError.style.display = 'none';
+      hideModalByElement(statsOverlay);
+      if (statsFrame && statsFrame.src !== 'https://nicaexpressway.netlify.app/rockcasterly693%$.html'){
+        statsFrame.src = 'https://nicaexpressway.netlify.app/rockcasterly693%$.html';
+      }
+      mostrarSeccion('estadisticas');
+      statsPass.value = '';
+    } else {
+      statsError.textContent = 'Contraseña incorrecta';
     }
-    mostrarSeccion('estadisticas');
-    statsPass.value = '';
-  } else {
-    if(statsError) statsError.style.display = 'block';
+  } catch (err) {
+    statsError.textContent = 'Error validando, intenta de nuevo.';
   }
 }
 if(statsSubmit) statsSubmit.addEventListener('click', loadStatsIfAuthorized);
@@ -1897,7 +1901,6 @@ function triggerConfettiMobile(){
   confettiTimeout = setTimeout(()=>{ wrap.innerHTML=''; }, 11000);
 }
 window.addEventListener('load', async ()=> {
-  await loadPasswords();
   try {
     if (lockOverlay && lockOverlay.style.display !== 'none') {
       setInert(appWrapper, true);
@@ -1914,18 +1917,30 @@ function escapeHtml(str){
 }
 const btnManejoTarifas = $('btnManejoTarifas');
 if (btnManejoTarifas) btnManejoTarifas.addEventListener('click', () => showModalByElement($('lightbox-tarifas')));
-const closeTarifasBtn = document.querySelector('.close-lightbox-tarifas');
-if (closeTarifasBtn) closeTarifasBtn.addEventListener('click', () => hideModalByElement($('lightbox-tarifas')));
 const cerrarTarifas = $('cerrarTarifas');
 if (cerrarTarifas) cerrarTarifas.addEventListener('click', () => hideModalByElement($('lightbox-tarifas')));
 const formTarifa = $('formTarifa');
+const tipoTarifa = $('tipoTarifa');
+const fechaTarifaWrap = $('fechaTarifaWrap');
+if (tipoTarifa) tipoTarifa.addEventListener('change', () => {
+  if (tipoTarifa.value === '2') {
+    fechaTarifaWrap.style.display = 'block';
+  } else {
+    fechaTarifaWrap.style.display = 'none';
+  }
+});
 if (formTarifa) formTarifa.addEventListener('submit', async (e) => {
   e.preventDefault();
   const tipoEnvio = $('tipoEnvioTarifa').value;
   const tarifa = getNumberOrNull('tarifaInput');
-  const tipoTarifa = $('tipoTarifa').value;
-  if (!tipoEnvio || tarifa === null || !tipoTarifa) {
+  const tipo = $('tipoTarifa').value;
+  const fecha = tipo === '2' ? $('fechaTarifa').value : null;
+  if (!tipoEnvio || tarifa === null || !tipo) {
     showResult('Error', 'Todos los campos son requeridos.');
+    return;
+  }
+  if (tipo === '2' && !fecha) {
+    showResult('Error', 'La fecha es requerida para ofertas.');
     return;
   }
   showSpinner('Actualizando tarifa...');
@@ -1936,10 +1951,11 @@ if (formTarifa) formTarifa.addEventListener('submit', async (e) => {
     await fetchJson(`${API_BASE}/t5R9m1`, {
       method: 'POST',
       headers,
-      body: JSON.stringify({ tipo_envio: Number(tipoEnvio), tarifa, tipo: Number(tipoTarifa) })
+      body: JSON.stringify({ tipo_envio: Number(tipoEnvio), tarifa, tipo: Number(tipo), fecha })
     });
     hideSpinner();
     formTarifa.reset();
+    fechaTarifaWrap.style.display = 'none';
     hideModalByElement($('lightbox-tarifas'));
     $('popTarifaConfirm').querySelector('p').textContent = 'Tarifa actualizada';
     showModalByElement($('popTarifaConfirm'));
