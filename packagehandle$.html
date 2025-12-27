@@ -731,7 +731,7 @@ Esta plataforma es de prueba, dog. Acción no disponible por el momento.
       </select>
       <div id="fechaTarifaWrap" style="display:none;">
         <label for="fechaTarifa">Duración</label>
-        <input type="date" id="fechaTarifa" required>
+         <input type="date" id="fechaTarifa">
       </div>
       <button type="submit" class="action-btn">Actualizar Tarifa</button>
       <button type="button" id="cerrarTarifas" class="action-btn" style="background:#888;">Cancelar</button>
@@ -1919,16 +1919,19 @@ const btnManejoTarifas = $('btnManejoTarifas');
 if (btnManejoTarifas) btnManejoTarifas.addEventListener('click', () => showModalByElement($('lightbox-tarifas')));
 const cerrarTarifas = $('cerrarTarifas');
 if (cerrarTarifas) cerrarTarifas.addEventListener('click', () => hideModalByElement($('lightbox-tarifas')));
-const formTarifa = $('formTarifa');
-const tipoTarifa = $('tipoTarifa');
-const fechaTarifaWrap = $('fechaTarifaWrap');
-if (tipoTarifa) tipoTarifa.addEventListener('change', () => {
+ const formTarifa = $('formTarifa');
+ const tipoTarifa = $('tipoTarifa');
+ const fechaTarifaWrap = $('fechaTarifaWrap');
+ const fechaTarifa = $('fechaTarifa');
+ if (tipoTarifa) tipoTarifa.addEventListener('change', () => {
   if (tipoTarifa.value === '2') {
     fechaTarifaWrap.style.display = 'block';
-  } else {
+    if (fechaTarifa) fechaTarifa.required = true;
+ } else {
     fechaTarifaWrap.style.display = 'none';
-  }
-});
+     if (fechaTarifa) { fechaTarifa.required = false; fechaTarifa.value = ''; }
+ }
+ });
 if (formTarifa) formTarifa.addEventListener('submit', async (e) => {
   e.preventDefault();
   const tipoEnvio = $('tipoEnvioTarifa').value;
@@ -1953,10 +1956,12 @@ if (formTarifa) formTarifa.addEventListener('submit', async (e) => {
       headers,
       body: JSON.stringify({ tipo_envio: Number(tipoEnvio), tarifa, tipo: Number(tipo), fecha })
     });
-    hideSpinner();
-    formTarifa.reset();
-    fechaTarifaWrap.style.display = 'none';
-    hideModalByElement($('lightbox-tarifas'));
+  hideSpinner();
+ formTarifa.reset();
+ if (fechaTarifa) { fechaTarifa.required = false; fechaTarifa.value = ''; }
+  fechaTarifaWrap.style.display = 'none';
+  hideModalByElement($('lightbox-tarifas'));
+
     $('popTarifaConfirm').querySelector('p').textContent = 'Tarifa actualizada';
     showModalByElement($('popTarifaConfirm'));
   } catch (err) {
