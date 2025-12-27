@@ -1,3 +1,4 @@
+
 <!DOCTYPE html> 
 <html lang="es">
 <head>
@@ -1067,22 +1068,19 @@ header img {
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
 
 <script>
-const API_BASE = 'https://nicaexpressway.pages.dev'; 
+const API_BASE = 'https://nicaexpressway.pages.dev';
 
 /* ---------- helpers para fetch y JSON robusto ---------- */
 async function safeJsonResponse(res) {
-  // intenta parsear JSON; si falla, devuelve un objeto con error y el texto bruto
   const contentType = res.headers.get('Content-Type') || '';
   try {
     if (contentType.includes('application/json')) {
       return await res.json();
     } else {
-      // intentar parsear igual (algunos servidores devuelven json sin content-type)
       const text = await res.text();
       try { return JSON.parse(text); } catch(e){ return { __non_json: true, text }; }
     }
   } catch (e) {
-    // fallo al parsear
     const txt = await res.text().catch(()=>null);
     return { __parse_error: true, text: txt, message: e && e.message ? e.message : String(e) };
   }
@@ -1101,7 +1099,7 @@ async function fetchWithTimeout(url, opts = {}, timeout = 15000) {
   }
 }
 
-/* ---------- UI + animations (sin cambios lógicos) ---------- */
+/* ---------- Intro FLIP (sin cambios) ---------- */
 (async function runIntroFLIP(){
   try {
     const intro = document.getElementById('introOverlay');
@@ -1165,18 +1163,9 @@ async function fetchWithTimeout(url, opts = {}, timeout = 15000) {
   }
 })();
 
-/* UI refs */
-const btnInicio = document.getElementById('btnInicio');
-const btnCotizar = document.getElementById('btnCotizar');
-const btnSolicitar = document.getElementById('btnSolicitar'); 
-const btnSeguimiento = document.getElementById('btnSeguimiento');
-
-const secciones = {
-  inicio: document.getElementById('inicio'),
-  cotizar: document.getElementById('cotizar'),
-  solicitar: document.getElementById('solicitar'),
-  seguimiento: document.getElementById('seguimiento')
-};
+/* ---------- NAV & SECTIONS (restaurado comportamiento original) ---------- */
+let btnInicio = null, btnCotizar = null, btnSolicitar = null, btnSeguimiento = null;
+let secciones = { inicio: null, cotizar: null, solicitar: null, seguimiento: null };
 
 function resetNavStyles(){
   [btnInicio,btnCotizar,btnSolicitar,btnSeguimiento].forEach(b=>{
@@ -1202,11 +1191,8 @@ function mostrarSeccion(nombre){
     if(btnSeguimiento) btnSeguimiento.classList.remove('active-highlight');
   }
 }
-if(btnInicio) btnInicio.addEventListener('click',()=>mostrarSeccion('inicio'));
-if(btnCotizar) btnCotizar.addEventListener('click',()=>mostrarSeccion('cotizar'));
-if(btnSolicitar) btnSolicitar.addEventListener('click',()=>mostrarSeccion('solicitar'));
-if(btnSeguimiento) btnSeguimiento.addEventListener('click',()=>mostrarSeccion('seguimiento'));
 
+/* CTA reveal */
 (function revealCotizarCTA(){
   try {
     setTimeout(()=> {
@@ -1215,10 +1201,8 @@ if(btnSeguimiento) btnSeguimiento.addEventListener('click',()=>mostrarSeccion('s
   } catch(e){}
 })();
 
-const btnCalcularMain = document.getElementById('btnCalcularMain');
-const resultadoDiv = document.getElementById('resultado');
-const cotizarCtaWrap = document.getElementById('cotizarCtaWrap');
-
+/* ---------- cálculo principal ---------- */
+let btnCalcularMain = null, resultadoDiv = null, cotizarCtaWrap = null;
 function crearWaButton(){
   const waHref = 'https://wa.me/50577079035?text=' + encodeURIComponent('Hola, NicaExpressWay, me gustaria hacer un pedido.');
   const a = document.createElement('a');
@@ -1238,7 +1222,8 @@ function resetCotizarForm(){
   if(pesoEl) pesoEl.value = '';
 }
 
-if (btnCalcularMain) {
+function setupCalcularMain(){
+  if (!btnCalcularMain) return;
   btnCalcularMain.addEventListener('click', (e)=>{
     e.preventDefault();
     const tipoEl = document.getElementById('tipoEnvio');
@@ -1274,7 +1259,6 @@ if (btnCalcularMain) {
       }
     }, 2000);
 
-    // reset form
     resetCotizarForm();
     if(waBtnTimeout) clearTimeout(waBtnTimeout);
     waBtnTimeout = setTimeout(()=>{
@@ -1287,21 +1271,8 @@ if (btnCalcularMain) {
   });
 }
 
-/* ---------- SEARCH / CLIENT UI (modificado) ---------- */
-const btnBuscar = document.getElementById('btnBuscar');
-const btnLimpiar = document.getElementById('btnLimpiar');
-const overlay = document.getElementById('searchOverlay');
-const resultContainer = document.getElementById('resultContainer');
-const noResult = document.getElementById('noResult');
-const timelineEl = document.getElementById('timeline');
-const detalleTipo = document.getElementById('detalleTipo');
-const detallePeso = document.getElementById('detallePeso');
-const detalleTarifa = document.getElementById('detalleTarifa');
-const detalleTotal = document.getElementById('detalleTotal');
-const multiResults = document.getElementById('multiResults');
-
-if(btnBuscar) btnBuscar.addEventListener('click', onBuscar);
-if(btnLimpiar) btnLimpiar.addEventListener('click', onLimpiar);
+/* ---------- SEARCH / CLIENT UI ---------- */
+let btnBuscar = null, btnLimpiar = null, overlay = null, resultContainer = null, noResult = null, timelineEl = null, detalleTipo = null, detallePeso = null, detalleTarifa = null, detalleTotal = null, multiResults = null;
 
 function onLimpiar(){
   const c = document.getElementById('codigo');
@@ -1378,31 +1349,20 @@ async function onBuscar(){
   }
 }
 
-/* ---------- fetchPackageFromAPI (ajustada para Cloudflare Functions + robusta) ---------- */
+/* ---------- fetchPackageFromAPI (robusta) ---------- */
 async function fetchPackageFromAPI({ codigo, nombre, telefono }){
   codigo = codigo ? String(codigo).trim() : null;
   nombre = nombre ? String(nombre).trim() : null;
   telefono = telefono ? String(telefono).trim() : null;
 
-  // 1) búsqueda por código -> GET ?codigo=...
   if (codigo) {
     try {
       const url = `${API_BASE}/q4X9b2?codigo=${encodeURIComponent(codigo)}`;
       const res = await fetchWithTimeout(url, { method: 'GET', headers: { 'Accept': 'application/json' } }, 12000);
-
-      if (!res.ok) {
-        // devuelve texto útil para debugging
-        const txt = await res.text().catch(()=>null);
-        console.warn('paquetes fetch fallo', res.status, txt);
-        return null;
-      }
-
+      if (!res.ok) { const txt = await res.text().catch(()=>null); console.warn('paquetes fetch fallo', res.status, txt); return null; }
       const arrOrObj = await safeJsonResponse(res);
       if (!Array.isArray(arrOrObj)) {
-        // el endpoint debería devolver un array para la búsqueda por código
-        // en caso de que devuelva un solo objeto, normalizamos
         if (arrOrObj && typeof arrOrObj === 'object' && !Array.isArray(arrOrObj)) {
-          // si la función devolvió un objeto (por ejemplo single row), envuélvelo
           const arr = Array.isArray(arrOrObj) ? arrOrObj : [arrOrObj];
           if (arr.length === 0) return null;
           const paquete = arr[0];
@@ -1413,10 +1373,8 @@ async function fetchPackageFromAPI({ codigo, nombre, telefono }){
           } catch(err){ console.warn('historial fetch failed', err); historial = null; }
           return { paquete, historial };
         }
-        // si llegó un wrapper con error o HTML, tratamos como no encontrado
         return null;
       }
-
       if (arrOrObj.length === 0) return null;
       const paquete = arrOrObj[0];
       let historial = null;
@@ -1424,7 +1382,6 @@ async function fetchPackageFromAPI({ codigo, nombre, telefono }){
         const resH = await fetch(`${API_BASE}/m7k2Z?codigo=${encodeURIComponent(paquete.codigo_seguimiento)}`);
         if (resH.ok) historial = await safeJsonResponse(resH);
       } catch(err){ console.warn('historial fetch failed', err); historial = null; }
-
       return { paquete, historial };
     } catch (e) {
       console.warn('fetchPackageFromAPI by codigo error', e);
@@ -1432,7 +1389,6 @@ async function fetchPackageFromAPI({ codigo, nombre, telefono }){
     }
   }
 
-  // 2) búsqueda por nombre / teléfono -> POST R8t6sQ
   if (nombre || telefono) {
     try {
       const res = await fetchWithTimeout(`${API_BASE}/R8t6sQ`, {
@@ -1468,7 +1424,7 @@ function parseNumberFromString(val){
   return isFinite(n) ? n : null;
 }
 
-/* ---------- render / lightbox (ligeros ajustes para tolerancia) ---------- */
+/* ---------- render / lightbox ---------- */
 function renderPackageResult({ paquete, historial }){
   if (multiResults) { multiResults.style.display = 'none'; multiResults.innerHTML = ''; }
 
@@ -1561,7 +1517,7 @@ function buildTimelineFromHistorialElement(historial, containerEl){
   }
 }
 
-/* ---------- lightbox open/close (igual que antes) ---------- */
+/* ---------- lightbox open/close ---------- */
 const packageLightboxOverlay = document.getElementById('packageLightboxOverlay');
 const lbClose = document.getElementById('lbClose');
 const lbCloseBtn = document.getElementById('lbCloseBtn');
@@ -1709,93 +1665,600 @@ function escapeHtml(str){
     .replace(/>/g, '&gt;');
 }
 
-/* ---------- confetti helpers (idem) ---------- */
-/* (omitted here to keep the example concise — keep your original implementations) */
+/* ---------- confetti helpers (restore robust version) ---------- */
+let confettiClearTimeout = null;
+function triggerConfettiOnce(opts = {}) {
+  const defaults = {
+    particleCount: 260,
+    spread: 110,
+    ticks: 520,
+    gravity: 0.32,
+    startVelocity: 30,
+    decay: 0.9,
+    drift: 0.4,
+    scalar: 1,
+    origin: { y: 0.08 },
+    colors: ['#1f3a66','#2F528F','#79A7E4'],
+    shapes: ['square','circle'],
+    zIndex: 6001
+  };
+  const cfg = Object.assign({}, defaults, opts);
+  const maxAllowed = (window.innerWidth <= 420) ? 320 : 700;
+  cfg.particleCount = Math.min(cfg.particleCount, maxAllowed);
 
-/* ---------- key bindings and init ---------- */
-['codigo','telefonoBuscar','nombreBuscar','telefonoSolicitar','peso'].forEach(id=>{
-  const el = document.getElementById(id);
+  if (typeof confetti === 'function') {
+    const shootBurst = (override) => { confetti(Object.assign({}, cfg, override)); };
+
+    shootBurst({
+      particleCount: Math.floor(cfg.particleCount * 0.45),
+      spread: cfg.spread + 30,
+      origin: cfg.origin,
+      ticks: cfg.ticks,
+      gravity: cfg.gravity,
+      startVelocity: cfg.startVelocity,
+      decay: cfg.decay,
+      drift: cfg.drift,
+      scalar: cfg.scalar,
+      shapes: cfg.shapes,
+      colors: cfg.colors
+    });
+
+    setTimeout(() => {
+      shootBurst({
+        particleCount: Math.floor(cfg.particleCount * 0.28),
+        angle: 60,
+        spread: Math.max(40, cfg.spread - 20),
+        origin: { x: 0.12, y: cfg.origin.y },
+        ticks: Math.floor(cfg.ticks * 0.95),
+        gravity: cfg.gravity * 0.98,
+        drift: cfg.drift * 1.2
+      });
+      shootBurst({
+        particleCount: Math.floor(cfg.particleCount * 0.28),
+        angle: 120,
+        spread: Math.max(40, cfg.spread - 20),
+        origin: { x: 0.88, y: cfg.origin.y },
+        ticks: Math.floor(cfg.ticks * 0.95),
+        gravity: cfg.gravity * 0.98,
+        drift: -cfg.drift * 1.2
+      });
+    }, 180);
+
+    setTimeout(() => {
+      shootBurst({
+        particleCount: Math.floor(cfg.particleCount * 0.12),
+        spread: 40,
+        origin: { x: 0.5, y: cfg.origin.y + 0.02 },
+        startVelocity: Math.max(10, cfg.startVelocity * 0.6),
+        ticks: Math.floor(cfg.ticks * 0.8),
+        gravity: cfg.gravity * 0.9
+      });
+    }, 360);
+  } else {
+    console.warn('canvas-confetti not loaded');
+  }
+
+  if (confettiClearTimeout) clearTimeout(confettiClearTimeout);
+  confettiClearTimeout = setTimeout(() => {
+    const wrap = document.getElementById('confettiWrap');
+    if (wrap) wrap.innerHTML = '';
+  }, 9000);
+}
+
+function triggerConfetti(el) {
+  let side = 'center';
+  try {
+    if (el && el.getBoundingClientRect) {
+      const rect = el.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      side = (cx < window.innerWidth / 2) ? 'left' : 'right';
+    }
+  } catch(e){
+    side = 'center';
+  }
+
+  if (window.innerWidth <= 420) {
+    if (side === 'left' || side === 'right') {
+      triggerConfettiOnce({ particleCount: 220, origin: { y: 0.06 }, gravity: 0.34 });
+    } else {
+      triggerConfettiOnce({ particleCount: 200, origin: { y: 0.06 }, gravity: 0.34 });
+    }
+  } else {
+    if (side === 'left' || side === 'right') {
+      triggerConfettiOnce({ particleCount: 420, origin: { y: 0.04 } });
+    } else {
+      triggerConfettiOnce({ particleCount: 360, origin: { y: 0.04 } });
+    }
+  }
+}
+
+/* ---------- pedidos (restore) ---------- */
+let btnCalcularSolicitar = null, btnConfirmarSolicitar = null, reciboSolicitar = null, rcPrecioLibra = null, rcLibras = null, rcTotal = null, rcEstimado = null;
+let waitingPop = null, waitingError = null, confirmPop = null, btnCerrarConfirm = null;
+
+function calcularSolicitar(){ console.warn("calcularSolicitar replaced: delegating to dynamic implementation"); if(window._pR3tXk_applyPrices){ try { /* trigger init to ensure rates loaded */ window._pR3tXk_applyPrices(); } catch(e){} } return true; }
+
+/* ---------- landing & reveal logic (restored from working version) ---------- */
+/* Logos & services carousel */
+const logos = [
+  'https://github.com/nicaexpressway/web/blob/main/media/shein.png?raw=true',
+  'https://github.com/nicaexpressway/web/blob/main/media/alibaba.webp?raw=true',
+  'https://github.com/nicaexpressway/web/blob/main/media/aliexpress.png?raw=true',
+  'https://github.com/nicaexpressway/web/blob/main/media/ebay.webp?raw=true',
+  'https://raw.githubusercontent.com/nicaexpressway/web/652db483d5e2050f4495a2f65c52fcb2da155b3e/media/amazon.svg'
+];
+const logoInterval = 1800;
+const logoFade = 380;
+
+let logosIdx = 0, logosTimer = null;
+let servicesIdx = 0, servicesTimer = null;
+const servicesAutoAdvance = 5400;
+let subtitleChangeTimer = null;
+
+function safeChangeSubtitle(el, newText, delay = 180){
   if(!el) return;
-  el.addEventListener('keydown',(e)=>{
-    if(e.key==='Enter'){
-      e.preventDefault();
-      if(id==='peso'){
-        if (btnCalcularMain) btnCalcularMain.click();
-        try { el.blur(); } catch(_) {}
-      } else {
-        onBuscar();
-        try { el.blur(); } catch(_) {}
+  if (el.textContent === newText) {
+    el.classList.add('visible');
+    return;
+  }
+  el.classList.remove('visible');
+  if (subtitleChangeTimer) clearTimeout(subtitleChangeTimer);
+  subtitleChangeTimer = setTimeout(()=> {
+    el.textContent = newText;
+    requestAnimationFrame(()=> el.classList.add('visible'));
+    subtitleChangeTimer = null;
+  }, delay);
+}
+
+function rotateLogos() {
+  const wrap = document.getElementById('logosCarousel');
+  if (!wrap) return;
+  let img = wrap.querySelector('img.logo-slide');
+  if (!img) {
+    img = document.createElement('img');
+    img.className = 'logo-slide';
+    img.style.opacity = '0';
+    img.style.transition = `opacity ${logoFade}ms ease, transform ${logoFade}ms ease`;
+    wrap.appendChild(img);
+  }
+
+  img.classList.remove('active');
+
+  setTimeout(() => {
+    const nextSrc = logos[logosIdx];
+    logosIdx = (logosIdx + 1) % logos.length;
+
+    const tmp = new Image();
+    tmp.onload = () => {
+      img.src = nextSrc;
+      img.alt = (nextSrc.split('/').slice(-1)[0] || 'logo') + ' logo';
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        img.classList.add('active');
+      }));
+    };
+    tmp.onerror = () => {
+      img.src = nextSrc;
+      img.alt = 'logo';
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        img.classList.add('active');
+      }));
+    };
+    tmp.src = nextSrc;
+  }, logoFade);
+}
+
+function startLogoLoop(){
+  rotateLogos();
+  if (logosTimer) clearInterval(logosTimer);
+  logosTimer = setInterval(rotateLogos, logoInterval);
+}
+
+function setServicesPosition(idx){
+  const track = document.getElementById('servicesTrack');
+  if(!track) return;
+  const firstCard = track.children[0];
+  const cardW = firstCard ? firstCard.getBoundingClientRect().width : track.getBoundingClientRect().width;
+  const gap = parseFloat(getComputedStyle(track).gap) || 0;
+  const x = (cardW + gap) * idx * -1;
+  track.style.transform = `translateX(${x}px)`;
+
+  const dots = document.getElementById('servicesDots');
+  if (dots) {
+    Array.from(dots.children).forEach((b,i) => b.classList.toggle('active', i === idx));
+  }
+
+  Array.from(track.children).forEach((c, i) => {
+    c.classList.toggle('current', i === idx);
+  });
+
+  const servicesTitle = document.getElementById('servicesTitle');
+  if (servicesTitle) {
+    const newText = (idx === 2) ? 'También te ofrecemos:' : 'Te las hacemos llegar vía:';
+    safeChangeSubtitle(servicesTitle, newText, 180);
+  }
+
+  servicesIdx = idx;
+}
+
+function advanceServices(){
+  const track = document.getElementById('servicesTrack');
+  if(!track) return;
+  const total = track.children.length || 1;
+  servicesIdx = (servicesIdx + 1) % total;
+  setServicesPosition(servicesIdx);
+}
+
+function startServicesAuto(){
+  if(servicesTimer) clearInterval(servicesTimer);
+  servicesTimer = setInterval(advanceServices, servicesAutoAdvance);
+}
+
+function buildDots(){
+  const track = document.getElementById('servicesTrack');
+  const dots = document.getElementById('servicesDots');
+  if(!track || !dots) return;
+  dots.innerHTML = '';
+  for(let i=0;i<track.children.length;i++){
+    const b = document.createElement('button');
+    b.type='button';
+    b.title = 'Mostrar tarjeta ' + (i+1);
+    b.addEventListener('click', ()=> {
+      servicesIdx = i;
+      setServicesPosition(i);
+      startServicesAuto();
+    });
+    dots.appendChild(b);
+  }
+  if (dots.children[0]) dots.children[0].classList.add('active');
+}
+
+function revealElement(el, delay=0){
+  if(!el) return;
+  setTimeout(()=> el.classList.add('visible'), delay);
+}
+
+function initLandingSequence(){
+  startLogoLoop();
+
+  setTimeout(()=> {
+    const first = document.querySelector('#landingServices [data-reveal]');
+    if(first) first.classList.add('visible');
+
+    const servicesTitle = document.getElementById('servicesTitle');
+    if(servicesTitle) servicesTitle.classList.add('visible');
+
+    try { adjustServiceTextSizes(); } catch(e){/* ignore */ }
+  }, 600);
+
+  const top = document.getElementById('landingTop');
+  const services = document.getElementById('landingServices');
+  const original = document.getElementById('inicioOriginal');
+
+  revealElement(top, 400);
+  revealElement(services, 680);
+  revealElement(original, 1900);
+
+  setTimeout(()=> {
+    const logoMain = document.getElementById('logoMain');
+    if (logoMain) logoMain.classList.add('visible');
+  }, 1950);
+}
+
+function waitForIntroAndInit(){
+  const intro = document.getElementById('introOverlay');
+  if(!intro || getComputedStyle(intro).display === 'none') { initLandingSequence(); return; }
+  const observer = new MutationObserver(()=> {
+    if(!document.body.contains(intro) || getComputedStyle(intro).display === 'none' || intro.classList.contains('hide')){
+      observer.disconnect();
+      setTimeout(initLandingSequence, 260);
+    }
+  });
+  observer.observe(document.documentElement || document.body, { childList:true, subtree:true, attributes:true });
+  setTimeout(()=> { if(observer) observer.disconnect(); initLandingSequence(); }, 6000);
+}
+
+function adjustServiceTextSizes(){
+  const cards = document.querySelectorAll('.service-card');
+  cards.forEach(card => {
+    const desc = card.querySelector('.card-desc');
+    if(!desc) return;
+    const len = (desc.textContent || '').trim().length;
+    let size = 15;
+    if(len < 40) size = 18;
+    else if(len < 80) size = 16;
+    else if(len < 140) size = 15;
+    else size = 14;
+    desc.style.fontSize = size + 'px';
+  });
+}
+
+function setupSocialScrollReveal(){
+  const inicio = document.getElementById('inicio');
+  const linkwrap = document.getElementById('linktreeOriginal');
+  if(!inicio || !linkwrap) return;
+  const buttons = Array.from(linkwrap.querySelectorAll('.link-btn'));
+  if(buttons.length === 0) return;
+
+  function computeTriggerPoints(){
+    const maxScroll = Math.max(0, inicio.scrollHeight - inicio.clientHeight);
+    const step = maxScroll / (buttons.length + 1);
+    return { start: maxScroll * 0.15, step };
+  }
+
+  let scrollTimeout = null;
+  function onScroll(){
+    if (scrollTimeout) clearTimeout(scrollTimeout);
+    scrollTimeout = setTimeout(() => {
+      const { start, step } = computeTriggerPoints();
+      const progress = inicio.scrollTop;
+      const maxScroll = Math.max(0, inicio.scrollHeight - inicio.clientHeight);
+
+      if (maxScroll > 0 && progress >= (maxScroll - 6)) {
+        buttons.forEach((btn) => {
+          btn.classList.add('visible');
+          btn.style.opacity = '1';
+          btn.style.transform = 'translateY(0)';
+          btn.setAttribute('aria-hidden','false');
+        });
+        return;
       }
+
+      buttons.forEach((btn, i) => {
+        const threshold = Math.round(start + i * step);
+        if (progress >= threshold){
+          setTimeout(() => {
+            btn.classList.add('visible');
+            btn.style.opacity = '1';
+            btn.style.transform = 'translateY(0)';
+            btn.setAttribute('aria-hidden','false');
+          }, i * 150);
+        } else {
+          btn.classList.remove('visible');
+          btn.style.opacity = '0';
+          btn.style.transform = 'translateY(8px)';
+          btn.setAttribute('aria-hidden','true');
+        }
+      });
+    }, 50);
+  }
+
+  buttons.forEach(b => { b.style.transition = 'opacity .72s ease, transform .72s ease'; b.style.opacity = 0; b.style.transform = 'translateY(8px)'; b.setAttribute('aria-hidden','true'); });
+
+  inicio.addEventListener('scroll', onScroll, { passive:true });
+  setTimeout(onScroll, 80);
+}
+
+function setupRevealOnScroll(){
+  const inicio = document.getElementById('inicio');
+  if(!inicio) return;
+
+  const revealEls = Array.from(document.querySelectorAll('#landingServices [data-reveal]'));
+  if(revealEls.length === 0) return;
+
+  revealEls.forEach(el => {
+    el.style.transition = 'opacity .84s ease, transform .84s ease';
+    el.setAttribute('aria-hidden', 'true');
+    if(!el.classList.contains('reveal')) el.classList.add('reveal');
+  });
+
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(en => {
+      const el = en.target;
+      const isVisible = en.intersectionRatio > 0.18;
+
+      if(isVisible) {
+        el.classList.add('visible');
+        el.setAttribute('aria-hidden','false');
+      } else {
+        el.classList.remove('visible');
+        el.setAttribute('aria-hidden','true');
+      }
+    });
+  }, {
+    root: document.getElementById('inicio'),
+    threshold: [0.18]
+  });
+
+  revealEls.forEach(el => io.observe(el));
+}
+
+/* ---------- key bindings and input initializers ---------- */
+function wireSimpleKeyBindings(){
+  ['codigo','telefonoBuscar','nombreBuscar','telefonoSolicitar','peso'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.addEventListener('keydown',(e)=>{
+      if(e.key==='Enter'){
+        e.preventDefault();
+        if(id==='peso'){
+          if (btnCalcularMain) btnCalcularMain.click();
+          try { el.blur(); } catch(_) {}
+        } else {
+          onBuscar();
+          try { el.blur(); } catch(_) {}
+        }
+      }
+    });
+  });
+  ['peso','codigo','nombreBuscar','telefonoBuscar','telefonoSolicitar'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.addEventListener('input', ()=> {});
+    el.addEventListener('blur', ()=> {});
+  });
+}
+
+/* ---------- init sequence (assign refs and wire everything) ---------- */
+document.addEventListener('DOMContentLoaded', ()=> {
+  // assign navigation refs
+  btnInicio = document.getElementById('btnInicio');
+  btnCotizar = document.getElementById('btnCotizar');
+  btnSolicitar = document.getElementById('btnSolicitar');
+  btnSeguimiento = document.getElementById('btnSeguimiento');
+
+  secciones = {
+    inicio: document.getElementById('inicio'),
+    cotizar: document.getElementById('cotizar'),
+    solicitar: document.getElementById('solicitar'),
+    seguimiento: document.getElementById('seguimiento')
+  };
+
+  if(btnInicio) btnInicio.addEventListener('click',()=>mostrarSeccion('inicio'));
+  if(btnCotizar) btnCotizar.addEventListener('click',()=>mostrarSeccion('cotizar'));
+  if(btnSolicitar) btnSolicitar.addEventListener('click',()=>mostrarSeccion('solicitar'));
+  if(btnSeguimiento) btnSeguimiento.addEventListener('click',()=>mostrarSeccion('seguimiento'));
+
+  // calcular main refs
+  btnCalcularMain = document.getElementById('btnCalcularMain');
+  resultadoDiv = document.getElementById('resultado');
+  cotizarCtaWrap = document.getElementById('cotizarCtaWrap');
+  setupCalcularMain();
+
+  // search refs
+  btnBuscar = document.getElementById('btnBuscar');
+  btnLimpiar = document.getElementById('btnLimpiar');
+  overlay = document.getElementById('searchOverlay');
+  resultContainer = document.getElementById('resultContainer');
+  noResult = document.getElementById('noResult');
+  timelineEl = document.getElementById('timeline');
+  detalleTipo = document.getElementById('detalleTipo');
+  detallePeso = document.getElementById('detallePeso');
+  detalleTarifa = document.getElementById('detalleTarifa');
+  detalleTotal = document.getElementById('detalleTotal');
+  multiResults = document.getElementById('multiResults');
+
+  if(btnBuscar) btnBuscar.addEventListener('click', onBuscar);
+  if(btnLimpiar) btnLimpiar.addEventListener('click', onLimpiar);
+
+  // pedidos refs
+  btnCalcularSolicitar = document.getElementById('btnCalcularSolicitar');
+  btnConfirmarSolicitar = document.getElementById('btnConfirmarSolicitar');
+  reciboSolicitar = document.getElementById('reciboSolicitar');
+  rcPrecioLibra = document.getElementById('rcPrecioLibra');
+  rcLibras = document.getElementById('rcLibras');
+  rcTotal = document.getElementById('rcTotal');
+  rcEstimado = document.getElementById('rcEstimado');
+
+  waitingPop = document.getElementById('waitingPop');
+  waitingError = document.getElementById('waitingError');
+  confirmPop = document.getElementById('confirmPop');
+  btnCerrarConfirm = document.getElementById('btnCerrarConfirm');
+
+  if (btnCalcularSolicitar) btnCalcularSolicitar.addEventListener('click', (e)=>{ e.preventDefault(); calcularSolicitar(); });
+
+  if (btnConfirmarSolicitar) btnConfirmarSolicitar.addEventListener('click', async (e)=>{
+    e.preventDefault();
+    if (!validarFormularioSolicitar()) return;
+    const nombre = (document.getElementById('nombreSolicitar')?.value||'').trim();
+    const telCode = document.getElementById('telCodeSolicitar')?.value;
+    const telefono = (document.getElementById('telefonoSolicitar')?.value||'').trim();
+    const agencia = (document.getElementById('plataformaSolicitar')?.value||'').trim();
+    const descripcion = (document.getElementById('descripcionSolicitar')?.value||'').trim() || null;
+    const tipo = document.getElementById('tipoEnvioSolicitar')?.value;
+    const peso_aprox = Number(document.getElementById('pesoSolicitar')?.value);
+    const telefonoFull = `${telCode}${telefono}`;
+    const payload = { nombre, telefono: telefonoFull, agencia, descripcion, tipo, peso_aprox };
+
+    showWaiting();
+    if (btnConfirmarSolicitar) btnConfirmarSolicitar.disabled = true;
+
+    try {
+      const resp = await fetch(`${API_BASE}/b5Nf7q2`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (!resp.ok) {
+        const txt = await resp.text().catch(()=>null);
+        if (waitingError) { waitingError.style.display = 'block'; waitingError.textContent = `Error guardando la solicitud (${resp.status})`; }
+        console.error('POST /pedidos failed', resp.status, txt);
+        if (btnConfirmarSolicitar) btnConfirmarSolicitar.disabled = false;
+        return;
+      }
+
+      const data = await safeJsonResponse(resp);
+      hideWaiting();
+      showConfirm();
+
+      document.getElementById('nombreSolicitar').value = '';
+      document.getElementById('telCodeSolicitar').value = '+505';
+      document.getElementById('telefonoSolicitar').value = '';
+      document.getElementById('plataformaSolicitar').value = '';
+      document.getElementById('descripcionSolicitar').value = '';
+      document.getElementById('tipoEnvioSolicitar').value = 'aereo';
+      document.getElementById('pesoSolicitar').value = '';
+      if (reciboSolicitar) reciboSolicitar.style.display = 'none';
+      if (btnConfirmarSolicitar) btnConfirmarSolicitar.style.display = 'none';
+      if (btnConfirmarSolicitar) btnConfirmarSolicitar.disabled = false;
+      if (btnCalcularSolicitar) btnCalcularSolicitar.style.display = 'block';
+    } catch (err) {
+      console.error('Error POST /pedidos', err);
+      if (waitingError) { waitingError.style.display = 'block'; waitingError.textContent = 'Ocurrió un error de red. Intenta nuevamente.'; }
+      if (btnConfirmarSolicitar) btnConfirmarSolicitar.disabled = false;
+    }
+  });
+
+  if (btnCerrarConfirm) btnCerrarConfirm.addEventListener('click', (e)=>{ e.preventDefault(); hideConfirm(); });
+
+  if(lbClose) lbClose.addEventListener('click', closePackageLightbox);
+  if(lbCloseBtn) lbCloseBtn.addEventListener('click', closePackageLightbox);
+
+  wireSimpleKeyBindings();
+
+  // landing init behavior (reveal elements, carousels, etc.)
+  try{ setupSocialScrollReveal(); }catch(e){ console.warn('social reveal init failed', e); }
+  try{ setupRevealOnScroll(); }catch(e){ console.warn('reveal-on-scroll init failed', e); }
+
+  try {
+    fetch(`${API_BASE}/z4W1p?nocache=${Date.now()}`, { method: 'GET' }).catch(()=>{});
+  } catch(e){ /* ignore */ }
+
+  // build dots for services if any
+  try { buildDots(); } catch(e){}
+
+  waitForIntroAndInit();
+
+  // show inicio by default (matches original behavior)
+  mostrarSeccion('inicio');
+  hideResult();
+
+  window.addEventListener('resize', () => {
+    if(window.__svc_resize_timeout) clearTimeout(window.__svc_resize_timeout);
+    window.__svc_resize_timeout = setTimeout(() => { try { adjustServiceTextSizes(); } catch(e){} }, 120);
+  });
+});
+
+/* ---------- form submit guard (preserve) ---------- */
+document.addEventListener('DOMContentLoaded', () => {
+  const form = document.querySelector("form");
+  if (!form) return;
+
+  form.addEventListener("submit", (e) => {
+    const nombre = (document.getElementById("nombreBuscar")?.value || '').trim();
+    const telefono = (document.getElementById("telefonoBuscar")?.value || '').trim();
+
+    if (!nombre) {
+      alert("Por favor ingresa tu nombre.");
+      e.preventDefault();
+      return;
+    }
+    if (telefono && !/^\d{8,10}$/.test(telefono)) {
+      alert("El teléfono debe tener entre 8 y 10 dígitos.");
+      e.preventDefault();
+      return;
     }
   });
 });
-['peso','codigo','nombreBuscar','telefonoBuscar','telefonoSolicitar'].forEach(id=>{
-  const el = document.getElementById(id);
-  if(!el) return;
-  el.addEventListener('input', ()=> {});
-  el.addEventListener('blur', ()=> {});
-});
 
-(function init(){
-  mostrarSeccion('inicio');
-  hideResult();
-})();
+/* ---------- util: hideResult ---------- */
 function hideResult(){
   if(resultContainer) resultContainer.style.display='none';
   if(noResult) { noResult.style.display='block'; noResult.textContent = 'Aquí se mostrará el estado del envío.'; }
   if(timelineEl) timelineEl.innerHTML='';
 }
 
-/* ---------- pedidos (tu POST ya estaba correcto, solo tolerance) ---------- */
-const btnCalcularSolicitar = document.getElementById('btnCalcularSolicitar');
-const btnConfirmarSolicitar = document.getElementById('btnConfirmarSolicitar');
-const reciboSolicitar = document.getElementById('reciboSolicitar');
-const rcPrecioLibra = document.getElementById('rcPrecioLibra');
-const rcLibras = document.getElementById('rcLibras');
-const rcTotal = document.getElementById('rcTotal');
-const rcEstimado = document.getElementById('rcEstimado');
-
-const waitingPop = document.getElementById('waitingPop');
-const waitingError = document.getElementById('waitingError');
-const confirmPop = document.getElementById('confirmPop');
-const btnCerrarConfirm = document.getElementById('btnCerrarConfirm');
-
-function calcularSolicitar(){
-  const tipoEl = document.getElementById('tipoEnvioSolicitar');
-  const pesoEl = document.getElementById('pesoSolicitar');
-  const tipo = tipoEl ? tipoEl.value : 'aereo';
-  const peso = pesoEl ? parseFloat(pesoEl.value) : NaN;
-  if (isNaN(peso) || peso <= 0) {
-    alert('Por favor ingresa un peso válido.');
-    return false;
-  }
-  let precioPorLb = 0;
-  if (tipo === 'aereo') precioPorLb = 7.50;
-  else precioPorLb = 3.00;
-
-  const total = precioPorLb * peso;
-
-  if (rcPrecioLibra) rcPrecioLibra.textContent = `$${precioPorLb.toFixed(2)} USD`;
-  if (rcLibras) rcLibras.textContent = `${Number(peso).toFixed(2)} lb`;
-  if (rcTotal) rcTotal.innerHTML = `<strong>$${isFinite(total) ? total.toFixed(2) : '0.00'} USD</strong>`;
-
-  if (tipo === 'maritimo') {
-    if (rcEstimado) rcEstimado.textContent = 'Llegada estimada: 15 días';
-  } else {
-    if (rcEstimado) rcEstimado.textContent = 'Llegada estimada: 7 días';
-  }
-
-  if (reciboSolicitar) reciboSolicitar.style.display = 'block';
-  if (btnCalcularSolicitar) btnCalcularSolicitar.style.display = 'none';
-  if (btnConfirmarSolicitar) btnConfirmarSolicitar.style.display = 'block';
-  return true;
-}
-
-if (btnCalcularSolicitar) btnCalcularSolicitar.addEventListener('click', (e)=>{
-  e.preventDefault();
-  calcularSolicitar();
-});
-
+/* ---------- UI helpers para pedidos ---------- */
 function validarFormularioSolicitar(){
   const nombre = (document.getElementById('nombreSolicitar')?.value||'').trim();
   const telCode = document.getElementById('telCodeSolicitar')?.value;
@@ -1817,101 +2280,394 @@ function showWaiting(){ if (waitingError) { waitingError.style.display = 'none';
 function hideWaiting(){ if (waitingPop) waitingPop.classList.remove('show'); setTimeout(()=>{ if (waitingError) { waitingError.style.display='none'; waitingError.textContent=''; } }, 350); }
 function showConfirm(){ if (confirmPop) confirmPop.classList.add('show'); }
 function hideConfirm(){ if (confirmPop) confirmPop.classList.remove('show'); }
-
-if (btnConfirmarSolicitar) btnConfirmarSolicitar.addEventListener('click', async (e)=>{
-  e.preventDefault();
-  if (!validarFormularioSolicitar()) return;
-  const nombre = (document.getElementById('nombreSolicitar')?.value||'').trim();
-  const telCode = document.getElementById('telCodeSolicitar')?.value;
-  const telefono = (document.getElementById('telefonoSolicitar')?.value||'').trim();
-  const agencia = (document.getElementById('plataformaSolicitar')?.value||'').trim();
-  const descripcion = (document.getElementById('descripcionSolicitar')?.value||'').trim() || null;
-  const tipo = document.getElementById('tipoEnvioSolicitar')?.value;
-  const peso_aprox = Number(document.getElementById('pesoSolicitar')?.value);
-  const telefonoFull = `${telCode}${telefono}`;
-  const payload = { nombre, telefono: telefonoFull, agencia, descripcion, tipo, peso_aprox };
-
-  showWaiting();
-  if (btnConfirmarSolicitar) btnConfirmarSolicitar.disabled = true;
-
-  try {
-    const resp = await fetch(`${API_BASE}/b5Nf7q2`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-
-    if (!resp.ok) {
-      const txt = await resp.text().catch(()=>null);
-      if (waitingError) { waitingError.style.display = 'block'; waitingError.textContent = `Error guardando la solicitud (${resp.status})`; }
-      console.error('POST /pedidos failed', resp.status, txt);
-      if (btnConfirmarSolicitar) btnConfirmarSolicitar.disabled = false;
-      return;
-    }
-
-    const data = await safeJsonResponse(resp);
-    hideWaiting();
-    showConfirm();
-
-    document.getElementById('nombreSolicitar').value = '';
-    document.getElementById('telCodeSolicitar').value = '+505';
-    document.getElementById('telefonoSolicitar').value = '';
-    document.getElementById('plataformaSolicitar').value = '';
-    document.getElementById('descripcionSolicitar').value = '';
-    document.getElementById('tipoEnvioSolicitar').value = 'aereo';
-    document.getElementById('pesoSolicitar').value = '';
-    if (reciboSolicitar) reciboSolicitar.style.display = 'none';
-    if (btnConfirmarSolicitar) btnConfirmarSolicitar.style.display = 'none';
-    if (btnConfirmarSolicitar) btnConfirmarSolicitar.disabled = false;
-    if (btnCalcularSolicitar) btnCalcularSolicitar.style.display = 'block';
-  } catch (err) {
-    console.error('Error POST /pedidos', err);
-    if (waitingError) { waitingError.style.display = 'block'; waitingError.textContent = 'Ocurrió un error de red. Intenta nuevamente.'; }
-    if (btnConfirmarSolicitar) btnConfirmarSolicitar.disabled = false;
-  }
-});
-
-if (btnCerrarConfirm) btnCerrarConfirm.addEventListener('click', (e)=>{
-  e.preventDefault();
-  hideConfirm();
-});
-
-/* ---------- small init calls ---------- */
-(function(){
-  // logos
-  // ... (mantén tu lógica original)
-  // llamada wake SIN mode:no-cors (para que el fetch realice la petición y liveness se registre)
-  try {
-    fetch(`${API_BASE}/z4W1p?nocache=${Date.now()}`, { method: 'GET' }).catch(()=>{});
-  } catch(e){ /* ignore */ }
-
-  waitForIntroAndInit();
-  window.addEventListener('resize', () => {
-    if(window.__svc_resize_timeout) clearTimeout(window.__svc_resize_timeout);
-    window.__svc_resize_timeout = setTimeout(() => { adjustServiceTextSizes(); }, 120);
-  });
-})();
-
-/* ---------- form submit guard ---------- */
- document.addEventListener('DOMContentLoaded', () => {
-  const form = document.querySelector("form");
-  if (!form) return;
-
-  form.addEventListener("submit", (e) => {
-    const nombre = (document.getElementById("nombreBuscar")?.value || '').trim();
-    const telefono = (document.getElementById("telefonoBuscar")?.value || '').trim();
-
-    if (!nombre) {
-      alert("Por favor ingresa tu nombre.");
-      e.preventDefault();
-      return;
-    }
-    // Validación simple para teléfono (ajusta según formato)
-    if (telefono && !/^\d{8,10}$/.test(telefono)) {
-      alert("El teléfono debe tener entre 8 y 10 dígitos.");
-      e.preventDefault();
-      return;
-    }
-  });
-});
 </script>
+<!-- BEGIN DYNAMIC PRICES & COTIZADOR SCRIPT (inserted by assistant) -->
+<script>
+(function(){
+  const API_BASE = (typeof API_BASE !== 'undefined') ? API_BASE : 'https://nicaexpressway.pages.dev';
+  const PRICES_ENDPOINT = API_BASE + '/t5R9m1';
+
+  // defaults
+  const DEFAULT_AERO = 7.5;
+  const DEFAULT_MAR = 3.0;
+
+  function formatDateDDMMYYYY(isoStr){
+    if(!isoStr) return null;
+    try {
+      // handle both YYYY-MM-DD and full ISO
+      const d = new Date(isoStr);
+      if (isNaN(d.getTime())) return null;
+      const dd = String(d.getDate()).padStart(2,'0');
+      const mm = String(d.getMonth()+1).padStart(2,'0');
+      const yyyy = d.getFullYear();
+      return `${dd}/${mm}/${yyyy}`;
+    } catch(e){
+      return null;
+    }
+  }
+
+  async function fetchPrices(){
+    try {
+      const res = await fetch(PRICES_ENDPOINT, { method: 'GET', headers: { 'Accept': 'application/json' }});
+      if (!res.ok) throw new Error('fetch prices failed ' + res.status);
+      const data = await res.json();
+      // ensure numeric
+      return {
+        aero: Number(data?.aero ?? DEFAULT_AERO),
+        tipoaereo: Number(data?.tipoaereo ?? 1),
+        fechaaereo: data?.fechaaereo ?? null,
+        maritimo: Number(data?.maritimo ?? DEFAULT_MAR),
+        tipomaritimo: Number(data?.tipomaritimo ?? 1),
+        fechamaritimo: data?.fechamaritimo ?? null
+      };
+    } catch (err) {
+      console.warn('fetchPrices error, falling back to defaults', err);
+      return {
+        aero: DEFAULT_AERO, tipoaereo:1, fechaaereo:null,
+        maritimo: DEFAULT_MAR, tipomaritimo:1, fechamaritimo:null
+      };
+    }
+  }
+
+  function applyPriceStyle(el){
+    if(!el) return;
+    el.style.color = '#FF6B4A'; // orange tone
+    el.style.fontWeight = '800';
+    el.style.fontSize = (parseFloat(getComputedStyle(el).fontSize || '16') * 1.05) + 'px';
+  }
+
+  function updateServiceCards(pr){
+    try {
+      // Aérea card (data-card="0")
+      const aeroCard = document.querySelector('.service-card[data-card="0"]');
+      if (aeroCard) {
+        const priceSpan = aeroCard.querySelector('.card-price');
+        const desc = aeroCard.querySelector('.card-desc');
+        if(priceSpan){
+          priceSpan.textContent = `${Number(pr.aero).toFixed(2)} USD por libra!`;
+          applyPriceStyle(priceSpan);
+        }
+        if (desc){
+          // if offer (tipoaereo === 2) and valid date -> add "hasta el ..."
+          if (Number(pr.tipoaereo) === 2 && pr.fechaaereo) {
+            const f = formatDateDDMMYYYY(pr.fechaaereo);
+            if (f) {
+              desc.innerHTML = `Te hacemos llegar tus paquetes ligeros y urgentes a Nicaragua entre 3 a 5 días hábiles, por tan sólo <span class="card-price">${Number(pr.aero).toFixed(2)} USD por libra</span> hasta el <strong>${f}</strong>!`;
+              const sp = desc.querySelector('.card-price'); if(sp) applyPriceStyle(sp);
+            } else {
+              // fallback: no date parsed
+              desc.innerHTML = `Te hacemos llegar tus paquetes ligeros y urgentes a Nicaragua entre 3 a 5 días hábiles, por tan sólo <span class="card-price">${Number(pr.aero).toFixed(2)} USD por libra!</span>`;
+              const sp = desc.querySelector('.card-price'); if(sp) applyPriceStyle(sp);
+            }
+          } else {
+            // general
+            desc.innerHTML = `Te hacemos llegar tus paquetes ligeros y urgentes a Nicaragua entre 3 a 5 días hábiles, por tan sólo <span class="card-price">${Number(pr.aero).toFixed(2)} USD por libra!</span>`;
+            const sp = desc.querySelector('.card-price'); if(sp) applyPriceStyle(sp);
+          }
+        }
+      }
+
+      // Marítima card (data-card="1")
+      const marCard = document.querySelector('.service-card[data-card="1"]');
+      if (marCard) {
+        const priceSpan = marCard.querySelector('.card-price');
+        const desc = marCard.querySelector('.card-desc');
+        if(priceSpan){
+          priceSpan.textContent = `${Number(pr.maritimo).toFixed(2)} USD por libra!`;
+          applyPriceStyle(priceSpan);
+        }
+        if (desc){
+          if (Number(pr.tipomaritimo) === 2 && pr.fechamaritimo) {
+            const f = formatDateDDMMYYYY(pr.fechamaritimo);
+            if (f) {
+              desc.innerHTML = `Te llevamos paquetes grandes a Nicaragua de forma económica entre 15 a 20 días hábiles por <span class="card-price">${Number(pr.maritimo).toFixed(2)} USD por libra</span> hasta el <strong>${f}</strong>!`;
+              const sp = desc.querySelector('.card-price'); if(sp) applyPriceStyle(sp);
+            } else {
+              desc.innerHTML = `Te llevamos paquetes grandes a Nicaragua de forma económica entre 15 a 20 días hábiles por <span class="card-price">${Number(pr.maritimo).toFixed(2)} USD por libra!</span>`;
+              const sp = desc.querySelector('.card-price'); if(sp) applyPriceStyle(sp);
+            }
+          } else {
+            desc.innerHTML = `Te llevamos paquetes grandes a Nicaragua de forma económica entre 15 a 20 días hábiles por <span class="card-price">${Number(pr.maritimo).toFixed(2)} USD por libra!</span>`;
+            const sp = desc.querySelector('.card-price'); if(sp) applyPriceStyle(sp);
+          }
+        }
+      }
+
+      // ensure "Tarifas Especiales" has pulse-loop animation
+      const special = document.querySelector('.service-card[data-card="2"]');
+      if (special && !special.classList.contains('pulse-loop')) {
+        special.classList.add('pulse-loop');
+      }
+
+    } catch(e){
+      console.warn('updateServiceCards error', e);
+    }
+  }
+
+  function isOfferActive(typeVal, offerDateIso){
+    try {
+      if (Number(typeVal) !== 2) return false;
+      if (!offerDateIso) return true; // if no date, treat as active
+      // compare in Nicaragua timezone by creating date objects and comparing YYYY-MM-DD
+      const tz = 'America/Managua';
+      const todayParts = new Intl.DateTimeFormat('en-CA', { timeZone: tz, year:'numeric', month:'2-digit', day:'2-digit' }).formatToParts(new Date());
+      const todayIso = todayParts.map(p=>p.value).join('').replace(/-/,'-'); // not perfect but we'll use toDate approach
+      const today = new Date(new Date().toLocaleString('en-US', { timeZone: tz }));
+      const offerDate = new Date(offerDateIso);
+      // Normalize ignoring time-of-day
+      const t = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      const o = new Date(offerDate.getFullYear(), offerDate.getMonth(), offerDate.getDate());
+      // active if o >= t (offer date today or later)
+      return o.getTime() >= t.getTime();
+    } catch(e){
+      return true;
+    }
+  }
+
+  function showOfferPopupIfNeeded(pr){
+    try {
+      // if both offers present, prefer aérero shown first, else maritimo
+      const tz = 'America/Managua';
+      const today = new Date(new Date().toLocaleString('en-US', { timeZone: tz }));
+      // Aéreo
+      if (Number(pr.tipoaereo) === 2 && pr.fechaaereo && isOfferActive(pr.tipoaereo, pr.fechaaereo)) {
+        const f = formatDateDDMMYYYY(pr.fechaaereo);
+        showOfferPopup('Aéreo', pr.aero, f);
+        return;
+      }
+      // Marítimo
+      if (Number(pr.tipomaritimo) === 2 && pr.fechamaritimo && isOfferActive(pr.tipomaritimo, pr.fechamaritimo)) {
+        const f = formatDateDDMMYYYY(pr.fechamaritimo);
+        showOfferPopup('Marítimo', pr.maritimo, f);
+        return;
+      }
+    } catch(e){
+      console.warn('showOfferPopupIfNeeded error', e);
+    }
+  }
+
+  function showOfferPopup(kind, tarifa, fechaStr){
+    try {
+      // Build popup DOM similar to lightbox style
+      const existing = document.getElementById('assistantOfferPopup');
+      if (existing) return; // already shown
+      const overlay = document.createElement('div');
+      overlay.id = 'assistantOfferPopup';
+      overlay.style.position = 'fixed';
+      overlay.style.inset = '0';
+      overlay.style.display = 'flex';
+      overlay.style.alignItems = 'center';
+      overlay.style.justifyContent = 'center';
+      overlay.style.background = 'rgba(0,0,0,0.35)';
+      overlay.style.zIndex = '99999';
+      overlay.style.opacity = '0';
+      overlay.style.transition = 'opacity .28s ease';
+      const panel = document.createElement('div');
+      panel.style.background = '#fff';
+      panel.style.borderRadius = '14px';
+      panel.style.padding = '18px';
+      panel.style.maxWidth = '420px';
+      panel.style.width = '92%';
+      panel.style.textAlign = 'center';
+      panel.style.boxShadow = '0 12px 36px rgba(0,0,0,0.18)';
+      panel.style.transform = 'translateY(-8px)';
+      panel.style.transition = 'transform .38s cubic-bezier(.2,.9,.2,1)';
+      const title = document.createElement('div');
+      title.textContent = 'Aprovecha esta oferta especial';
+      title.style.fontFamily = "Poppins, Inter, sans-serif";
+      title.style.fontWeight = '700';
+      title.style.fontSize = '1.25rem';
+      title.style.color = '#0f3a66';
+      title.style.marginBottom = '8px';
+      const msg = document.createElement('div');
+      msg.style.marginBottom = '12px';
+      msg.style.fontWeight = '700';
+      msg.style.color = '#FF6B4A';
+      msg.style.fontSize = '1.05rem';
+      msg.textContent = `${kind} se encuentra a ${Number(tarifa).toFixed(2)} USD por libra${fechaStr ? ' hasta el ' + fechaStr : ''}!!!`;
+      const btn = document.createElement('button');
+      btn.textContent = 'Entendido!';
+      btn.style.marginTop = '6px';
+      btn.style.padding = '10px 14px';
+      btn.style.borderRadius = '10px';
+      btn.style.border = 'none';
+      btn.style.background = '#0f3a66';
+      btn.style.color = '#fff';
+      btn.style.fontWeight = '700';
+      btn.style.cursor = 'pointer';
+      btn.addEventListener('click', ()=> {
+        // close with reverse animation
+        overlay.style.opacity = '0';
+        panel.style.transform = 'translateY(-10px) scale(.98)';
+        setTimeout(()=> { try { overlay.remove(); } catch(e){} }, 280);
+      });
+      panel.appendChild(title);
+      panel.appendChild(msg);
+      panel.appendChild(btn);
+      overlay.appendChild(panel);
+      document.body.appendChild(overlay);
+      // animate in
+      requestAnimationFrame(()=> {
+        overlay.style.opacity = '1';
+        panel.style.transform = 'translateY(0)';
+      });
+    } catch(e){
+      console.warn('showOfferPopup failed', e);
+    }
+  }
+
+  // replace the static calcularSolicitar with a dynamic version
+  async function dynamicCalcularSolicitar(){
+    try {
+      const tipoEl = document.getElementById('tipoEnvioSolicitar');
+      const pesoEl = document.getElementById('pesoSolicitar');
+      const tipo = tipoEl ? tipoEl.value : 'aereo';
+      const peso = pesoEl ? parseFloat(pesoEl.value) : NaN;
+      if (isNaN(peso) || peso <= 0) {
+        alert('Por favor ingresa un peso válido.');
+        return false;
+      }
+
+      // show the waiting spinner (if present)
+      const waitingPopEl = document.getElementById('waitingPop') || document.querySelector('.overlay-spinner') || null;
+      const spinnerStart = Date.now();
+      if (waitingPopEl) {
+        waitingPopEl.classList.add('show');
+        waitingPopEl.style.display = 'flex';
+      }
+
+      // fetch prices (this may take variable time)
+      const pr = await fetchPrices();
+
+      // ensure spinner visible at least 5000ms (5s). If fetch took longer, continue immediately.
+      const elapsed = Date.now() - spinnerStart;
+      const minVisible = 5000;
+      if (elapsed < minVisible) {
+        await new Promise(resolve => setTimeout(resolve, minVisible - elapsed));
+      }
+
+      // hide spinner
+      if (waitingPopEl) {
+        waitingPopEl.classList.remove('show');
+        waitingPopEl.style.display = 'none';
+      }
+
+      let precioPorLb = (tipo === 'aereo') ? Number(pr.aero) : Number(pr.maritimo);
+
+      const total = precioPorLb * peso;
+
+      // display results elements (rcPrecioLibra, rcLibras, rcTotal, rcEstimado) if they exist
+      const rcPrecioLibra = document.getElementById('rcPrecioLibra') || document.getElementById('rcPrecio') || null;
+      const rcLibras = document.getElementById('rcLibras') || document.getElementById('rcPeso') || null;
+      const rcTotal = document.getElementById('rcTotal') || document.getElementById('lbTotal') || null;
+      const rcEstimado = document.getElementById('rcEstimado') || document.getElementById('rcEta') || null;
+      const reciboSolicitar = document.getElementById('reciboSolicitar') || document.getElementById('lbTotalCard') || null;
+      const btnCalcularSolicitar = document.getElementById('btnCalcularSolicitar') || null;
+      const btnConfirmarSolicitar = document.getElementById('btnConfirmarSolicitar') || null;
+
+      if (rcPrecioLibra) rcPrecioLibra.textContent = `$${precioPorLb.toFixed(2)} USD`;
+      if (rcLibras) rcLibras.textContent = `${Number(peso).toFixed(2)} lb`;
+      if (rcTotal) rcTotal.innerHTML = `<strong>$${isFinite(total) ? total.toFixed(2) : '0.00'} USD</strong>`;
+      if (tipo === 'maritimo') {
+        if (rcEstimado) rcEstimado.textContent = 'Llegada estimada: 15 días';
+      } else {
+        if (rcEstimado) rcEstimado.textContent = 'Llegada estimada: 7 días';
+      }
+      if (reciboSolicitar) reciboSolicitar.style.display = 'block';
+      if (btnCalcularSolicitar) btnCalcularSolicitar.style.display = 'none';
+      if (btnConfirmarSolicitar) btnConfirmarSolicitar.style.display = 'block';
+
+      // if the price type is special (tipoaereo==2 or tipomaritimo==2), show savings %
+      const standardA = DEFAULT_AERO, standardM = DEFAULT_MAR;
+      let savingsText = '';
+      if (tipo === 'aereo' && Number(pr.tipoaereo) === 2) {
+        const pct = ((standardA - Number(pr.aero)) / standardA) * 100;
+        if (isFinite(pct) && pct > 0) savingsText = `Debido al precio especial, te estarías ahorrando un ${pct.toFixed(0)}%`;
+      }
+      if (tipo === 'maritimo' && Number(pr.tipomaritimo) === 2) {
+        const pct = ((standardM - Number(pr.maritimo)) / standardM) * 100;
+        if (isFinite(pct) && pct > 0) savingsText = `Debido al precio especial, te estarías ahorrando un ${pct.toFixed(0)}%`;
+      }
+      if (savingsText) {
+        // find or create savings element below estimado
+        let saveEl = document.getElementById('rcSavings');
+        if(!saveEl){
+          saveEl = document.createElement('div'); saveEl.id = 'rcSavings';
+          saveEl.style.marginTop = '8px';
+          saveEl.style.fontWeight = '700';
+          saveEl.style.color = '#FF6B4A';
+          if (rcEstimado && rcEstimado.parentNode) rcEstimado.parentNode.insertBefore(saveEl, rcEstimado.nextSibling);
+          else if (reciboSolicitar && reciboSolicitar.parentNode) reciboSolicitar.parentNode.insertBefore(saveEl, reciboSolicitar.nextSibling);
+          else document.body.appendChild(saveEl);
+        }
+        saveEl.textContent = savingsText;
+      }
+
+      return true;
+    } catch(e){
+      console.error('dynamicCalcularSolicitar error', e);
+      alert('No se pudo calcular el envío. Revisa la consola.');
+      return false;
+    }
+  }
+
+  // wire dynamicCalcularSolicitar to existing button if present
+  function wireCalcButton(){
+    try {
+      const btn = document.getElementById('btnCalcularSolicitar') || document.getElementById('btnCalcular') || null;
+      if (btn) {
+        btn.removeEventListener('click', dynamicCalcularSolicitar);
+        btn.addEventListener('click', function(ev){ ev.preventDefault(); dynamicCalcularSolicitar(); });
+      }
+      // Also if there is a form that previously called calcularSolicitar on submit, intercept it
+      const solicitarForm = document.getElementById('formSolicitar') || document.getElementById('solicitarForm') || null;
+      if (solicitarForm) {
+        solicitarForm.removeEventListener('submit', dynamicCalcularSolicitar);
+        solicitarForm.addEventListener('submit', function(ev){ ev.preventDefault(); dynamicCalcularSolicitar(); });
+      }
+    } catch(e){}
+  }
+
+  // initialize on load
+  async function initDynamicPrices(){
+    try {
+      const pr = await fetchPrices();
+
+      // If any offer date is before today (expired), treat as general (reset to defaults)
+      const tz = 'America/Managua';
+      const today = new Date(new Date().toLocaleString('en-US', { timeZone: tz }));
+      // If aereo offer expired -> set tipoaereo =1
+      if (pr.fechaaereo) {
+        const oa = new Date(pr.fechaaereo);
+        const od = new Date(oa.getFullYear(), oa.getMonth(), oa.getDate());
+        const td = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        if (od.getTime() < td.getTime()) { pr.tipoaereo = 1; pr.aero = DEFAULT_AERO; }
+      }
+      if (pr.fechamaritimo) {
+        const om = new Date(pr.fechamaritimo);
+        const omd = new Date(om.getFullYear(), om.getMonth(), om.getDate());
+        const td = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        if (omd.getTime() < td.getTime()) { pr.tipomaritimo = 1; pr.maritimo = DEFAULT_MAR; }
+      }
+
+      updateServiceCards(pr);
+      showOfferPopupIfNeeded(pr);
+      wireCalcButton();
+    } catch(e){
+      console.warn('initDynamicPrices error', e);
+      wireCalcButton();
+    }
+  }
+
+  // run after DOM ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initDynamicPrices);
+  } else {
+    initDynamicPrices();
+  }
+
+  // expose for debugging (obfuscated-ish name suggested)
+  window._pR3tXk_applyPrices = initDynamicPrices;
+})();
+</script>
+<!-- END DYNAMIC PRICES & COTIZADOR SCRIPT -->
